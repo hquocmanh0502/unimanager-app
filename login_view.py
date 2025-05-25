@@ -7,6 +7,7 @@ from department_view import DepartmentView
 from accountant_view import AccountantView
 import os
 
+
 class LoginPage(object):
     def __init__(self, window):
         # Màn hình
