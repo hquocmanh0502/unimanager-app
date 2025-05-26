@@ -87,60 +87,60 @@ class DepartmentView:
 
         # Dictionary để theo dõi trạng thái hiển thị của các tab con
         self.submenu_visible = {
-            "Quản lý thông tin giáo viên": False,
+            "Quản lý giáo viên": False,
             "Quản lý lớp học phần": False,
             "Thống kê": False
         }
 
         # Dictionary để lưu các button của tab con
         self.submenu_buttons = {
-            "Quản lý thông tin giáo viên": [],
+            "Quản lý giáo viên": [],
             "Quản lý lớp học phần": [],
             "Thống kê": []
         }
 
         # Dictionary để lưu các frame chứa tab con
         self.submenu_frames = {
-            "Quản lý thông tin giáo viên": None,
+            "Quản lý giáo viên": None,
             "Quản lý lớp học phần": None,
             "Thống kê": None
         }
 
         # Dictionary để ánh xạ mục chính với các tab con
         self.submenu_items = {
-            "Quản lý thông tin giáo viên": ["Bằng cấp", "Khoa", "Giáo viên"],
+            "Quản lý giáo viên": ["Bằng cấp", "Khoa", "Giáo viên"],
             "Quản lý lớp học phần": ["Học phần", "Kỳ học", "Lớp học", "Phân công"],
             "Thống kê": ["Thống kê giáo viên", "Thống kê lớp"]
         }
 
         # Menu sidebar với cơ chế drop down
-        # Mục chính: Quản lý thông tin giáo viên
-        self.teacher_info_button = CTkButton(self.sidebar, text="▶ Quản lý thông tin giáo viên", font=("Helvetica", 18, "bold"), fg_color="#2A4B8D",
-                                        text_color="white", hover_color="#4A78E0",
-                                        command=lambda: self.toggle_submenu("Quản lý thông tin giáo viên"))
+        # Mục chính: Quản lý giáo viên
+        self.teacher_info_button = CTkButton(self.sidebar, text="▶ Quản lý giáo viên", font=("Helvetica", 18, "bold"), fg_color="#2A4B8D",
+                                        text_color="white", hover_color="#4A78E0", anchor="w",
+                                        command=lambda: self.toggle_submenu("Quản lý giáo viên"))
         self.teacher_info_button.pack(pady=(15, 0), padx=10, fill="x")
-        self.submenu_frames["Quản lý thông tin giáo viên"] = CTkFrame(self.sidebar, fg_color="transparent", height=0)
-        self.submenu_frames["Quản lý thông tin giáo viên"].pack(pady=0, padx=10, fill="x")
+        self.submenu_frames["Quản lý giáo viên"] = CTkFrame(self.sidebar, fg_color="transparent", height=0)
+        self.submenu_frames["Quản lý giáo viên"].pack(pady=0, padx=5, fill="x")
 
         # Mục chính: Quản lý lớp học phần
         self.class_management_button = CTkButton(self.sidebar, text="▶ Quản lý lớp học phần", font=("Helvetica", 18, "bold"), fg_color="#2A4B8D",
-                                                text_color="white", hover_color="#4A78E0",
+                                                text_color="white", hover_color="#4A78E0", anchor="w",
                                                 command=lambda: self.toggle_submenu("Quản lý lớp học phần"))
         self.class_management_button.pack(pady=(15, 0), padx=10, fill="x")
         self.submenu_frames["Quản lý lớp học phần"] = CTkFrame(self.sidebar, fg_color="transparent", height=0)
-        self.submenu_frames["Quản lý lớp học phần"].pack(pady=0, padx=10, fill="x")
+        self.submenu_frames["Quản lý lớp học phần"].pack(pady=0, padx=5, fill="x")
 
         # Mục chính: Thống kê
         self.stats_button = CTkButton(self.sidebar, text="▶ Thống kê", font=("Helvetica", 18, "bold"), fg_color="#2A4B8D",
-                                    text_color="white", hover_color="#4A78E0",
+                                    text_color="white", hover_color="#4A78E0", anchor="w",
                                     command=lambda: self.toggle_submenu("Thống kê"))
         self.stats_button.pack(pady=(15, 0), padx=10, fill="x")
         self.submenu_frames["Thống kê"] = CTkFrame(self.sidebar, fg_color="transparent", height=0)
-        self.submenu_frames["Thống kê"].pack(pady=0, padx=10, fill="x")
+        self.submenu_frames["Thống kê"].pack(pady=0, padx=5, fill="x")
 
         # Mục chính: Lương (không có tab con)
         CTkButton(self.sidebar, text="Lương", font=("Helvetica", 18, "bold"), fg_color="#2A4B8D",
-                text_color="white", hover_color="#4A78E0",
+                text_color="white", hover_color="#4A78E0", anchor="w",
                 command=lambda: self.switch_tab("Lương")).pack(pady=(15, 0), padx=10, fill="x")
 
         # Frame chính (bên phải)
@@ -230,9 +230,9 @@ class DepartmentView:
         self.degree_tree.heading("Abbr", text="Tên viết tắt")
         self.degree_tree.heading("Coefficient", text="Hệ số")
         self.degree_tree.column("ID", width=100, anchor="center")
-        self.degree_tree.column("Name", width=200, anchor="center")
-        self.degree_tree.column("Abbr", width=150, anchor="center")
-        self.degree_tree.column("Coefficient", width=100, anchor="center")
+        self.degree_tree.column("Name", width=150, anchor="center")
+        self.degree_tree.column("Abbr", width=80, anchor="center")
+        self.degree_tree.column("Coefficient", width=80, anchor="center")
         self.degree_tree.pack(padx=10, pady=10, fill="both", expand=True)
         self.degree_tree.bind("<<TreeviewSelect>>", self.on_degree_select)
         self.load_degrees()
@@ -243,8 +243,9 @@ class DepartmentView:
         main_frame.pack(padx=10, pady=10, fill="both", expand=True)
 
         # Form chỉnh sửa khoa
-        form_frame = CTkFrame(main_frame, fg_color="#F0F0F0", corner_radius=10)
-        form_frame.pack(side="left", padx=10, pady=10, fill="y")
+        form_frame = CTkFrame(main_frame, fg_color="#F0F0F0", corner_radius=10, width=250)
+        form_frame.pack(side="left", padx=5, pady=10, fill="y")
+        form_frame.pack_propagate(False)
         CTkLabel(form_frame, text="Quản lý Khoa", font=("Helvetica", 16, "bold")).pack(pady=5)
         self.dept_name = CTkEntry(form_frame, placeholder_text="Tên khoa", width=200)
         self.dept_name.pack(pady=5)
@@ -254,10 +255,18 @@ class DepartmentView:
         self.dept_description.pack(pady=5)
         button_frame = CTkFrame(form_frame, fg_color="transparent")
         button_frame.pack(pady=10)
-        CTkButton(button_frame, text="Thêm", fg_color="#0085FF", command=self.add_dept).pack(side="left", padx=5)
-        CTkButton(button_frame, text="Sửa", fg_color="#FFC107", command=self.edit_dept).pack(side="left", padx=5)
-        CTkButton(button_frame, text="Xóa", fg_color="#F44336", command=self.delete_dept).pack(side="left", padx=5)
-        CTkButton(button_frame, text="Reset", fg_color="#6C757D", command=self.reset_dept_fields).pack(side="left", padx=5)
+
+        # Hàng 1: Các nút "Thêm", "Sửa", "Xóa"
+        button_row_1 = CTkFrame(button_frame, fg_color="transparent")
+        button_row_1.pack()
+        CTkButton(button_row_1, text="Thêm", fg_color="#0085FF", command=self.add_dept, width=70, font=("Helvetica", 12)).pack(side="left", padx=5)
+        CTkButton(button_row_1, text="Sửa", fg_color="#FFC107", command=self.edit_dept, width=70, font=("Helvetica", 12)).pack(side="left", padx=5)
+        CTkButton(button_row_1, text="Xóa", fg_color="#F44336", command=self.delete_dept, width=70, font=("Helvetica", 12)).pack(side="left", padx=5)
+
+        # Hàng 2: Nút "Reset"
+        button_row_2 = CTkFrame(button_frame, fg_color="transparent")
+        button_row_2.pack(pady=(5, 0))
+        CTkButton(button_row_2, text="Reset", fg_color="#6C757D", command=self.reset_dept_fields, width=70, font=("Helvetica", 12)).pack()
 
         # Bảng khoa
         table_frame = CTkFrame(main_frame, fg_color="#FFFFFF", corner_radius=10)
@@ -284,20 +293,132 @@ class DepartmentView:
         form_frame = CTkFrame(main_frame, fg_color="#F0F0F0", corner_radius=10)
         form_frame.pack(side="left", padx=10, pady=10, fill="y")
         CTkLabel(form_frame, text="Quản lý Giáo viên", font=("Helvetica", 16, "bold")).pack(pady=5)
-        self.teacher_name = CTkEntry(form_frame, placeholder_text="Họ tên", width=150)
+        self.teacher_name = CTkEntry(
+            form_frame,
+            placeholder_text="Họ tên",
+            placeholder_text_color="#666666",
+            width=150,
+            height=32,
+            font=("Helvetica", 11),
+            fg_color="#E0E0E0",
+            text_color="black",
+            border_color="#4A4A4A",
+            border_width=2,
+            corner_radius=5
+        )
         self.teacher_name.pack(pady=5)
-        self.date_of_birth = CTkEntry(form_frame, placeholder_text="Ngày sinh (YYYY-MM-DD)", width=150)
-        self.date_of_birth.pack(pady=5)
-        self.phone = CTkEntry(form_frame, placeholder_text="Điện thoại", width=150)
+
+        # Ngày sinh: Sử dụng CTkEntry với nút lịch
+        date_frame_birth = CTkFrame(form_frame, fg_color="transparent")
+        date_frame_birth.pack(pady=5, padx=(10, 10), fill="x")
+        inner_frame_birth = CTkFrame(date_frame_birth, fg_color="transparent")
+        inner_frame_birth.pack(side="right", padx=(0, 29))  # Thêm padx để tạo khoảng cách từ lề phải
+        self.date_of_birth = CTkEntry(
+            inner_frame_birth,
+            placeholder_text="Ngày sinh (YYYY-MM-DD)",
+            placeholder_text_color="#666666",
+            width=150,
+            height=32,
+            font=("Helvetica", 11),
+            fg_color="#E0E0E0",
+            text_color="black",
+            border_color="#4A4A4A",
+            border_width=2,
+            corner_radius=5
+        )
+        self.date_of_birth.pack(side="left")
+        calendar_button_birth = CTkButton(
+            inner_frame_birth,
+            text="📅",
+            width=30,
+            height=32,
+            fg_color="#4A4A4A",
+            hover_color="#666666",
+            command=lambda: self.open_calendar(self.date_of_birth)
+        )
+        calendar_button_birth.pack(side="right", padx=(5, 0))
+
+        self.phone = CTkEntry(
+            form_frame,
+            placeholder_text="Điện thoại",
+            placeholder_text_color="#666666",
+            width=150,
+            height=32,
+            font=("Helvetica", 11),
+            fg_color="#E0E0E0",
+            text_color="black",
+            border_color="#4A4A4A",
+            border_width=2,
+            corner_radius=5
+        )
         self.phone.pack(pady=5)
-        self.email = CTkEntry(form_frame, placeholder_text="Email", width=150)
+
+        self.email = CTkEntry(
+            form_frame,
+            placeholder_text="Email",
+            placeholder_text_color="#666666",
+            width=150,
+            height=32,
+            font=("Helvetica", 11),
+            fg_color="#E0E0E0",
+            text_color="black",
+            border_color="#4A4A4A",
+            border_width=2,
+            corner_radius=5
+        )
         self.email.pack(pady=5)
-        self.dept_combobox = CTkComboBox(form_frame, width=150, values=self.get_departments())
+
+        self.dept_combobox = CTkComboBox(
+            form_frame,
+            values=self.get_departments(),
+            width=150,
+            height=32,
+            font=("Helvetica", 11),
+            fg_color="#E0E0E0",
+            text_color="black",
+            border_color="#4A4A4A",
+            border_width=2,
+            button_color="#4A4A4A",
+            button_hover_color="#666666",
+            dropdown_fg_color="#E0E0E0",
+            dropdown_text_color="black",
+            dropdown_hover_color="#A0A0A0"
+        )
         self.dept_combobox.pack(pady=5)
-        self.degree_combobox = CTkComboBox(form_frame, width=150, values=self.get_degrees())
+
+        self.degree_combobox = CTkComboBox(
+            form_frame,
+            values=self.get_degrees(),
+            width=150,
+            height=32,
+            font=("Helvetica", 11),
+            fg_color="#E0E0E0",
+            text_color="black",
+            border_color="#4A4A4A",
+            border_width=2,
+            button_color="#4A4A4A",
+            button_hover_color="#666666",
+            dropdown_fg_color="#E0E0E0",
+            dropdown_text_color="black",
+            dropdown_hover_color="#A0A0A0"
+        )
         self.degree_combobox.pack(pady=5)
-        self.teacher_coeff = CTkEntry(form_frame, placeholder_text="Hệ số (ví dụ: 1.5)", width=150)
+
+        self.teacher_coeff = CTkEntry(
+            form_frame,
+            placeholder_text="Hệ số (ví dụ: 1.5)",
+            placeholder_text_color="#666666",
+            width=150,
+            height=32,
+            font=("Helvetica", 11),
+            fg_color="#E0E0E0",
+            text_color="black",
+            border_color="#4A4A4A",
+            border_width=2,
+            corner_radius=5
+        )
         self.teacher_coeff.pack(pady=5)
+
         self.degree_combobox.configure(command=self.update_teacher_coefficient)
         button_frame = CTkFrame(form_frame, fg_color="transparent")
         button_frame.pack(pady=5)
@@ -625,10 +746,10 @@ class DepartmentView:
         self.assignment_tree.heading("Students", text="Số sinh viên")
         self.assignment_tree.heading("Teacher", text="Giáo viên")
         self.assignment_tree.column("Semester", width=150, anchor="center")
-        self.assignment_tree.column("Module", width=200, anchor="center")
-        self.assignment_tree.column("ID", width=150, anchor="center")
-        self.assignment_tree.column("Name", width=200, anchor="center")
-        self.assignment_tree.column("Students", width=150, anchor="center")
+        self.assignment_tree.column("Module", width=170, anchor="center")
+        self.assignment_tree.column("ID", width=80, anchor="center")
+        self.assignment_tree.column("Name", width=170, anchor="center")
+        self.assignment_tree.column("Students", width=80, anchor="center")
         self.assignment_tree.column("Teacher", width=200, anchor="center")
         self.assignment_tree.pack(padx=10, pady=10, fill="both", expand=True)
         self.assignment_tree.bind("<<TreeviewSelect>>", self.on_assignment_select)
@@ -697,17 +818,18 @@ class DepartmentView:
         self.module_tree.heading("ID", text="Mã số")
         self.module_tree.heading("Name", text="Tên học phần")
         self.module_tree.heading("Credits", text="Số tín chỉ")
-        self.module_tree.heading("Coefficient", text="Hệ số học phần")
+        self.module_tree.heading("Coefficient", text="Hệ số")
         self.module_tree.heading("Periods", text="Số tiết")
         self.module_tree.column("ID", width=100, anchor="center")
-        self.module_tree.column("Name", width=200, anchor="center")
-        self.module_tree.column("Credits", width=100, anchor="center")
-        self.module_tree.column("Coefficient", width=100, anchor="center")
+        self.module_tree.column("Name", width=160, anchor="center")
+        self.module_tree.column("Credits", width=80, anchor="center")
+        self.module_tree.column("Coefficient", width=60, anchor="center")
         self.module_tree.column("Periods", width=100, anchor="center")
         self.module_tree.pack(padx=10, pady=10, fill="both", expand=True)
         self.module_tree.bind("<<TreeviewSelect>>", self.on_module_select)
         self.load_modules()
 
+    
     def setup_class_tab(self):
         CTkLabel(self.class_tab, text="Lớp học", font=("Helvetica", 18, "bold"), text_color="black").pack(pady=10)
         main_frame = CTkFrame(self.class_tab, fg_color="transparent")
@@ -719,7 +841,7 @@ class DepartmentView:
         CTkLabel(form_frame, text="Quản lý Lớp học", font=("Helvetica", 16, "bold")).pack(pady=5)
 
         # Kỳ học
-        self.class_semester = CTkComboBox(form_frame, width=150, values=self.get_semesters())  # Đặt width=150 giống tab Giáo viên
+        self.class_semester = CTkComboBox(form_frame, width=150, values=self.get_semesters(), command=self.load_classes)
         self.class_semester.pack(pady=5)
         self.class_semester.set(self.get_semesters()[0] if self.get_semesters() else "")
 
@@ -755,9 +877,9 @@ class DepartmentView:
         self.class_tree.heading("Name", text="Tên lớp")
         self.class_tree.heading("Students", text="Số sinh viên")
         self.class_tree.column("Semester", width=200, anchor="center")  # Tăng chiều rộng để tận dụng không gian
-        self.class_tree.column("Module", width=250, anchor="center")
-        self.class_tree.column("ID", width=150, anchor="center")
-        self.class_tree.column("Name", width=300, anchor="center")
+        self.class_tree.column("Module", width=180, anchor="center")
+        self.class_tree.column("ID", width=100, anchor="center")
+        self.class_tree.column("Name", width=200, anchor="center")
         self.class_tree.column("Students", width=150, anchor="center")
         self.class_tree.pack(padx=10, pady=10, fill="both", expand=True)
         self.class_tree.bind("<<TreeviewSelect>>", self.on_class_select)
@@ -1237,34 +1359,38 @@ class DepartmentView:
             messagebox.showwarning("Cảnh báo", "Vui lòng chọn khoa để xóa!")
             return
 
-        dept_id = self.dept_tree.item(selected_item)["values"][0]
+        item = self.dept_tree.item(selected_item)
+        dept_id = item["values"][0]
 
-        # Xác nhận xóa
-        confirm = messagebox.askyesno("Xác nhận", "Bạn có chắc muốn xóa khoa này? Tất cả các khóa học liên quan sẽ bị xóa!")
-        if not confirm:
-            return
-
+        # Kiểm tra xem khoa có liên kết với giáo viên không
         try:
             conn = mysql.connector.connect(**DB_CONFIG)
             cursor = conn.cursor()
-
-            # Xóa các bản ghi liên quan trong course_modules trước
-            cursor.execute("DELETE FROM course_modules WHERE dept_id = %s", (dept_id,))
-            # Xóa khoa trong departments
-            cursor.execute("DELETE FROM departments WHERE dept_id = %s", (dept_id,))
-            conn.commit()
-            messagebox.showinfo("Thành công", "Xóa khoa thành công")
-            self.reset_dept_fields()
-            self.load_depts()
-            self.dept_combobox.configure(values=self.get_departments())
-            # Xóa dòng này vì stats_dept_combobox không tồn tại
-            # self.stats_dept_combobox.configure(values=self.get_departments())
+            cursor.execute("SELECT 1 FROM teachers WHERE dept_id = %s LIMIT 1", (dept_id,))
+            if cursor.fetchone():
+                messagebox.showerror("Lỗi", "Khoa đang được sử dụng, không thể xóa!")
+                return
         except mysql.connector.Error as e:
-            messagebox.showerror("Lỗi", f"Không thể xóa khoa: {e}")
+            messagebox.showerror("Lỗi", f"Không thể kiểm tra liên kết khoa: {e}")
+            return
         finally:
-            if 'cursor' in locals():
+            cursor.close()
+            conn.close()
+
+        # Nếu không có liên kết, tiến hành xóa
+        if messagebox.askyesno("Xác nhận", "Bạn có chắc muốn xóa khoa này?"):
+            try:
+                conn = mysql.connector.connect(**DB_CONFIG)
+                cursor = conn.cursor()
+                cursor.execute("DELETE FROM departments WHERE dept_id = %s", (dept_id,))
+                conn.commit()
+                messagebox.showinfo("Thành công", "Xóa khoa thành công")
+                self.reset_dept_fields()
+                self.load_depts()
+            except mysql.connector.Error as e:
+                messagebox.showerror("Lỗi", f"Không thể xóa khoa: {str(e)}")
+            finally:
                 cursor.close()
-            if 'conn' in locals():
                 conn.close()
 
     def load_depts(self):
@@ -1362,97 +1488,81 @@ class DepartmentView:
         self.teacher_coeff.configure(placeholder_text="")
 
     def add_teacher(self):
-        # Lấy dữ liệu đầu vào
+        selected = self.teacher_tree.selection()
+        if selected:
+            messagebox.showwarning("Cảnh báo", "Vui lòng reset form trước khi thêm mới!")
+            return
+
         name = self.teacher_name.get().strip()
         dob = self.date_of_birth.get().strip()
         phone = self.phone.get().strip()
         email = self.email.get().strip()
-        dept = self.dept_combobox.get()
-        degree = self.degree_combobox.get()
+        dept = self.dept_combobox.get().strip()
+        degree = self.degree_combobox.get().strip()
         coeff = self.teacher_coeff.get().strip()
 
-        # Kiểm tra dữ liệu trống
-        if not all([name, phone, email, dept, degree, coeff]):
+        if not all([name, dob, phone, email, dept, degree, coeff]):
             messagebox.showerror("Lỗi", "Vui lòng nhập đầy đủ thông tin")
             return
 
         try:
-            # Kiểm tra định dạng ngày sinh
-            if not dob:
-                dob = datetime.now().strftime('%Y-%m-%d')
-            else:
-                try:
-                    dob = datetime.strptime(dob, '%Y-%m-%d').strftime('%Y-%m-%d')
-                except ValueError:
-                    raise ValueError("Định dạng ngày sinh phải là YYYY-MM-DD")
+            dob_date = datetime.strptime(dob, '%Y-%m-%d').date()
+            current_date = datetime.now().date()  # Ngày hiện tại: 26/05/2025
+            if dob_date > current_date:
+                messagebox.showerror("Lỗi", "Ngày sinh không được là ngày trong tương lai!")
+                return
+        except ValueError:
+            messagebox.showerror("Lỗi", "Ngày sinh không hợp lệ. Vui lòng nhập theo định dạng YYYY-MM-DD!")
+            return
 
-            # Kiểm tra định dạng email
-            if '@' not in email or '.' not in email:
-                raise ValueError("Email không hợp lệ (phải chứa '@' và '.')")
-
-            # Kiểm tra số điện thoại
-            if not phone.isdigit() or len(phone) < 10 or len(phone) > 11:
-                raise ValueError("Số điện thoại phải chứa 10-11 chữ số")
-
-            # Kiểm tra hệ số
+        try:
             coeff = float(coeff)
             if coeff <= 0:
-                raise ValueError("Hệ số phải là số thực dương")
-
-            # Kiểm tra và trích xuất dept_id
-            if ":" not in dept:
-                raise ValueError("Định dạng khoa không hợp lệ (phải là 'deptX: Tên khoa')")
-            dept_id = dept.split(":")[0].strip()
-            if not dept_id:
-                raise ValueError("Mã khoa không được để trống")
-            if len(dept_id) > 10:
-                raise ValueError("Mã khoa vượt quá độ dài tối đa (10 ký tự)")
-
-            # Kiểm tra và trích xuất degree_id
-            if ":" not in degree:
-                raise ValueError("Định dạng bằng cấp không hợp lệ (phải là 'degX: Tên bằng cấp')")
-            degree_id = degree.split(":")[0].strip()
-            if not degree_id:
-                raise ValueError("Mã bằng cấp không được để trống")
-            if len(degree_id) > 10:
-                raise ValueError("Mã bằng cấp vượt quá độ dài tối đa (10 ký tự)")
-
-            # ✅ Xác nhận thêm giáo viên
-            confirm = messagebox.askyesno("Xác nhận", "Bạn có chắc muốn thêm giáo viên này?")
-            if not confirm:
+                messagebox.showerror("Lỗi", "Hệ số phải lớn hơn 0")
                 return
+        except ValueError:
+            messagebox.showerror("Lỗi", "Hệ số phải là số hợp lệ")
+            return
 
-            # Thêm giáo viên vào cơ sở dữ liệu
+        if not re.match(r"^\d{10}$", phone):
+            messagebox.showerror("Lỗi", "Số điện thoại phải gồm 10 chữ số")
+            return
+
+        if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", email):
+            messagebox.showerror("Lỗi", "Email không hợp lệ")
+            return
+
+        dept_id = dept.split(":")[0].strip()
+        degree_id = degree.split(":")[0].strip()
+
+        try:
             conn = mysql.connector.connect(**DB_CONFIG)
             cursor = conn.cursor()
-            # Tạo mã giáo viên ngẫu nhiên TCHxxxxx
+            cursor.execute("SELECT email FROM teachers WHERE email = %s", (email,))
+            if cursor.fetchone():
+                messagebox.showerror("Lỗi", "Email đã tồn tại. Vui lòng chọn email khác!")
+                return
+
             while True:
                 random_num = random.randint(0, 99999)
                 teacher_id = f"TCH{str(random_num).zfill(5)}"
                 cursor.execute("SELECT teacher_id FROM teachers WHERE teacher_id = %s", (teacher_id,))
                 if not cursor.fetchone():
-                    cursor.fetchall()  # Đọc hết kết quả để tránh lỗi Unread result
                     break
 
-            cursor.execute("INSERT INTO teachers (teacher_id, full_name, date_of_birth, phone, email, degree_id, dept_id, teacher_coefficient) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
-                        (teacher_id, name, dob, phone, email, degree_id, dept_id, coeff))
-            cursor.execute("INSERT INTO users (user_id, username, password, role) VALUES (%s, %s, %s, %s)",
-                        (teacher_id, name.lower().replace(" ", "_") + "_teacher", "default123", "Teacher"))
+            cursor.execute("""
+                INSERT INTO teachers (teacher_id, full_name, date_of_birth, phone, email, dept_id, degree_id, coefficient)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, (teacher_id, name, dob_date, phone, email, dept_id, degree_id, coeff))
             conn.commit()
             messagebox.showinfo("Thành công", f"Thêm giáo viên thành công với mã số {teacher_id}")
             self.reset_teacher_fields()
             self.load_teachers()
-            self.teacher_combobox.configure(values=self.get_teachers())
-            self.salary_teacher_combobox.configure(values=self.get_teachers())
-        except ValueError as ve:
-            messagebox.showerror("Lỗi", f"Lỗi dữ liệu: {ve}")
         except mysql.connector.Error as e:
             messagebox.showerror("Lỗi", f"Không thể thêm giáo viên: {e}")
         finally:
-            if 'cursor' in locals():
-                cursor.close()
-            if 'conn' in locals():
-                conn.close()
+            cursor.close()
+            conn.close()
 
 
     def edit_teacher(self):
@@ -1467,99 +1577,66 @@ class DepartmentView:
         dob = self.date_of_birth.get().strip()
         phone = self.phone.get().strip()
         email = self.email.get().strip()
-        dept = self.dept_combobox.get()
-        degree = self.degree_combobox.get()
+        dept = self.dept_combobox.get().strip()
+        degree = self.degree_combobox.get().strip()
         coeff = self.teacher_coeff.get().strip()
 
-        # Kiểm tra dữ liệu trống
-        if not all([name, phone, email, dept, degree, coeff]):
+        if not all([name, dob, phone, email, dept, degree, coeff]):
             messagebox.showerror("Lỗi", "Vui lòng nhập đầy đủ thông tin")
             return
 
-        conn = None
-        cursor = None
         try:
-            # Kiểm tra định dạng ngày sinh
-            if not dob:
-                dob = datetime.now().strftime('%Y-%m-%d')
-            else:
-                try:
-                    dob = datetime.strptime(dob, '%Y-%m-%d').strftime('%Y-%m-%d')
-                except ValueError:
-                    raise ValueError("Định dạng ngày sinh phải là YYYY-MM-DD")
+            dob_date = datetime.strptime(dob, '%Y-%m-%d').date()
+            current_date = datetime.now().date()  # Ngày hiện tại: 26/05/2025
+            if dob_date > current_date:
+                messagebox.showerror("Lỗi", "Ngày sinh không được là ngày trong tương lai!")
+                return
+        except ValueError:
+            messagebox.showerror("Lỗi", "Ngày sinh không hợp lệ. Vui lòng nhập theo định dạng YYYY-MM-DD!")
+            return
 
-            # Kiểm tra định dạng email
-            if '@' not in email or '.' not in email:
-                raise ValueError("Email không hợp lệ (phải chứa '@' và '.')")
-
-            # Kiểm tra số điện thoại
-            if not phone.isdigit() or len(phone) < 10 or len(phone) > 11:
-                raise ValueError("Số điện thoại phải chứa 10-11 chữ số")
-
-            # Kiểm tra hệ số
+        try:
             coeff = float(coeff)
             if coeff <= 0:
-                raise ValueError("Hệ số phải là số thực dương")
-
-            # Xử lý dept_id
-            if ":" not in dept:
-                conn_temp = mysql.connector.connect(**DB_CONFIG)
-                cursor_temp = conn_temp.cursor()
-                cursor_temp.execute("SELECT dept_id, dept_name FROM departments WHERE dept_name = %s", (dept,))
-                result = cursor_temp.fetchone()
-                cursor_temp.close()
-                conn_temp.close()
-                if result:
-                    dept = f"{result[0]}: {result[1]}"
-            dept_id = dept.split(":")[0].strip()
-            if not dept_id:
-                raise ValueError("Mã khoa không được để trống")
-            if len(dept_id) > 10:
-                raise ValueError("Mã khoa vượt quá độ dài tối đa (10 ký tự)")
-
-            # Xử lý degree_id
-            if ":" not in degree:
-                conn_temp = mysql.connector.connect(**DB_CONFIG)
-                cursor_temp = conn_temp.cursor()
-                cursor_temp.execute("SELECT degree_id, degree_name FROM degrees WHERE degree_name = %s", (degree,))
-                result = cursor_temp.fetchone()
-                cursor_temp.close()
-                conn_temp.close()
-                if result:
-                    degree = f"{result[0]}: {result[1]}"
-            degree_id = degree.split(":")[0].strip()
-            if not degree_id:
-                raise ValueError("Mã bằng cấp không được để trống")
-            if len(degree_id) > 10:
-                raise ValueError("Mã bằng cấp vượt quá độ dài tối đa (10 ký tự)")
-
-            # ✅ Xác nhận cập nhật
-            confirm = messagebox.askyesno("Xác nhận", "Bạn có chắc muốn cập nhật thông tin giáo viên?")
-            if not confirm:
+                messagebox.showerror("Lỗi", "Hệ số phải lớn hơn 0")
                 return
+        except ValueError:
+            messagebox.showerror("Lỗi", "Hệ số phải là số hợp lệ")
+            return
 
-            # Kết nối và cập nhật
+        if not re.match(r"^\d{10}$", phone):
+            messagebox.showerror("Lỗi", "Số điện thoại phải gồm 10 chữ số")
+            return
+
+        if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", email):
+            messagebox.showerror("Lỗi", "Email không hợp lệ")
+            return
+
+        dept_id = dept.split(":")[0].strip()
+        degree_id = degree.split(":")[0].strip()
+
+        try:
             conn = mysql.connector.connect(**DB_CONFIG)
             cursor = conn.cursor()
-            cursor.execute("UPDATE teachers SET full_name = %s, date_of_birth = %s, phone = %s, email = %s, degree_id = %s, dept_id = %s, teacher_coefficient = %s WHERE teacher_id = %s",
-                        (name, dob, phone, email, degree_id, dept_id, coeff, teacher_id))
-            cursor.execute("UPDATE users SET username = %s WHERE user_id = %s",
-                        (name.lower().replace(" ", "_") + "_teacher", teacher_id))
+            cursor.execute("SELECT email FROM teachers WHERE email = %s AND teacher_id != %s", (email, teacher_id))
+            if cursor.fetchone():
+                messagebox.showerror("Lỗi", "Email đã tồn tại. Vui lòng chọn email khác!")
+                return
+
+            cursor.execute("""
+                UPDATE teachers
+                SET full_name = %s, date_of_birth = %s, phone = %s, email = %s, dept_id = %s, degree_id = %s, coefficient = %s
+                WHERE teacher_id = %s
+            """, (name, dob_date, phone, email, dept_id, degree_id, coeff, teacher_id))
             conn.commit()
             messagebox.showinfo("Thành công", "Cập nhật giáo viên thành công")
-            self.load_teachers()
-            self.teacher_combobox.configure(values=self.get_departments())
-            self.salary_teacher_combobox.configure(values=self.get_teachers())
             self.reset_teacher_fields()
-        except ValueError as ve:
-            messagebox.showerror("Lỗi", f"Lỗi dữ liệu: {ve}")
+            self.load_teachers()
         except mysql.connector.Error as e:
             messagebox.showerror("Lỗi", f"Không thể sửa giáo viên: {e}")
         finally:
-            if cursor is not None:
-                cursor.close()
-            if conn is not None:
-                conn.close()
+            cursor.close()
+            conn.close()
 
 
     def delete_teacher(self):
@@ -1567,60 +1644,35 @@ class DepartmentView:
         if not selected_item:
             messagebox.showwarning("Cảnh báo", "Vui lòng chọn giáo viên để xóa!")
             return
+
         item = self.teacher_tree.item(selected_item)
         teacher_id = item["values"][0]
-        teacher_name = item["values"][1]
 
-        # Kiểm tra xem giáo viên có liên quan đến phân công không
+        # Kiểm tra xem giáo viên có đang được phân công không
         try:
             conn = mysql.connector.connect(**DB_CONFIG)
             cursor = conn.cursor()
-            cursor.execute("SELECT assignment_id, class_id FROM assignments WHERE teacher_id = %s", (teacher_id,))
-            assignments = cursor.fetchall()
-            
-            # Nếu có phân công, kiểm tra xem có lương liên quan không
-            if assignments:
-                class_ids = [assignment[1] for assignment in assignments]  # Lấy danh sách class_id
-                cursor.execute("SELECT class_id FROM salaries WHERE class_id IN (%s)" % ','.join(['%s'] * len(class_ids)), class_ids)
-                salary_classes = cursor.fetchall()
-                
-                if salary_classes:
-                    # Có lương liên quan, hỏi người dùng có muốn xóa tất cả không
-                    if messagebox.askyesno("Xác nhận", f"Giáo viên '{teacher_name}' có phân công và lương liên quan. Xóa giáo viên sẽ xóa cả phân công và lương. Bạn có chắc muốn tiếp tục?"):
-                        # Xóa lương
-                        cursor.execute("DELETE FROM salaries WHERE class_id IN (%s)" % ','.join(['%s'] * len(class_ids)), class_ids)
-                        # Xóa phân công
-                        cursor.execute("DELETE FROM assignments WHERE teacher_id = %s", (teacher_id,))
-                        conn.commit()
-                    else:
-                        return
-                else:
-                    # Có phân công nhưng không có lương, chỉ cần xóa phân công
-                    if messagebox.askyesno("Xác nhận", f"Giáo viên '{teacher_name}' có phân công liên quan. Xóa giáo viên sẽ xóa cả phân công. Bạn có chắc muốn tiếp tục?"):
-                        cursor.execute("DELETE FROM assignments WHERE teacher_id = %s", (teacher_id,))
-                        conn.commit()
-                    else:
-                        return
+            cursor.execute("SELECT 1 FROM assignments WHERE teacher_id = %s LIMIT 1", (teacher_id,))
+            if cursor.fetchone():
+                messagebox.showerror("Lỗi", "Giáo viên đang được phân công, không thể xóa!")
+                return
         except mysql.connector.Error as e:
-            messagebox.showerror("Lỗi", f"Không thể kiểm tra ràng buộc: {e}")
+            messagebox.showerror("Lỗi", f"Không thể kiểm tra phân công của giáo viên: {e}")
             return
         finally:
             cursor.close()
             conn.close()
 
-        # Xóa giáo viên
-        if messagebox.askyesno("Xác nhận", f"Bạn có chắc muốn xóa giáo viên '{teacher_name}'?"):
+        # Nếu không có phân công, tiến hành xóa
+        if messagebox.askyesno("Xác nhận", "Bạn có chắc muốn xóa giáo viên này?"):
             try:
                 conn = mysql.connector.connect(**DB_CONFIG)
                 cursor = conn.cursor()
-                cursor.execute("DELETE FROM users WHERE user_id = %s", (teacher_id,))
                 cursor.execute("DELETE FROM teachers WHERE teacher_id = %s", (teacher_id,))
                 conn.commit()
-                messagebox.showinfo("Thành công", f"Xóa giáo viên '{teacher_name}' thành công")
+                messagebox.showinfo("Thành công", "Xóa giáo viên thành công")
                 self.reset_teacher_fields()
                 self.load_teachers()
-                # Chỉ cập nhật salary_teacher_combobox (trong tab Lương)
-                self.salary_teacher_combobox.configure(values=self.get_teachers())
             except mysql.connector.Error as e:
                 messagebox.showerror("Lỗi", f"Không thể xóa giáo viên: {e}")
             finally:
@@ -2372,25 +2424,33 @@ class DepartmentView:
                 cursor.close()
                 conn.close()
 
-    def load_classes(self):
+    def load_classes(self, event=None):
+        semester = self.class_semester.get().strip() if event else None
+        semester_id = semester.split(":")[0].strip() if semester else None
+
         try:
             conn = mysql.connector.connect(**DB_CONFIG)
             cursor = conn.cursor()
-            cursor.execute("""
-                SELECT c.semester_id, s.semester_name, s.year, c.module_id, m.module_name, c.class_id, c.class_name, c.num_students
+            query = """
+                SELECT s.semester_name, s.year, cm.module_name, c.class_id, c.class_name, c.num_students
                 FROM classes c
                 JOIN semesters s ON c.semester_id = s.semester_id
-                JOIN course_modules m ON c.module_id = m.module_id
-            """)
+                JOIN course_modules cm ON c.module_id = cm.module_id
+            """
+            params = []
+            if semester_id:
+                query += " WHERE c.semester_id = %s"
+                params.append(semester_id)
+
+            cursor.execute(query, params)
             for item in self.class_tree.get_children():
                 self.class_tree.delete(item)
             rows = cursor.fetchall()
             if not rows:
-                messagebox.showwarning("Cảnh báo", "Không có dữ liệu lớp học")
+                messagebox.showwarning("Cảnh báo", "Không có dữ liệu lớp học phần")
             for row in rows:
-                semester_display = f"{row[1]} {row[2]}"  # Hiển thị tên kỳ và năm
-                module_display = row[4]  # Hiển thị tên học phần
-                self.class_tree.insert("", "end", values=(semester_display, module_display, row[5], row[6], row[7]))
+                semester_display = f"{row[0]} {row[1]}"  # Hiển thị tên kỳ và năm học
+                self.class_tree.insert("", "end", values=(semester_display, row[2], row[3], row[4], row[5]))
         except mysql.connector.Error as e:
             messagebox.showerror("Lỗi", f"Không thể tải dữ liệu lớp học: {e}")
         finally:
@@ -2431,9 +2491,10 @@ class DepartmentView:
         self.class_count.set("1")
         self.class_size.delete(0, END)
         self.class_size.configure(placeholder_text="Số sinh viên")
-        # Bỏ chọn dòng trong bảng class_tree
         for item in self.class_tree.selection():
             self.class_tree.selection_remove(item)
+        # Làm mới bảng dữ liệu, hiển thị tất cả lớp học phần
+        self.load_classes()
 
     def load_salaries(self):
         try:
@@ -2486,14 +2547,40 @@ class DepartmentView:
 
 
     def reset_teacher_fields(self):
+        # Làm trống các trường text
         self.teacher_name.delete(0, END)
         self.teacher_name.configure(placeholder_text="Họ tên")
+        
+        # Đặt ngày sinh về ngày hiện tại (26/05/2025)
+        current_date = datetime.now().strftime('%Y-%m-%d')  # Lấy ngày hiện tại theo định dạng YYYY-MM-DD
         self.date_of_birth.delete(0, END)
-        self.date_of_birth.configure(placeholder_text="Ngày sinh (YYYY-MM-DD)")
+        self.date_of_birth.insert(0, current_date)
+        
         self.phone.delete(0, END)
         self.phone.configure(placeholder_text="Điện thoại")
+        
         self.email.delete(0, END)
         self.email.configure(placeholder_text="Email")
+        
+        # Đặt combobox khoa về giá trị đầu tiên
+        departments = self.get_departments()
+        self.dept_combobox.set(departments[0] if departments else "")
+        
+        # Đặt combobox bằng cấp về "Thạc sĩ" (giả định là giá trị có degree_name là "Thạc sĩ")
+        degrees = self.get_degrees()
+        selected_degree = ""
+        for degree in degrees:
+            if "Thạc sĩ" in degree:
+                selected_degree = degree
+                break
+        if not selected_degree and degrees:
+            selected_degree = degrees[0]  # Nếu không tìm thấy "Thạc sĩ", lấy giá trị đầu tiên
+        self.degree_combobox.set(selected_degree)
+        self.update_teacher_coefficient(None)  # Cập nhật hệ số dựa trên bằng cấp "Thạc sĩ"
+        
+        # Bỏ chọn dòng trong bảng teacher_tree
+        for item in self.teacher_tree.selection():
+            self.teacher_tree.selection_remove(item)
     
 
     def get_age_distribution(self):
@@ -3495,10 +3582,10 @@ class DepartmentView:
             # Hiển thị các tab con
             button_height = 40  # Chiều cao của mỗi button
             for idx, item in enumerate(self.submenu_items[main_item]):
-                btn = CTkButton(self.submenu_frames[main_item], text=f"  {item}", font=("Helvetica", 14), fg_color="transparent",
-                                text_color="#DDEEFF", hover_color="#5A9BFF",
+                btn = CTkButton(self.submenu_frames[main_item], text=f"{item}", font=("Helvetica", 14), fg_color="transparent",
+                                text_color="#DDEEFF", hover_color="#5A9BFF", anchor="w",
                                 command=lambda x=item: self.switch_tab(x))
-                btn.place(relx=0, rely=0, y=-button_height, relwidth=1.0)
+                btn.place(relx=0.15, rely=0, y=-button_height)  # Lùi vào 15% từ lề trái, bỏ relwidth để không mở rộng
                 self.submenu_buttons[main_item].append(btn)
                 # Hiệu ứng slide down
                 self.slide_down(btn, idx * button_height, -button_height)
