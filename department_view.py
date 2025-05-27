@@ -1018,6 +1018,11 @@ class DepartmentView:
             messagebox.showerror("Lỗi", "Vui lòng nhập đầy đủ thông tin")
             return
 
+        # Kiểm tra độ dài tên viết tắt
+        if len(abbr) > 5:
+            messagebox.showerror("Lỗi", "Tên viết tắt bằng cấp phải dưới 5 ký tự!")
+            return
+
         try:
             coeff = float(coeff)
             if coeff <= 0:
@@ -1035,36 +1040,17 @@ class DepartmentView:
             if cursor.fetchone():
                 messagebox.showerror("Lỗi", "Tên bằng cấp đã tồn tại. Vui lòng chọn tên khác!")
                 return
-            cursor.fetchall()  # Đọc hết kết quả để tránh lỗi Unread result
 
             cursor.execute("SELECT degree_abbr FROM degrees WHERE degree_abbr = %s", (abbr,))
             if cursor.fetchone():
-                messagebox.showerror("Lỗi", "Tên viết tắt đã tồn tại. Vui lòng chọn tên viết tắt khác!")
+                messagebox.showerror("Lỗi", "Tên viết tắt đã tồn tại. Vui lòng chọn tên khác!")
                 return
-            cursor.fetchall()  # Đọc hết kết quả để tránh lỗi Unread result
-        except mysql.connector.Error as e:
-            messagebox.showerror("Lỗi", f"Không thể kiểm tra trùng lặp: {e}")
-            return
-        finally:
-            if 'cursor' in locals():
-                cursor.close()
-            if 'conn' in locals():
-                conn.close()
 
-        confirm = messagebox.askyesno("Xác nhận", "Bạn có chắc muốn thêm bằng cấp này?")
-        if not confirm:
-            return
-
-        try:
-            conn = mysql.connector.connect(**DB_CONFIG)
-            cursor = conn.cursor()
-            # Tạo mã số ngẫu nhiên DEGxxxxx
             while True:
                 random_num = random.randint(0, 99999)
                 degree_id = f"DEG{str(random_num).zfill(5)}"
                 cursor.execute("SELECT degree_id FROM degrees WHERE degree_id = %s", (degree_id,))
                 if not cursor.fetchone():
-                    cursor.fetchall()  # Đọc hết kết quả để tránh lỗi Unread result
                     break
 
             cursor.execute("INSERT INTO degrees (degree_id, degree_name, degree_abbr, coefficient) VALUES (%s, %s, %s, %s)",
@@ -1076,10 +1062,8 @@ class DepartmentView:
         except mysql.connector.Error as e:
             messagebox.showerror("Lỗi", f"Không thể thêm bằng cấp: {e}")
         finally:
-            if 'cursor' in locals():
-                cursor.close()
-            if 'conn' in locals():
-                conn.close()
+            cursor.close()
+            conn.close()
 
     def edit_degree(self):
         selected_item = self.degree_tree.selection()
@@ -1097,6 +1081,11 @@ class DepartmentView:
             messagebox.showerror("Lỗi", "Vui lòng nhập đầy đủ thông tin")
             return
 
+        # Kiểm tra độ dài tên viết tắt
+        if len(abbr) > 5:
+            messagebox.showerror("Lỗi", "Tên viết tắt bằng cấp phải dưới 5 ký tự!")
+            return
+
         try:
             coeff = float(coeff)
             if coeff <= 0:
@@ -1106,7 +1095,6 @@ class DepartmentView:
             messagebox.showerror("Lỗi", "Hệ số phải là số hợp lệ")
             return
 
-        # Kiểm tra trùng tên bằng cấp và tên viết tắt (ngoại trừ chính bằng cấp đang sửa)
         try:
             conn = mysql.connector.connect(**DB_CONFIG)
             cursor = conn.cursor()
@@ -1117,24 +1105,9 @@ class DepartmentView:
 
             cursor.execute("SELECT degree_abbr FROM degrees WHERE degree_abbr = %s AND degree_id != %s", (abbr, degree_id))
             if cursor.fetchone():
-                messagebox.showerror("Lỗi", "Tên viết tắt đã tồn tại. Vui lòng chọn tên viết tắt khác!")
+                messagebox.showerror("Lỗi", "Tên viết tắt đã tồn tại. Vui lòng chọn tên khác!")
                 return
-        except mysql.connector.Error as e:
-            messagebox.showerror("Lỗi", f"Không thể kiểm tra trùng lặp: {e}")
-            return
-        finally:
-            if 'cursor' in locals():
-                cursor.close()
-            if 'conn' in locals():
-                conn.close()
 
-        confirm = messagebox.askyesno("Xác nhận", "Bạn có chắc muốn cập nhật thông tin bằng cấp này?")
-        if not confirm:
-            return
-
-        try:
-            conn = mysql.connector.connect(**DB_CONFIG)
-            cursor = conn.cursor()
             cursor.execute("UPDATE degrees SET degree_name = %s, degree_abbr = %s, coefficient = %s WHERE degree_id = %s",
                         (name, abbr, coeff, degree_id))
             conn.commit()
@@ -1144,10 +1117,8 @@ class DepartmentView:
         except mysql.connector.Error as e:
             messagebox.showerror("Lỗi", f"Không thể sửa bằng cấp: {e}")
         finally:
-            if 'cursor' in locals():
-                cursor.close()
-            if 'conn' in locals():
-                conn.close()
+            cursor.close()
+            conn.close()
 
 
     def delete_degree(self):
@@ -1231,11 +1202,15 @@ class DepartmentView:
         abbr = self.dept_abbr.get().strip()
         description = self.dept_description.get().strip()
 
-        if not all([name, abbr, description]):
+        if not all([name, abbr]):
             messagebox.showerror("Lỗi", "Vui lòng nhập đầy đủ thông tin")
             return
 
-        # Kiểm tra trùng tên khoa và tên viết tắt
+        # Kiểm tra độ dài tên viết tắt
+        if len(abbr) > 5:
+            messagebox.showerror("Lỗi", "Tên viết tắt khoa phải dưới 5 ký tự!")
+            return
+
         try:
             conn = mysql.connector.connect(**DB_CONFIG)
             cursor = conn.cursor()
@@ -1243,53 +1218,30 @@ class DepartmentView:
             if cursor.fetchone():
                 messagebox.showerror("Lỗi", "Tên khoa đã tồn tại. Vui lòng chọn tên khác!")
                 return
-            cursor.fetchall()  # Đọc hết kết quả để tránh lỗi Unread result
 
             cursor.execute("SELECT dept_abbr FROM departments WHERE dept_abbr = %s", (abbr,))
             if cursor.fetchone():
-                messagebox.showerror("Lỗi", "Tên viết tắt đã tồn tại. Vui lòng chọn tên viết tắt khác!")
+                messagebox.showerror("Lỗi", "Tên viết tắt đã tồn tại. Vui lòng chọn tên khác!")
                 return
-            cursor.fetchall()  # Đọc hết kết quả để tránh lỗi Unread result
-        except mysql.connector.Error as e:
-            messagebox.showerror("Lỗi", f"Không thể kiểm tra trùng lặp: {e}")
-            return
-        finally:
-            if 'cursor' in locals():
-                cursor.close()
-            if 'conn' in locals():
-                conn.close()
 
-        # Xác nhận thêm khoa
-        confirm = messagebox.askyesno("Xác nhận", "Bạn có chắc muốn thêm khoa này?")
-        if not confirm:
-            return
-
-        try:
-            conn = mysql.connector.connect(**DB_CONFIG)
-            cursor = conn.cursor()
-            # Tạo mã khoa ngẫu nhiên DEPTxxxx
             while True:
-                random_num = random.randint(0, 9999)
-                dept_id = f"DEPT{str(random_num).zfill(4)}"
+                random_num = random.randint(0, 99999)
+                dept_id = f"DEPT{str(random_num).zfill(3)}"
                 cursor.execute("SELECT dept_id FROM departments WHERE dept_id = %s", (dept_id,))
                 if not cursor.fetchone():
-                    cursor.fetchall()  # Đọc hết kết quả để tránh lỗi Unread result
                     break
 
             cursor.execute("INSERT INTO departments (dept_id, dept_name, dept_abbr, dept_description) VALUES (%s, %s, %s, %s)",
                         (dept_id, name, abbr, description))
             conn.commit()
-            messagebox.showinfo("Thành công", f"Thêm khoa thành công với mã số {dept_id}")
+            messagebox.showinfo("Thành công", f"Thêm khoa thành công với mã {dept_id}")
             self.reset_dept_fields()
             self.load_depts()
-            self.dept_combobox.configure(values=self.get_departments())
         except mysql.connector.Error as e:
             messagebox.showerror("Lỗi", f"Không thể thêm khoa: {e}")
         finally:
-            if 'cursor' in locals():
-                cursor.close()
-            if 'conn' in locals():
-                conn.close()
+            cursor.close()
+            conn.close()
 
     def edit_dept(self):
         selected_item = self.dept_tree.selection()
@@ -1303,11 +1255,15 @@ class DepartmentView:
         abbr = self.dept_abbr.get().strip()
         description = self.dept_description.get().strip()
 
-        if not all([name, abbr, description]):
+        if not all([name, abbr]):
             messagebox.showerror("Lỗi", "Vui lòng nhập đầy đủ thông tin")
             return
 
-        # Kiểm tra trùng tên khoa và tên viết tắt (ngoại trừ chính khoa đang sửa)
+        # Kiểm tra độ dài tên viết tắt
+        if len(abbr) > 5:
+            messagebox.showerror("Lỗi", "Tên viết tắt khoa phải dưới 5 ký tự!")
+            return
+
         try:
             conn = mysql.connector.connect(**DB_CONFIG)
             cursor = conn.cursor()
@@ -1318,39 +1274,20 @@ class DepartmentView:
 
             cursor.execute("SELECT dept_abbr FROM departments WHERE dept_abbr = %s AND dept_id != %s", (abbr, dept_id))
             if cursor.fetchone():
-                messagebox.showerror("Lỗi", "Tên viết tắt đã tồn tại. Vui lòng chọn tên viết tắt khác!")
+                messagebox.showerror("Lỗi", "Tên viết tắt đã tồn tại. Vui lòng chọn tên khác!")
                 return
-        except mysql.connector.Error as e:
-            messagebox.showerror("Lỗi", f"Không thể kiểm tra trùng lặp: {e}")
-            return
-        finally:
-            if 'cursor' in locals():
-                cursor.close()
-            if 'conn' in locals():
-                conn.close()
 
-        # Xác nhận cập nhật khoa
-        confirm = messagebox.askyesno("Xác nhận", "Bạn có chắc muốn cập nhật thông tin khoa?")
-        if not confirm:
-            return
-
-        try:
-            conn = mysql.connector.connect(**DB_CONFIG)
-            cursor = conn.cursor()
             cursor.execute("UPDATE departments SET dept_name = %s, dept_abbr = %s, dept_description = %s WHERE dept_id = %s",
                         (name, abbr, description, dept_id))
             conn.commit()
             messagebox.showinfo("Thành công", "Cập nhật khoa thành công")
             self.reset_dept_fields()
             self.load_depts()
-            self.dept_combobox.configure(values=self.get_departments())
         except mysql.connector.Error as e:
             messagebox.showerror("Lỗi", f"Không thể sửa khoa: {e}")
         finally:
-            if 'cursor' in locals():
-                cursor.close()
-            if 'conn' in locals():
-                conn.close()
+            cursor.close()
+            conn.close()
 
 
     def delete_dept(self):
