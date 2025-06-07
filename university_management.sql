@@ -1,9 +1,9 @@
--- Xoá & tạo lại database
+-- XÓA & TẠO LẠI DATABASE
 DROP DATABASE IF EXISTS university_management;
 CREATE DATABASE university_management;
 USE university_management;
 
--- 1. Bảng Khoa (departments)
+-- 1. BẢNG KHOA (departments)
 CREATE TABLE departments (
     dept_id VARCHAR(10) PRIMARY KEY,
     dept_name VARCHAR(100) NOT NULL,
@@ -11,7 +11,7 @@ CREATE TABLE departments (
     dept_description TEXT
 );
 
--- 2. Bảng Trình độ học vấn (degrees)
+-- 2. BẢNG TRÌNH ĐỘ HỌC VẤN (degrees)
 CREATE TABLE degrees (
     degree_id VARCHAR(10) PRIMARY KEY,
     degree_name VARCHAR(100) NOT NULL,
@@ -19,7 +19,7 @@ CREATE TABLE degrees (
     coefficient FLOAT NOT NULL DEFAULT 1.0
 );
 
--- 3. Bảng Giảng viên (teachers)
+-- 3. BẢNG GIẢNG VIÊN (teachers)
 CREATE TABLE teachers (
     id INT AUTO_INCREMENT PRIMARY KEY,
     teacher_id VARCHAR(10) UNIQUE,
@@ -34,16 +34,18 @@ CREATE TABLE teachers (
     FOREIGN KEY (dept_id) REFERENCES departments(dept_id)
 );
 
--- 4. Bảng Học phần (course_modules)
+-- 4. BẢNG HỌC PHẦN (course_modules)
 CREATE TABLE course_modules (
     module_id VARCHAR(10) PRIMARY KEY,
     module_name VARCHAR(100) NOT NULL,
     credits INT NOT NULL CHECK (credits > 0),
-    coefficient FLOAT NOT NULL DEFAULT 1.0,  -- Hệ số học phần
-    periods INT NOT NULL CHECK (periods > 0) -- Số tiết dự kiến
+    coefficient FLOAT NOT NULL DEFAULT 1.0,
+    periods INT NOT NULL CHECK (periods > 0),
+    dept_id VARCHAR(10) NOT NULL,
+    FOREIGN KEY (dept_id) REFERENCES departments(dept_id)
 );
 
--- 5. Bảng Kỳ học (semesters)
+-- 5. BẢNG KỲ HỌC (semesters)
 CREATE TABLE semesters (
     semester_id VARCHAR(9) PRIMARY KEY,
     semester_name VARCHAR(50) NOT NULL,
@@ -53,8 +55,7 @@ CREATE TABLE semesters (
     CHECK (start_date < end_date)
 );
 
--- 6. Bảng Lớp học phần (classes)
-
+-- 6. BẢNG LỚP HỌC PHẦN (classes)
 CREATE TABLE classes (
     class_id VARCHAR(9) PRIMARY KEY,
     semester_id VARCHAR(9) NOT NULL,
@@ -64,8 +65,8 @@ CREATE TABLE classes (
     FOREIGN KEY (semester_id) REFERENCES semesters(semester_id),
     FOREIGN KEY (module_id) REFERENCES course_modules(module_id)
 );
--- 7. Bảng Phân công giảng viên (assignments)
 
+-- 7. BẢNG PHÂN CÔNG GIẢNG VIÊN (assignments)
 CREATE TABLE assignments (
     assignment_id VARCHAR(9) PRIMARY KEY,
     class_id VARCHAR(9) NOT NULL,
@@ -75,7 +76,8 @@ CREATE TABLE assignments (
     FOREIGN KEY (teacher_id) REFERENCES teachers(teacher_id) ON DELETE CASCADE,
     UNIQUE (class_id)
 );
--- 8. Bảng Tính lương (salaries)
+
+-- 8. BẢNG TÍNH LƯƠNG (salaries)
 CREATE TABLE salaries (
     id INT AUTO_INCREMENT PRIMARY KEY,
     teacher_id VARCHAR(10),
@@ -88,7 +90,7 @@ CREATE TABLE salaries (
     FOREIGN KEY (semester_id) REFERENCES semesters(semester_id)
 );
 
--- 9. Bảng Người dùng (users)
+-- 9. BẢNG NGƯỜI DÙNG (users)
 CREATE TABLE users (
     user_id VARCHAR(10) PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
@@ -96,16 +98,16 @@ CREATE TABLE users (
     role VARCHAR(20) NOT NULL
 );
 
--- -----------------------------------------
+-- ------------------------------
 -- DỮ LIỆU MẪU
--- -----------------------------------------
+-- ------------------------------
 
--- Departments
+-- departments
 INSERT INTO departments VALUES 
 ('DEPT2321', 'Khoa Công nghệ Thông tin', 'CNTT', 'Quản lý các ngành liên quan đến CNTT'),
 ('DEPT4847', 'Khoa Kinh tế', 'KT', 'Quản lý các ngành liên quan đến Kinh tế');
 
--- Degrees
+-- degrees
 INSERT INTO degrees VALUES 
 ('DEG82838', 'Đại học', 'ĐH', 1.3),
 ('DEG12238', 'Thạc sĩ', 'ThS', 1.5),
@@ -113,45 +115,39 @@ INSERT INTO degrees VALUES
 ('DEG21434', 'Phó Giáo sư', 'PGS', 2.0),
 ('DEG92138', 'Giáo sư', 'GS', 2.5);
 
--- Teachers
-INSERT INTO teachers (teacher_id, full_name, date_of_birth, phone, email, degree_id, dept_id, teacher_coefficient)
-VALUES 
+-- teachers
+INSERT INTO teachers (teacher_id, full_name, date_of_birth, phone, email, degree_id, dept_id, teacher_coefficient) VALUES
 ('TCH93289', 'Nguyễn Văn A', '1985-05-20', '0905123456', 'nguyenvana@example.com', 'DEG82838', 'DEPT4847', 1.3),
 ('TCH94393', 'Trần Thị B', '1990-03-15', '0916123456', 'tranthib@example.com', 'DEG12238', 'DEPT4847', 1.5);
 
-
-
--- Semesters
+-- semesters
 INSERT INTO semesters VALUES
 ('SEM20251', 'Học kỳ 1', '2025', '2025-01-06', '2025-05-20'),
 ('SEM20252', 'Học kỳ 2', '2025', '2025-06-01', '2025-12-15'),
 ('SEM20261', 'Học kỳ 1', '2026', '2026-01-05', '2026-05-20');
 
--- Users
-INSERT INTO users VALUES
-('DEPT2321', 'a', 'a', 'Department'),
-('TCH93289', 'nguyenvana_teacher', 'default123', 'Teacher'),
-('TCH94393', 'tranthib_teacher', 'default123', 'Teacher');
-SELECT semester_id, start_date, end_date FROM semesters;
-SELECT semester_id, start_date, end_date FROM semesters;
+-- course_modules
+INSERT INTO course_modules (module_id, module_name, credits, coefficient, periods, dept_id) VALUES
+('MOD29934', 'Lập trình Python', 3, 1.0, 45, 'DEPT2321'),
+('MOD93923', 'Cơ sở dữ liệu', 3, 1.5, 60, 'DEPT2321');
 
--- Thêm dữ liệu mẫu cho course_modules
-INSERT INTO course_modules (module_id, module_name, credits, coefficient, periods) VALUES
-('MOD29934', 'Lập trình Python', 3, 1.0, 45),
-('MOD93923', 'Cơ sở dữ liệu', 3, 1.5, 60);
-
--- Thêm dữ liệu mẫu cho classes
+-- classes
 INSERT INTO classes (class_id, semester_id, module_id, class_name, num_students) VALUES
 ('CLS39293', 'SEM20251', 'MOD29934', 'Lớp Python 1', 40),
 ('CLS92948', 'SEM20251', 'MOD93923', 'Lớp CSDL 1', 35);
 
--- Thêm dữ liệu mẫu cho assignments
+-- assignments
 INSERT INTO assignments (assignment_id, class_id, teacher_id, assigned_at) VALUES
 ('ASN39293', 'CLS39293', 'TCH93289', '2025-05-23 03:07:00'),
 ('ASN92948', 'CLS92948', 'TCH94393', '2025-05-23 03:07:00');
 
--- Thêm dữ liệu mẫu cho salaries
+-- salaries
 INSERT INTO salaries (teacher_id, class_id, semester_id, salary_amount, calculated_at) VALUES
 ('TCH93289', 'CLS39293', 'SEM20251', 4500000, '2025-05-17 04:05:00'),
 ('TCH94393', 'CLS92948', 'SEM20251', 6000000, '2025-05-17 04:05:00');
 
+-- users
+INSERT INTO users VALUES
+('DEPT2321', 'a', 'a', 'Department'),
+('TCH93289', 'nguyenvana_teacher', 'default123', 'Teacher'),
+('TCH94393', 'tranthib_teacher', 'default123', 'Teacher');

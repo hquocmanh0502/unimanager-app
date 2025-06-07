@@ -23,8 +23,6 @@ class DepartmentView:
         self.window.geometry("1700x700")
         self.window.resizable(False, False)
 
-        
-
         # Khởi tạo dept_id nếu là tài khoản khoa
         if self.user['role'] == 'Department':
             try:
@@ -109,7 +107,7 @@ class DepartmentView:
         # Dictionary để ánh xạ mục chính với các tab con
         self.submenu_items = {
             "Quản lý giáo viên": ["Bằng cấp", "Khoa", "Giáo viên"],
-            "Quản lý lớp học phần": ["Học phần", "Kỳ học", "Lớp học", "Phân công"],
+            "Quản lý lớp học phần": ["Học phần", "Kỳ học", "Lớp học"],  # Xóa "Phân công"
             "Thống kê": ["Thống kê giáo viên", "Thống kê lớp"]
         }
 
@@ -183,10 +181,6 @@ class DepartmentView:
         self.semester_tab = CTkFrame(self.tab_frame, fg_color="#FFFFFF", corner_radius=10)
         self.setup_semester_tab()
 
-        # Tab Phân công giảng viên
-        self.assignment_tab = CTkFrame(self.tab_frame, fg_color="#FFFFFF", corner_radius=10)
-        self.setup_assignment_tab()
-
         # Tab Thống kê số lớp
         self.class_stats_tab = CTkFrame(self.tab_frame, fg_color="#FFFFFF", corner_radius=10)
         self.setup_class_stats_tab()
@@ -200,503 +194,504 @@ class DepartmentView:
                   hover_color="#B02A37", command=self.logout).pack(pady=10, side="bottom", anchor="se")
 
     def setup_degree_tab(self):
-        CTkLabel(self.degree_tab, text="Bằng cấp", font=("Helvetica", 18, "bold"), text_color="black").pack(pady=10)
-        main_frame = CTkFrame(self.degree_tab, fg_color="transparent")
-        main_frame.pack(padx=10, pady=10, fill="both", expand=True)
+        # Tiêu đề tab
+        header_frame = CTkFrame(self.degree_tab, fg_color="transparent")
+        header_frame.pack(fill="x", padx=10, pady=10)
+        CTkLabel(header_frame, text="Quản lý bằng cấp", font=("Helvetica", 18, "bold"), text_color="black").pack(side="left")
+        CTkButton(header_frame, text="Thêm bằng cấp mới", fg_color="#0085FF", command=self.add_degree).pack(side="right")
 
-        # Form chỉnh sửa bằng cấp
-        form_frame = CTkFrame(main_frame, fg_color="#F0F0F0", corner_radius=10)
-        form_frame.pack(side="left", padx=10, pady=10, fill="y")
-        CTkLabel(form_frame, text="Quản lý Bằng cấp", font=("Helvetica", 16, "bold")).pack(pady=5)
-        self.degree_name = CTkEntry(form_frame, placeholder_text="Tên bằng cấp", width=200)
-        self.degree_name.pack(pady=5)
-        self.degree_abbr = CTkEntry(form_frame, placeholder_text="Tên viết tắt", width=200)
-        self.degree_abbr.pack(pady=5)
-        self.degree_coeff = CTkEntry(form_frame, placeholder_text="Hệ số (ví dụ: 1.5)", width=200)
-        self.degree_coeff.pack(pady=5)
-        button_frame = CTkFrame(form_frame, fg_color="transparent")
-        button_frame.pack(pady=10)
-        CTkButton(button_frame, text="Thêm", fg_color="#0085FF", command=self.add_degree).pack(side="left", padx=5)
-        CTkButton(button_frame, text="Sửa", fg_color="#FFC107", command=self.edit_degree).pack(side="left", padx=5)
-        CTkButton(button_frame, text="Xóa", fg_color="#F44336", command=self.delete_degree).pack(side="left", padx=5)
-        CTkButton(button_frame, text="Reset", fg_color="#6C757D", command=self.reset_degree_fields).pack(side="left", padx=5)
+        # Frame chứa heading và danh sách
+        self.degree_container = CTkFrame(self.degree_tab, fg_color="#FFFFFF", corner_radius=10)
+        self.degree_container.pack(padx=10, pady=10, fill="both", expand=True)
 
-        # Bảng bằng cấp
-        table_frame = CTkFrame(main_frame, fg_color="#FFFFFF", corner_radius=10)
-        table_frame.pack(side="right", padx=10, pady=10, fill="both", expand=True)
-        self.degree_tree = ttk.Treeview(table_frame, columns=("ID", "Name", "Abbr", "Coefficient"), show="headings")
-        self.degree_tree.heading("ID", text="Mã bằng cấp")
-        self.degree_tree.heading("Name", text="Tên bằng cấp")
-        self.degree_tree.heading("Abbr", text="Tên viết tắt")
-        self.degree_tree.heading("Coefficient", text="Hệ số")
-        self.degree_tree.column("ID", width=100, anchor="center")
-        self.degree_tree.column("Name", width=150, anchor="center")
-        self.degree_tree.column("Abbr", width=80, anchor="center")
-        self.degree_tree.column("Coefficient", width=80, anchor="center")
-        self.degree_tree.pack(padx=10, pady=10, fill="both", expand=True)
-        self.degree_tree.bind("<<TreeviewSelect>>", self.on_degree_select)
+        # Heading
+        heading_frame = CTkFrame(self.degree_container, fg_color="#D3D3D3", corner_radius=0)
+        heading_frame.pack(fill="x", padx=5, pady=(5, 0))
+        
+        # Tạo các cột heading với chiều rộng lớn hơn để lấp đầy không gian
+        CTkLabel(heading_frame, text="STT", font=("Helvetica", 12, "bold"), text_color="black", width=80, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Tên bằng cấp", font=("Helvetica", 12, "bold"), text_color="black", width=400, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Tên viết tắt", font=("Helvetica", 12, "bold"), text_color="black", width=200, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Hệ số", font=("Helvetica", 12, "bold"), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Thao tác", font=("Helvetica", 12, "bold"), text_color="black", width=200, anchor="center").pack(side="left", padx=5)
+
+        # Frame chứa danh sách bằng cấp
+        self.degree_list_frame = CTkFrame(self.degree_container, fg_color="transparent")
+        self.degree_list_frame.pack(fill="both", expand=True, padx=5, pady=5)
+
+        # Tải dữ liệu bằng cấp
         self.load_degrees()
 
     def setup_dept_tab(self):
-        CTkLabel(self.dept_tab, text="Khoa", font=("Helvetica", 18, "bold"), text_color="black").pack(pady=10)
-        main_frame = CTkFrame(self.dept_tab, fg_color="transparent")
-        main_frame.pack(padx=10, pady=10, fill="both", expand=True)
+        # Tiêu đề tab
+        header_frame = CTkFrame(self.dept_tab, fg_color="transparent")
+        header_frame.pack(fill="x", padx=10, pady=10)
+        CTkLabel(header_frame, text="Quản lý khoa", font=("Helvetica", 18, "bold"), text_color="black").pack(side="left")
+        CTkButton(header_frame, text="Thêm khoa mới", fg_color="#0085FF", command=self.add_dept).pack(side="right")
 
-        # Form chỉnh sửa khoa
-        form_frame = CTkFrame(main_frame, fg_color="#F0F0F0", corner_radius=10, width=250)
-        form_frame.pack(side="left", padx=5, pady=10, fill="y")
-        form_frame.pack_propagate(False)
-        CTkLabel(form_frame, text="Quản lý Khoa", font=("Helvetica", 16, "bold")).pack(pady=5)
-        self.dept_name = CTkEntry(form_frame, placeholder_text="Tên khoa", width=200)
-        self.dept_name.pack(pady=5)
-        self.dept_abbr = CTkEntry(form_frame, placeholder_text="Tên viết tắt", width=200)
-        self.dept_abbr.pack(pady=5)
-        self.dept_description = CTkEntry(form_frame, placeholder_text="Mô tả nhiệm vụ", width=200)
-        self.dept_description.pack(pady=5)
-        button_frame = CTkFrame(form_frame, fg_color="transparent")
-        button_frame.pack(pady=10)
+        # Frame chứa heading và danh sách
+        self.dept_container = CTkFrame(self.dept_tab, fg_color="#FFFFFF", corner_radius=10)
+        self.dept_container.pack(padx=10, pady=10, fill="both", expand=True)
 
-        # Hàng 1: Các nút "Thêm", "Sửa", "Xóa"
-        button_row_1 = CTkFrame(button_frame, fg_color="transparent")
-        button_row_1.pack()
-        CTkButton(button_row_1, text="Thêm", fg_color="#0085FF", command=self.add_dept, width=70, font=("Helvetica", 12)).pack(side="left", padx=5)
-        CTkButton(button_row_1, text="Sửa", fg_color="#FFC107", command=self.edit_dept, width=70, font=("Helvetica", 12)).pack(side="left", padx=5)
-        CTkButton(button_row_1, text="Xóa", fg_color="#F44336", command=self.delete_dept, width=70, font=("Helvetica", 12)).pack(side="left", padx=5)
+        # Heading
+        heading_frame = CTkFrame(self.dept_container, fg_color="#D3D3D3", corner_radius=0)
+        heading_frame.pack(fill="x", padx=5, pady=(5, 0))
+        
+        # Tạo các cột heading với chiều rộng điều chỉnh
+        CTkLabel(heading_frame, text="Mã khoa", font=("Helvetica", 12, "bold"), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Tên khoa", font=("Helvetica", 12, "bold"), text_color="black", width=200, anchor="center").pack(side="left", padx=5)  # Giảm từ 450 xuống 400
+        CTkLabel(heading_frame, text="Tên viết tắt", font=("Helvetica", 12, "bold"), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Mô tả nhiệm vụ", font=("Helvetica", 12, "bold"), text_color="black", width=300, anchor="center").pack(side="left", padx=5)  # Giảm từ 600 xuống 500
+        CTkLabel(heading_frame, text="Thao tác", font=("Helvetica", 12, "bold"), text_color="black", width=250, anchor="center").pack(side="left", padx=5)  # Tăng từ 250 lên 350
 
-        # Hàng 2: Nút "Reset"
-        button_row_2 = CTkFrame(button_frame, fg_color="transparent")
-        button_row_2.pack(pady=(5, 0))
-        CTkButton(button_row_2, text="Reset", fg_color="#6C757D", command=self.reset_dept_fields, width=70, font=("Helvetica", 12)).pack()
+        # Frame chứa danh sách khoa
+        self.dept_list_frame = CTkFrame(self.dept_container, fg_color="transparent")
+        self.dept_list_frame.pack(fill="both", expand=True, padx=5, pady=5)
 
-        # Bảng khoa
-        table_frame = CTkFrame(main_frame, fg_color="#FFFFFF", corner_radius=10)
-        table_frame.pack(side="right", padx=10, pady=10, fill="both", expand=True)
-        self.dept_tree = ttk.Treeview(table_frame, columns=("ID", "Name", "Abbr", "Description"), show="headings")
-        self.dept_tree.heading("ID", text="Mã khoa")
-        self.dept_tree.heading("Name", text="Tên khoa")
-        self.dept_tree.heading("Abbr", text="Tên viết tắt")
-        self.dept_tree.heading("Description", text="Mô tả nhiệm vụ")
-        self.dept_tree.column("ID", width=60, anchor="center")
-        self.dept_tree.column("Name", width=200, anchor="center")
-        self.dept_tree.column("Abbr", width=60, anchor="center")
-        self.dept_tree.column("Description", width=300, anchor="center")
-        self.dept_tree.pack(padx=10, pady=10, fill="both", expand=True)
-        self.dept_tree.bind("<<TreeviewSelect>>", self.on_dept_select)
+        # Tải dữ liệu khoa
         self.load_depts()
 
     def setup_teacher_tab(self):
-        CTkLabel(self.teacher_tab, text="Giáo viên", font=("Helvetica", 18, "bold"), text_color="black").pack(pady=10)
-        main_frame = CTkFrame(self.teacher_tab, fg_color="transparent")
-        main_frame.pack(padx=10, pady=10, fill="both", expand=True)
+        # Tiêu đề tab
+        header_frame = CTkFrame(self.teacher_tab, fg_color="transparent")
+        header_frame.pack(fill="x", padx=10, pady=10)
+        CTkLabel(header_frame, text="Quản lý giáo viên", font=("Helvetica", 18, "bold"), text_color="black").pack(side="left")
+        CTkButton(header_frame, text="Thêm giáo viên mới", fg_color="#0085FF", command=self.add_teacher).pack(side="right")
 
-        # Form chỉnh sửa giáo viên
-        form_frame = CTkFrame(main_frame, fg_color="#F0F0F0", corner_radius=10)
-        form_frame.pack(side="left", padx=10, pady=10, fill="y")
-        CTkLabel(form_frame, text="Quản lý Giáo viên", font=("Helvetica", 16, "bold")).pack(pady=5)
-        self.teacher_name = CTkEntry(
-            form_frame,
-            placeholder_text="Họ tên",
-            placeholder_text_color="#666666",
-            width=150,
-            height=32,
-            font=("Helvetica", 11),
-            fg_color="#E0E0E0",
-            text_color="black",
-            border_color="#4A4A4A",
-            border_width=2,
-            corner_radius=5
-        )
-        self.teacher_name.pack(pady=5)
+        # Frame chứa heading và danh sách
+        self.teacher_container = CTkFrame(self.teacher_tab, fg_color="#FFFFFF", corner_radius=10)
+        self.teacher_container.pack(padx=10, pady=10, fill="both", expand=True)
 
-        # Ngày sinh: Sử dụng CTkEntry với nút lịch
-        date_frame_birth = CTkFrame(form_frame, fg_color="transparent")
-        date_frame_birth.pack(pady=5, padx=(10, 10), fill="x")
-        inner_frame_birth = CTkFrame(date_frame_birth, fg_color="transparent")
-        inner_frame_birth.pack(side="right", padx=(0, 29))  # Thêm padx để tạo khoảng cách từ lề phải
-        self.date_of_birth = CTkEntry(
-            inner_frame_birth,
-            placeholder_text="Ngày sinh (YYYY-MM-DD)",
-            placeholder_text_color="#666666",
-            width=150,
-            height=32,
-            font=("Helvetica", 11),
-            fg_color="#E0E0E0",
-            text_color="black",
-            border_color="#4A4A4A",
-            border_width=2,
-            corner_radius=5
-        )
-        self.date_of_birth.pack(side="left")
-        calendar_button_birth = CTkButton(
-            inner_frame_birth,
-            text="📅",
-            width=30,
-            height=32,
-            fg_color="#4A4A4A",
-            hover_color="#666666",
-            command=lambda: self.open_calendar(self.date_of_birth)
-        )
-        calendar_button_birth.pack(side="right", padx=(5, 0))
+        # Heading
+        heading_frame = CTkFrame(self.teacher_container, fg_color="#D3D3D3", corner_radius=0)
+        heading_frame.pack(fill="x", padx=5, pady=(5, 0))
+        
+        # Tạo các cột heading
+        CTkLabel(heading_frame, text="Mã giáo viên", font=("Helvetica", 12, "bold"), text_color="black", width=80, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Họ tên", font=("Helvetica", 12, "bold"), text_color="black", width=120, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Ngày sinh", font=("Helvetica", 12, "bold"), text_color="black", width=80, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Điện thoại", font=("Helvetica", 12, "bold"), text_color="black", width=80, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Email", font=("Helvetica", 12, "bold"), text_color="black", width=120, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Khoa", font=("Helvetica", 12, "bold"), text_color="black", width=200, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Bằng cấp", font=("Helvetica", 12, "bold"), text_color="black", width=120, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Hệ số", font=("Helvetica", 12, "bold"), text_color="black", width=60, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Thao tác", font=("Helvetica", 12, "bold"), text_color="black", width=100, anchor="center").pack(side="left", padx=5)
 
-        self.phone = CTkEntry(
-            form_frame,
-            placeholder_text="Điện thoại",
-            placeholder_text_color="#666666",
-            width=150,
-            height=32,
-            font=("Helvetica", 11),
-            fg_color="#E0E0E0",
-            text_color="black",
-            border_color="#4A4A4A",
-            border_width=2,
-            corner_radius=5
-        )
-        self.phone.pack(pady=5)
+        # Frame chứa danh sách giáo viên
+        self.teacher_list_frame = CTkFrame(self.teacher_container, fg_color="transparent")
+        self.teacher_list_frame.pack(fill="both", expand=True, padx=5, pady=5)
 
-        self.email = CTkEntry(
-            form_frame,
-            placeholder_text="Email",
-            placeholder_text_color="#666666",
-            width=150,
-            height=32,
-            font=("Helvetica", 11),
-            fg_color="#E0E0E0",
-            text_color="black",
-            border_color="#4A4A4A",
-            border_width=2,
-            corner_radius=5
-        )
-        self.email.pack(pady=5)
-
-        self.dept_combobox = CTkComboBox(
-            form_frame,
-            values=self.get_departments(),
-            width=150,
-            height=32,
-            font=("Helvetica", 11),
-            fg_color="#E0E0E0",
-            text_color="black",
-            border_color="#4A4A4A",
-            border_width=2,
-            button_color="#4A4A4A",
-            button_hover_color="#666666",
-            dropdown_fg_color="#E0E0E0",
-            dropdown_text_color="black",
-            dropdown_hover_color="#A0A0A0"
-        )
-        self.dept_combobox.pack(pady=5)
-
-        self.degree_combobox = CTkComboBox(
-            form_frame,
-            values=self.get_degrees(),
-            width=150,
-            height=32,
-            font=("Helvetica", 11),
-            fg_color="#E0E0E0",
-            text_color="black",
-            border_color="#4A4A4A",
-            border_width=2,
-            button_color="#4A4A4A",
-            button_hover_color="#666666",
-            dropdown_fg_color="#E0E0E0",
-            dropdown_text_color="black",
-            dropdown_hover_color="#A0A0A0"
-        )
-        self.degree_combobox.pack(pady=5)
-
-        self.teacher_coeff = CTkEntry(
-            form_frame,
-            placeholder_text="Hệ số (ví dụ: 1.5)",
-            placeholder_text_color="#666666",
-            width=150,
-            height=32,
-            font=("Helvetica", 11),
-            fg_color="#E0E0E0",
-            text_color="black",
-            border_color="#4A4A4A",
-            border_width=2,
-            corner_radius=5
-        )
-        self.teacher_coeff.pack(pady=5)
-
-        self.degree_combobox.configure(command=self.update_teacher_coefficient)
-        button_frame = CTkFrame(form_frame, fg_color="transparent")
-        button_frame.pack(pady=5)
-        CTkButton(button_frame, text="Thêm", fg_color="#0085FF", command=self.add_teacher, width=70, font=("Helvetica", 12)).pack(side="left", padx=2)
-        CTkButton(button_frame, text="Sửa", fg_color="#FFC107", command=self.edit_teacher, width=70, font=("Helvetica", 12)).pack(side="left", padx=2)
-        CTkButton(button_frame, text="Xóa", fg_color="#F44336", command=self.delete_teacher, width=70, font=("Helvetica", 12)).pack(side="left", padx=2)
-        CTkButton(button_frame, text="Reset", fg_color="#6C757D", command=self.reset_teacher_fields, width=70, font=("Helvetica", 12)).pack(side="left", padx=2)
-
-        # Bảng giáo viên
-        table_frame = CTkFrame(main_frame, fg_color="#FFFFFF", corner_radius=10)
-        table_frame.pack(side="right", padx=10, pady=10, fill="both", expand=True)
-        self.teacher_tree = ttk.Treeview(table_frame, columns=("ID", "Name", "DOB", "Phone", "Email", "Dept", "Degree", "Coefficient"), show="headings")
-        self.teacher_tree.heading("ID", text="Mã số")
-        self.teacher_tree.heading("Name", text="Họ tên")
-        self.teacher_tree.heading("DOB", text="Ngày sinh")
-        self.teacher_tree.heading("Phone", text="Điện thoại")
-        self.teacher_tree.heading("Email", text="Email")
-        self.teacher_tree.heading("Dept", text="Khoa")
-        self.teacher_tree.heading("Degree", text="Bằng cấp")
-        self.teacher_tree.heading("Coefficient", text="Hệ số")
-        self.teacher_tree.column("ID", width=80, anchor="center")  # Tăng từ 80 lên 100
-        self.teacher_tree.column("Name", width=150, anchor="center")  # Tăng từ 120 lên 150
-        self.teacher_tree.column("DOB", width=100, anchor="center")  # Tăng từ 100 lên 120
-        self.teacher_tree.column("Phone", width=100, anchor="center")  # Tăng từ 100 lên 120
-        self.teacher_tree.column("Email", width=150, anchor="center")  # Tăng từ 120 lên 150
-        self.teacher_tree.column("Dept", width=150, anchor="center")  # Tăng từ 120 lên 150
-        self.teacher_tree.column("Degree", width=150, anchor="center")  # Tăng từ 120 lên 150
-        self.teacher_tree.column("Coefficient", width=100, anchor="center")  # Tăng từ 80 lên 100
-        self.teacher_tree.pack(padx=10, pady=10, fill="both", expand=True)
-        self.teacher_tree.bind("<<TreeviewSelect>>", self.on_teacher_select)
+        # Tải dữ liệu giáo viên
         self.load_teachers()
 
     def setup_stats_tab(self):
-        CTkLabel(self.stats_tab, text="Biểu đồ Thống kê", font=("Helvetica", 18, "bold"), text_color="black").pack(pady=10)
+    # Tiêu đề
+        header_frame = CTkFrame(self.stats_tab, fg_color="transparent")
+        header_frame.pack(fill="x", padx=10, pady=10)
+        CTkLabel(header_frame, text="Thống kê giáo viên", font=("Helvetica", 18, "bold"), text_color="black").pack(side="left")
+        
+        # Nút hành động
+        button_frame = CTkFrame(header_frame, fg_color="transparent")
+        button_frame.pack(side="right")
+        CTkButton(button_frame, text="Xuất báo cáo", font=("Helvetica", 12), fg_color="#36A2EB", hover_color="#2A82C5", 
+                command=self.export_stats).pack(side="left", padx=5)
+        CTkButton(button_frame, text="Cập nhật", font=("Helvetica", 12), fg_color="#36A2EB", hover_color="#2A82C5", 
+                command=self.refresh_stats).pack(side="left", padx=5)
 
-        # Frame chứa các nút điều hướng
-        button_frame = CTkFrame(self.stats_tab, fg_color="#FFFFFF", corner_radius=10)
-        button_frame.pack(padx=10, pady=10, fill="x")
+        # Thống kê tổng quan
+        overview_frame = CTkFrame(self.stats_tab, fg_color="transparent")
+        overview_frame.pack(fill="x", padx=10, pady=10)
+        
+        # Tổng số giáo viên
+        total_teachers_frame = CTkFrame(overview_frame, fg_color=("#BBDEFB", "#64B5F6"), corner_radius=12, 
+                                        border_width=3, border_color="#1976D2", width=200, height=100)
+        total_teachers_frame.pack(side="left", padx=10, pady=5, fill="x", expand=True)
+        total_teachers_frame.pack_propagate(False)
+        self.total_teachers_label = CTkLabel(total_teachers_frame, text="0", font=("Helvetica", 28, "bold"), text_color="#0D47A1")
+        self.total_teachers_label.pack(pady=(15, 5))
+        CTkLabel(total_teachers_frame, text="Tổng số giáo viên", font=("Helvetica", 14, "bold"), text_color="#0D47A1").pack(pady=(0, 10))
 
-        # Nút điều hướng đến các biểu đồ
-        CTkButton(button_frame, text="Biểu đồ Độ tuổi", font=("Helvetica", 14, "bold"), fg_color="#36A2EB", hover_color="#2A82C5", height=40, command=self.show_age_chart).pack(side="left", padx=10, pady=10, fill="x", expand=True)
-        CTkButton(button_frame, text="Biểu đồ Khoa", font=("Helvetica", 14, "bold"), fg_color="#FF6384", hover_color="#E55773", height=40, command=self.show_dept_chart).pack(side="left", padx=10, pady=10, fill="x", expand=True)
-        CTkButton(button_frame, text="Biểu đồ Bằng cấp", font=("Helvetica", 14, "bold"), fg_color="#FFCE56", hover_color="#E5B74C", height=40, command=self.show_degree_chart).pack(side="left", padx=10, pady=10, fill="x", expand=True)
+        # Số bằng cấp
+        degree_count_frame = CTkFrame(overview_frame, fg_color=("#C8E6C9", "#81C784"), corner_radius=12, 
+                                    border_width=3, border_color="#388E3C", width=200, height=100)
+        degree_count_frame.pack(side="left", padx=10, pady=5, fill="x", expand=True)
+        degree_count_frame.pack_propagate(False)
+        self.degree_count_label = CTkLabel(degree_count_frame, text="0", font=("Helvetica", 28, "bold"), text_color="#1B5E20")
+        self.degree_count_label.pack(pady=(15, 5))
+        CTkLabel(degree_count_frame, text="Số bằng cấp", font=("Helvetica", 14, "bold"), text_color="#1B5E20").pack(pady=(0, 10))
 
-        # Frame chứa biểu đồ
+        # Số khoa
+        total_depts_frame = CTkFrame(overview_frame, fg_color=("#FFECB3", "#FFB300"), corner_radius=12, 
+                                    border_width=3, border_color="#F57C00", width=200, height=100)
+        total_depts_frame.pack(side="left", padx=10, pady=5, fill="x", expand=True)
+        total_depts_frame.pack_propagate(False)
+        self.total_depts_label = CTkLabel(total_depts_frame, text="0", font=("Helvetica", 28, "bold"), text_color="#E65100")
+        self.total_depts_label.pack(pady=(15, 5))
+        CTkLabel(total_depts_frame, text="Số khoa", font=("Helvetica", 14, "bold"), text_color="#E65100").pack(pady=(0, 10))
+
+        # Tab điều hướng
+        tab_frame = CTkFrame(self.stats_tab, fg_color="#FFFFFF", corner_radius=10)
+        tab_frame.pack(fill="x", padx=10, pady=10)
+        
+        CTkButton(tab_frame, text="Thống kê theo độ tuổi", font=("Helvetica", 14), fg_color="#36A2EB", hover_color="#2A82C5", 
+                command=self.show_age_chart).pack(side="left", padx=5, pady=5, fill="x", expand=True)
+        CTkButton(tab_frame, text="Thống kê theo bằng cấp", font=("Helvetica", 14), fg_color="#FF6384", hover_color="#E55773", 
+                command=self.show_degree_chart).pack(side="left", padx=5, pady=5, fill="x", expand=True)
+        CTkButton(tab_frame, text="Thống kê theo khoa", font=("Helvetica", 14), fg_color="#FFCE56", hover_color="#E5B74C", 
+                command=self.show_dept_chart).pack(side="left", padx=5, pady=5, fill="x", expand=True)
+
+        # Frame chứa biểu đồ và bảng
         self.chart_frame = CTkFrame(self.stats_tab, fg_color="#FFFFFF", corner_radius=10)
         self.chart_frame.pack(padx=10, pady=10, fill="both", expand=True)
 
+        # Khởi tạo tab đầu tiên và cập nhật nhãn
+        self.update_labels()
+        self.show_age_chart()
+
     def clear_chart_frame(self):
-        """Xóa biểu đồ cũ trong chart_frame."""
         for widget in self.chart_frame.winfo_children():
             widget.destroy()
 
     def show_age_chart(self):
         self.clear_chart_frame()
-
+        
         age_labels, age_data = self.get_age_distribution()
         if not age_labels or not age_data:
             messagebox.showwarning("Cảnh báo", "Không có dữ liệu độ tuổi để hiển thị.")
             return
 
-        # Tạo biểu đồ cột bằng Matplotlib
-        fig, ax = plt.subplots(figsize=(6, 4))
+        total = sum(age_data)
+        ratios = [f"{(count/total*100):.1f}%" if total > 0 else "0.0%" for count in age_data]
+
+        # Frame chính
+        main_frame = CTkFrame(self.chart_frame, fg_color="transparent")
+        main_frame.pack(fill="both", expand=True, pady=20)
+
+        # Tiêu đề
+        CTkLabel(main_frame, text="Phân bố độ tuổi giáo viên", font=("Helvetica", 18, "bold"), text_color="black").pack(pady=5)
+
+        # Frame biểu đồ và bảng
+        content_frame = CTkFrame(main_frame, fg_color="transparent")
+        content_frame.pack(fill="both", expand=True)
+
+        # Frame biểu đồ
+        chart_container = CTkFrame(content_frame, fg_color="#FFFFFF")
+        chart_container.pack(side="left", padx=10, pady=10, fill="both", expand=True)
+
+        # Biểu đồ
+        fig, ax = plt.subplots(figsize=(4, 2.5))
         ax.bar(age_labels, age_data, color=["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"])
-        ax.set_title("Phân bố Độ tuổi", fontsize=14, pad=15)
-        ax.set_xlabel("Nhóm tuổi", fontsize=12)
-        ax.set_ylabel("Số giáo viên", fontsize=12)
+        ax.set_title("Phân bố độ tuổi", fontsize=12, pad=15)
+        ax.set_xlabel("Nhóm tuổi", fontsize=10)
+        ax.set_ylabel("Số giáo viên", fontsize=10)
         ax.set_ylim(0, max(age_data) + 1 if age_data else 1)
-
-        # Nhúng biểu đồ vào chart_frame
-        canvas = FigureCanvasTkAgg(fig, master=self.chart_frame)
+        plt.xticks(rotation=0, ha="center", fontsize=8)  # Không xoay nhãn
+        plt.tight_layout()
+        
+        canvas = FigureCanvasTkAgg(fig, master=chart_container)
         canvas.draw()
-        canvas.get_tk_widget().pack(fill="both", expand=True)
+        canvas.get_tk_widget().pack(fill="x", expand=True)
 
-    def show_dept_chart(self):
-        self.clear_chart_frame()
+        # Frame bảng
+        table_container = CTkFrame(content_frame, fg_color="#FFFFFF")
+        table_container.pack(side="right", padx=10, pady=10, fill="both", expand=True)
 
-        dept_labels, dept_data = self.get_dept_distribution()
-        if not dept_labels or not dept_data:
-            messagebox.showwarning("Cảnh báo", "Không có dữ liệu khoa để hiển thị.")
-            return
+        # Tiêu đề bảng
+        CTkLabel(table_container, text="Chi tiết thống kê", font=("Helvetica", 14, "bold"), text_color="black").pack(pady=5)
 
-        # Tạo biểu đồ tròn bằng Matplotlib
-        fig, ax = plt.subplots(figsize=(6, 4))
-        ax.pie(dept_data, labels=dept_labels, colors=["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF", "#FF9F40"], autopct='%1.1f%%', startangle=90)
-        ax.set_title("Phân bố theo Khoa", fontsize=14, pad=15)
-        ax.axis('equal')  # Đảm bảo biểu đồ tròn không bị méo
+        # Bảng
+        style = ttk.Style()
+        style.configure("Stats.Treeview", font=("Helvetica", 10))
+        style.configure("Stats.Treeview.Heading", font=("Helvetica", 10, "bold"))
+        
+        tree = ttk.Treeview(table_container, columns=("Age", "Count", "Ratio"), show="headings", style="Stats.Treeview")
+        tree.heading("Age", text="Độ tuổi", anchor="center")
+        tree.heading("Count", text="Số lượng", anchor="center")
+        tree.heading("Ratio", text="Tỷ lệ", anchor="center")
+        tree.column("Age", width=100, anchor="center", stretch=True)
+        tree.column("Count", width=80, anchor="center", stretch=True)
+        tree.column("Ratio", width=80, anchor="center", stretch=True)
+        tree.pack(fill="both", expand=True)
 
-        # Nhúng biểu đồ vào chart_frame
-        canvas = FigureCanvasTkAgg(fig, master=self.chart_frame)
-        canvas.draw()
-        canvas.get_tk_widget().pack(fill="both", expand=True)
+        for label, count, ratio in zip(age_labels, age_data, ratios):
+            tree.insert("", "end", values=(label, count, ratio))
 
     def show_degree_chart(self):
         self.clear_chart_frame()
-
+        
         degree_labels, degree_data = self.get_degree_distribution()
         if not degree_labels or not degree_data:
-            messagebox.showwarning("Cảnh báo", "Không có dữ liệu bằng cấp để hiển thị.")
+            messagebox.showwarning("Cảnh báo!", "Không có dữ liệu bằng cấp để xem!")
             return
 
-        # Tạo biểu đồ cột bằng Matplotlib
-        fig, ax = plt.subplots(figsize=(6, 4))
-        ax.bar(degree_labels, degree_data, color=["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"])
-        ax.set_title("Phân bố theo Bằng cấp", fontsize=14, pad=15)
-        ax.set_xlabel("Bằng cấp", fontsize=12)
-        ax.set_ylabel("Số giáo viên", fontsize=12)
-        ax.set_ylim(0, max(degree_data) + 1 if degree_data else 1)
-        plt.xticks(rotation=0, ha="right")
+        total = sum(degree_data)
+        ratios = [f"{(count/total*100):.1f}%" if total > 0 else "0.0%" for count in degree_data]
 
-        # Nhúng biểu đồ vào chart_frame
-        canvas = FigureCanvasTkAgg(fig, master=self.chart_frame)
+        # Frame chính
+        main_frame = CTkFrame(self.chart_frame, fg_color="transparent")
+        main_frame.pack(fill="both", expand=True, pady=20)
+
+        # Tiêu đề
+        CTkLabel(main_frame, text="Phân bố bằng cấp giáo viên", font=("Helvetica", 18, "bold"), text_color="black").pack(pady=5)
+
+        # Frame biểu đồ và bảng
+        content_frame = CTkFrame(main_frame, fg_color="transparent")
+        content_frame.pack(fill="both", expand=True)
+
+        # Frame biểu đồ
+        chart_container = CTkFrame(content_frame, fg_color="#FFFFFF")
+        chart_container.pack(side="left", padx=10, pady=10, fill="both", expand=True)
+
+        # Biểu đồ
+        fig, ax = plt.subplots(figsize=(4, 2.5))
+        ax.bar(degree_labels, degree_data, color=["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"])
+        ax.set_title("Phân bố bằng cấp", fontsize=12, pad=15)
+        ax.set_xlabel("Bằng cấp", fontsize=10)
+        ax.set_ylabel("Số giáo viên", fontsize=10)
+        ax.set_ylim(0, max(degree_data) + 1 if degree_data else 1)
+        plt.xticks(rotation=0, ha="center", fontsize=8)  # Không xoay nhãn
+        plt.tight_layout()
+        
+        canvas = FigureCanvasTkAgg(fig, master=chart_container)
         canvas.draw()
-        canvas.get_tk_widget().pack(fill="both", expand=True)
+        canvas.get_tk_widget().pack(fill="x", expand=True)
+
+        # Frame bảng
+        table_container = CTkFrame(content_frame, fg_color="#FFFFFF")
+        table_container.pack(side="right", padx=10, pady=10, fill="both", expand=True)
+
+        # Tiêu đề bảng
+        CTkLabel(table_container, text="Chi tiết thống kê", font=("Helvetica", 14, "bold"), text_color="black").pack(pady=5)
+
+        # Bảng
+        style = ttk.Style()
+        style.configure("Stats.Treeview", font=("Helvetica", 10))
+        style.configure("Stats.Treeview.Heading", font=("Helvetica", 10, "bold"))
+        
+        tree = ttk.Treeview(table_container, columns=("Degree", "Count", "Ratio"), show="headings", style="Stats.Treeview")
+        tree.heading("Degree", text="Bằng cấp", anchor="center")
+        tree.heading("Count", text="Số lượng", anchor="center")
+        tree.heading("Ratio", text="Tỷ lệ", anchor="center")
+        tree.column("Degree", width=100, anchor="center", stretch=True)
+        tree.column("Count", width=80, anchor="center", stretch=True)
+        tree.column("Ratio", width=80, anchor="center", stretch=True)
+        tree.pack(fill="both", expand=True)
+
+        for label, count, ratio in zip(degree_labels, degree_data, ratios):
+            tree.insert("", "end", values=(label, count, ratio))
+
+    def show_dept_chart(self):
+        self.clear_chart_frame()
+        
+        # Lấy cả tên viết tắt và tên đầy đủ
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+            query = """
+                SELECT d.dept_abbr, d.dept_name, COUNT(t.teacher_id) 
+                FROM departments d 
+                LEFT JOIN teachers t ON d.dept_id = t.dept_id
+                GROUP BY d.dept_id, d.dept_abbr, d.dept_name
+            """
+            cursor.execute(query)
+            dept_abbrs = []  # Tên viết tắt cho biểu đồ
+            dept_names = []  # Tên đầy đủ cho bảng
+            dept_data = []
+            for row in cursor.fetchall():
+                dept_abbr, dept_name, count = row
+                dept_abbrs.append(dept_abbr)
+                dept_names.append(dept_name)
+                dept_data.append(count)
+        except mysql.connector.Error as e:
+            messagebox.showerror("Lỗi", f"Không thể tải dữ liệu khoa: {e}")
+            return [], []
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
+        if not dept_abbrs or not dept_data:
+            messagebox.showwarning("Cảnh báo!", "Không có dữ liệu khoa để xem!")
+            return
+
+        total = sum(dept_data)
+        ratios = [f"{(count/total*100):.1f}%" if total > 0 else "0.0%" for count in dept_data]
+
+        # Frame chính
+        main_frame = CTkFrame(self.chart_frame, fg_color="transparent")
+        main_frame.pack(fill="both", expand=True, pady=20)
+
+        # Tiêu đề
+        CTkLabel(main_frame, text="Phân bố giáo viên theo khoa", font=("Helvetica", 18, "bold"), text_color="black").pack(pady=5)
+
+        # Frame biểu đồ và bảng
+        content_frame = CTkFrame(main_frame, fg_color="transparent")
+        content_frame.pack(fill="both", expand=True)
+
+        # Frame biểu đồ
+        chart_container = CTkFrame(content_frame, fg_color="#FFFFFF")
+        chart_container.pack(side="left", padx=10, pady=10, fill="both", expand=True)
+
+        # Biểu đồ cột
+        fig, ax = plt.subplots(figsize=(4, 2.5))
+        ax.bar(dept_abbrs, dept_data, color=["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"])
+        ax.set_title("Phân bố theo khoa", fontsize=12, pad=15)
+        ax.set_xlabel("Khoa (viết tắt)", fontsize=10)
+        ax.set_ylabel("Số giáo viên", fontsize=10)
+        ax.set_ylim(0, max(dept_data) + 1 if dept_data else 1)
+        plt.xticks(rotation=0, ha="center", fontsize=8)  # Không xoay nhãn
+        plt.tight_layout()
+        
+        canvas = FigureCanvasTkAgg(fig, master=chart_container)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill="x", expand=True)
+
+        # Frame bảng
+        table_container = CTkFrame(content_frame, fg_color="#FFFFFF")
+        table_container.pack(side="right", padx=10, pady=10, fill="both", expand=True)
+
+        # Tiêu đề bảng
+        CTkLabel(table_container, text="Chi tiết thống kê", font=("Helvetica", 14, "bold"), text_color="black").pack(pady=5)
+
+        # Bảng
+        style = ttk.Style()
+        style.configure("Stats.Treeview", font=("Helvetica", 10))
+        style.configure("Stats.Treeview.Heading", font=("Helvetica", 10, "bold"))
+        
+        tree = ttk.Treeview(table_container, columns=("Dept", "Count", "Ratio"), show="headings", style="Stats.Treeview")
+        tree.heading("Dept", text="Khoa", anchor="center")
+        tree.heading("Count", text="Số lượng", anchor="center")
+        tree.heading("Ratio", text="Tỷ lệ", anchor="center")
+        tree.column("Dept", width=120, anchor="center", stretch=True)
+        tree.column("Count", width=80, anchor="center", stretch=True)
+        tree.column("Ratio", width=80, anchor="center", stretch=True)
+        tree.pack(fill="both", expand=True)
+
+        for name, count, ratio in zip(dept_names, dept_data, ratios):
+            tree.insert("", "end", values=(name, count, ratio))
+
+    def export_stats(self):
+        import pandas as pd
+        
+        age_labels, age_data = self.get_age_distribution()
+        degree_labels, degree_data = self.get_degree_distribution()
+        
+        # Lấy dữ liệu khoa với tên đầy đủ
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+            query = """
+                SELECT d.dept_name, COUNT(t.teacher_id) 
+                FROM departments d 
+                LEFT JOIN teachers t ON d.dept_id = t.dept_id
+                GROUP BY d.dept_id, d.dept_name
+            """
+            cursor.execute(query)
+            dept_labels = []
+            dept_data = []
+            for row in cursor.fetchall():
+                dept_name, count = row
+                dept_labels.append(dept_name)
+                dept_data.append(count)
+        except mysql.connector.Error as e:
+            messagebox.showerror("Lỗi", f"Không thể tải dữ liệu khoa: {e}")
+            return
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+        
+        try:
+            # Tạo các DataFrame
+            age_df = pd.DataFrame({
+                "Độ tuổi": age_labels,
+                "Số lượng": age_data,
+                "Tỷ lệ (%)": [f"{(count/sum(age_data)*100):.1f}" if sum(age_data) > 0 else "0.0" for count in age_data]
+            })
+            degree_df = pd.DataFrame({
+                "Bằng cấp": degree_labels,
+                "Số lượng": degree_data,
+                "Tỷ lệ (%)": [f"{(count/sum(degree_data)*100):.1f}" if sum(degree_data) > 0 else "0.0" for count in degree_data]
+            })
+            dept_df = pd.DataFrame({
+                "Khoa": dept_labels,
+                "Số lượng": dept_data,
+                "Tỷ lệ (%)": [f"{(count/sum(dept_data)*100):.1f}" if sum(dept_data) > 0 else "0.0" for count in dept_data]
+            })
+
+            # Xuất ra Excel
+            with pd.ExcelWriter("teacher_statistics.xlsx", engine="xlsxwriter") as writer:
+                age_df.to_excel(writer, sheet_name="Age_Distribution", index=False)
+                degree_df.to_excel(writer, sheet_name="Degree_Distribution", index=False)
+                dept_df.to_excel(writer, sheet_name="Dept_Distribution", index=False)
+            
+            messagebox.showinfo("Thành công", "Báo cáo đã được xuất ra file: teacher_statistics.xlsx")
+        except Exception as e:
+            messagebox.showerror("Lỗi", f"Không thể xuất báo cáo: {e}")
+
+    def refresh_stats(self):
+        self.update_labels()
+        self.show_age_chart()
+
+    def update_labels(self):
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+            
+            # Tổng số giáo viên
+            cursor.execute("SELECT COUNT(*) FROM teachers")
+            total_teachers = cursor.fetchall()[0][0]
+            self.total_teachers_label.configure(text=str(total_teachers))
+            
+            # Số lượng bằng cấp
+            cursor.execute("SELECT COUNT(*) FROM degrees")
+            degree_count = cursor.fetchall()[0][0]
+            self.degree_count_label.configure(text=str(degree_count))
+            
+            # Số khoa
+            cursor.execute("SELECT COUNT(*) FROM departments")
+            total_depts = cursor.fetchall()[0][0]
+            self.total_depts_label.configure(text=str(total_depts))
+        except mysql.connector.Error as e:
+            messagebox.showerror("Lỗi", f"Không thể tải dữ liệu thống kê: {e}")
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
 
     from tkcalendar import DateEntry
 
     def setup_semester_tab(self):
-        # Tiêu đề tab
-        CTkLabel(self.semester_tab, text="Kỳ học", font=("Helvetica", 18, "bold"), text_color="black").pack(pady=10)
-        main_frame = CTkFrame(self.semester_tab, fg_color="transparent")
-        main_frame.pack(padx=10, pady=10, fill="both", expand=True)
+        # Header with title and add button
+        header_frame = CTkFrame(self.semester_tab, fg_color="transparent")
+        header_frame.pack(fill="x", padx=10, pady=10)
+        CTkLabel(header_frame, text="Quản lý kỳ học", font=("Helvetica", 18, "bold"), text_color="black").pack(side="left")
+        CTkButton(header_frame, text="Thêm kỳ học mới", fg_color="#0085FF", command=self.add_semester).pack(side="right")
 
-        # Form chỉnh sửa kỳ học (bên trái) - thu hẹp chiều ngang
-        form_frame = CTkFrame(main_frame, fg_color="#F0F0F0", corner_radius=10, width=250)
-        form_frame.pack(side="left", padx=5, pady=10, fill="y")
-        form_frame.pack_propagate(False)
-        CTkLabel(form_frame, text="Quản lý Kỳ học", font=("Helvetica", 16, "bold")).pack(pady=5)
+        # Main container
+        self.semester_container = CTkFrame(self.semester_tab, fg_color="#FFFFFF", corner_radius=10)
+        self.semester_container.pack(padx=10, pady=10, fill="both", expand=True)
 
-        # Combobox cho tên kỳ học
-        CTkLabel(form_frame, text="Tên kỳ học:", font=("Helvetica", 11)).pack(pady=(5, 0), padx=10)
-        self.semester_name = CTkComboBox(
-            form_frame,
-            values=["Học kỳ 1", "Học kỳ 2", "Học kỳ 3"],
-            width=200,
-            height=32,
-            font=("Helvetica", 11),
-            fg_color="#E0E0E0",
-            text_color="black",
-            border_color="#4A4A4A",
-            border_width=2,
-            button_color="#4A4A4A",
-            button_hover_color="#666666",
-            dropdown_fg_color="#E0E0E0",
-            dropdown_text_color="black",
-            dropdown_hover_color="#A0A0A0"
-        )
-        self.semester_name.pack(pady=5, padx=(10, 10), fill="x")
-        self.semester_name.set("Học kỳ 1")
+        # Heading row
+        heading_frame = CTkFrame(self.semester_container, fg_color="#D3D3D3", corner_radius=0)
+        heading_frame.pack(fill="x", padx=5, pady=(5, 0))
+        
+        # Column headers (giống tab Học phần)
+        CTkLabel(heading_frame, text="Mã kỳ", font=("Helvetica", 14, "bold"), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Tên kỳ", font=("Helvetica", 14, "bold"), text_color="black", width=200, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Năm học", font=("Helvetica", 14, "bold"), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Ngày bắt đầu", font=("Helvetica", 14, "bold"), text_color="black", width=200, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Ngày kết thúc", font=("Helvetica", 14, "bold"), text_color="black", width=200, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Thao tác", font=("Helvetica", 14, "bold"), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
 
-        # Combobox cho năm học
-        CTkLabel(form_frame, text="Năm học:", font=("Helvetica", 11)).pack(pady=(5, 0), padx=10)
-        self.semester_year = CTkComboBox(
-            form_frame,
-            values=self.get_academic_years(),
-            width=200,
-            height=32,
-            font=("Helvetica", 11),
-            fg_color="#E0E0E0",
-            text_color="black",
-            border_color="#4A4A4A",
-            border_width=2,
-            button_color="#4A4A4A",
-            button_hover_color="#666666",
-            dropdown_fg_color="#E0E0E0",
-            dropdown_text_color="black",
-            dropdown_hover_color="#A0A0A0"
-        )
-        self.semester_year.pack(pady=5, padx=(10, 10), fill="x")
-        self.semester_year.set("2025-2026")
+        # List frame
+        self.semester_list_frame = CTkFrame(self.semester_container, fg_color="transparent")
+        self.semester_list_frame.pack(fill="both", expand=True, padx=5, pady=5)
 
-        # Ngày bắt đầu: Sử dụng CTkEntry với nút lịch
-        CTkLabel(form_frame, text="Ngày bắt đầu:", font=("Helvetica", 11)).pack(pady=(5, 0), padx=10)
-        date_frame_start = CTkFrame(form_frame, fg_color="transparent")
-        date_frame_start.pack(pady=5, padx=(10, 10), fill="x")  # Đồng bộ padx với các ô phía trên
-
-        # Tạo frame con để chứa ô nhập liệu và nút lịch
-        inner_frame_start = CTkFrame(date_frame_start, fg_color="transparent")
-        inner_frame_start.pack(side="right")  # Dịch sang phải
-
-        # Nút lịch cho Ngày bắt đầu
-        calendar_button_start = CTkButton(
-            inner_frame_start,
-            text="📅",
-            width=30,
-            height=32,
-            fg_color="#4A4A4A",
-            hover_color="#666666",
-            command=lambda: self.open_calendar(self.start_date)
-        )
-        calendar_button_start.pack(side="right")
-
-        # Ô nhập liệu Ngày bắt đầu
-        self.start_date = CTkEntry(
-            inner_frame_start,
-            placeholder_text="YYYY-MM-DD",
-            placeholder_text_color="#666666",
-            width=200,
-            height=32,
-            font=("Helvetica", 11),
-            fg_color="#E0E0E0",
-            text_color="black",
-            border_color="#4A4A4A",
-            border_width=2,
-            corner_radius=5
-        )
-        self.start_date.pack(side="right", padx=(0, 5))
-        self.start_date.insert(0, "2025-01-01")
-
-        # Ngày kết thúc: Sử dụng CTkEntry với nút lịch
-        CTkLabel(form_frame, text="Ngày kết thúc:", font=("Helvetica", 11)).pack(pady=(5, 0), padx=10)
-        date_frame_end = CTkFrame(form_frame, fg_color="transparent")
-        date_frame_end.pack(pady=5, padx=(10, 10), fill="x")
-
-        # Tạo frame con để chứa ô nhập liệu và nút lịch
-        inner_frame_end = CTkFrame(date_frame_end, fg_color="transparent")
-        inner_frame_end.pack(side="right")
-
-        # Nút lịch cho Ngày kết thúc
-        calendar_button_end = CTkButton(
-            inner_frame_end,
-            text="📅",
-            width=30,
-            height=32,
-            fg_color="#4A4A4A",
-            hover_color="#666666",
-            command=lambda: self.open_calendar(self.end_date)
-        )
-        calendar_button_end.pack(side="right")
-
-        # Ô nhập liệu Ngày kết thúc
-        self.end_date = CTkEntry(
-            inner_frame_end,
-            placeholder_text="YYYY-MM-DD",
-            placeholder_text_color="#666666",
-            width=200,
-            height=32,
-            font=("Helvetica", 11),
-            fg_color="#E0E0E0",
-            text_color="black",
-            border_color="#4A4A4A",
-            border_width=2,
-            corner_radius=5
-        )
-        self.end_date.pack(side="right", padx=(0, 5))
-        self.end_date.insert(0, "2025-12-31")
-
-        # Gán sự kiện cho combobox Năm học
-        self.semester_year.bind("<<ComboboxSelected>>", self.update_date_years)
-
-        # Cập nhật giá trị ban đầu
-        self.update_date_years()
-
-        # Các nút chức năng
-        button_frame = CTkFrame(form_frame, fg_color="transparent")
-        button_frame.pack(pady=10)
-        CTkButton(button_frame, text="Thêm", fg_color="#0085FF", command=self.add_semester, width=50).pack(side="left", padx=3)
-        CTkButton(button_frame, text="Sửa", fg_color="#FFC107", command=self.edit_semester, width=50).pack(side="left", padx=3)
-        CTkButton(button_frame, text="Xóa", fg_color="#F44336", command=self.delete_semester, width=50).pack(side="left", padx=3)
-        CTkButton(button_frame, text="Reset", fg_color="#6C757D", command=self.reset_semester_fields, width=50).pack(side="left", padx=3)
-
-        # Bảng kỳ học (bên phải)
-        table_frame = CTkFrame(main_frame, fg_color="#FFFFFF", corner_radius=10)
-        table_frame.pack(side="right", padx=10, pady=10, fill="both", expand=True)
-        self.semester_tree = ttk.Treeview(table_frame, columns=("ID", "Name", "Year", "Start Date", "End Date"), show="headings")
-
-        self.semester_tree.heading("ID", text="Mã kỳ")
-        self.semester_tree.heading("Name", text="Tên kỳ")
-        self.semester_tree.heading("Year", text="Năm học")
-        self.semester_tree.heading("Start Date", text="Ngày bắt đầu")
-        self.semester_tree.heading("End Date", text="Ngày kết thúc")
-        self.semester_tree.column("ID", width=80, anchor="center")
-        self.semester_tree.column("Name", width=120, anchor="center")
-        self.semester_tree.column("Year", width=80, anchor="center")
-        self.semester_tree.column("Start Date", width=100, anchor="center")
-        self.semester_tree.column("End Date", width=100, anchor="center")
-        self.semester_tree.pack(padx=10, pady=10, fill="both", expand=True)
-        self.semester_tree.bind("<<TreeviewSelect>>", self.on_semester_select)
+        # Load semester data
         self.load_semesters()
 
 
@@ -756,133 +751,161 @@ class DepartmentView:
         self.load_classes_by_semester(None)  # Tải danh sách lớp học phần khi khởi tạo
 
     def setup_class_stats_tab(self):
+        # Tiêu đề
         CTkLabel(self.class_stats_tab, text="Thống kê lớp học phần", font=("Helvetica", 18, "bold"), text_color="black").pack(pady=10)
 
         # Frame chứa bộ lọc
         filter_frame = CTkFrame(self.class_stats_tab, fg_color="#F0F0F0", corner_radius=10)
         filter_frame.pack(padx=10, pady=10, fill="x")
-        CTkLabel(filter_frame, text="Chọn năm học:", font=("Helvetica", 14)).pack(side="left", padx=5)
+        CTkLabel(filter_frame, text="Năm học:", font=("Helvetica", 14), text_color="black").pack(side="left", padx=5)
         self.stats_year_combobox = CTkComboBox(filter_frame, width=200, values=self.get_academic_years())
         self.stats_year_combobox.pack(side="left", padx=5)
         self.stats_year_combobox.set("2025-2026")
 
-        # Frame chứa các nút (gộp tất cả nút vào một hàng)
+        # Frame chứa các nút
         stats_button_frame = CTkFrame(self.class_stats_tab, fg_color="transparent")
         stats_button_frame.pack(pady=5)
-        CTkButton(stats_button_frame, text="Thống kê theo bảng", fg_color="#0085FF", command=self.show_class_stats_table).pack(side="left", padx=5)
-        CTkButton(stats_button_frame, text="Thống kê theo biểu đồ", fg_color="#FF6384", command=self.show_class_stats_chart).pack(side="left", padx=5)
-        CTkButton(stats_button_frame, text="Xuất Excel", fg_color="#36A2EB", command=self.export_excel).pack(side="left", padx=5)
+        CTkButton(stats_button_frame, text="Tất cả", fg_color="#0085FF", command=self.show_class_stats_all).pack(side="left", padx=5)
+        CTkButton(stats_button_frame, text="Biểu đồ", fg_color="#FF6384", command=self.show_class_stats_chart).pack(side="left", padx=5)
+        CTkButton(stats_button_frame, text="Bảng", fg_color="#36A2EB", command=self.show_class_stats_table).pack(side="left", padx=5)
+        CTkButton(stats_button_frame, text="Xuất Excel", fg_color="#FFCE56", command=self.export_excel).pack(side="left", padx=5)
+
+        # Overview frame (4 khối thông tin tổng quan)
+        overview_frame = CTkFrame(self.class_stats_tab, fg_color="transparent")
+        overview_frame.pack(fill="x", padx=10, pady=10)
+
+        # Tổng số lớp
+        total_classes_frame = CTkFrame(overview_frame, fg_color=("#BBDEFB", "#64B5F6"), corner_radius=12, border_width=3, border_color="#1976D2", width=200, height=100)
+        total_classes_frame.pack(side="left", padx=10, pady=5, fill="x", expand=True)
+        total_classes_frame.pack_propagate(False)
+        self.total_classes_label = CTkLabel(total_classes_frame, text="0", font=("Helvetica", 28, "bold"), text_color="#0D47A1")
+        self.total_classes_label.pack(pady=(15, 5))
+        self.total_modules_label = CTkLabel(total_classes_frame, text="0 học phần", font=("Helvetica", 14, "bold"), text_color="#0D47A1")
+        self.total_modules_label.pack(pady=(0, 10))
+
+        # Tổng sinh viên
+        total_students_frame = CTkFrame(overview_frame, fg_color=("#FFECB3", "#FFB300"), corner_radius=12, border_width=3, border_color="#F57C00", width=200, height=100)
+        total_students_frame.pack(side="left", padx=10, pady=5, fill="x", expand=True)
+        total_students_frame.pack_propagate(False)
+        self.total_students_label = CTkLabel(total_students_frame, text="0", font=("Helvetica", 28, "bold"), text_color="#E65100")
+        self.total_students_label.pack(pady=(15, 5))
+        self.avg_students_label = CTkLabel(total_students_frame, text="Trung bình 0 SV/lớp", font=("Helvetica", 14, "bold"), text_color="#E65100")
+        self.avg_students_label.pack(pady=(0, 10))
+
+        # Học kỳ 1
+        sem1_frame = CTkFrame(overview_frame, fg_color=("#FFCDD2", "#EF5350"), corner_radius=12, border_width=3, border_color="#D32F2F", width=200, height=100)
+        sem1_frame.pack(side="left", padx=10, pady=5, fill="x", expand=True)
+        sem1_frame.pack_propagate(False)
+        self.sem1_classes_label = CTkLabel(sem1_frame, text="0", font=("Helvetica", 28, "bold"), text_color="#B71C1C")
+        self.sem1_classes_label.pack(pady=(15, 5))
+        self.sem1_percentage_label = CTkLabel(sem1_frame, text="0% tổng số lớp", font=("Helvetica", 14, "bold"), text_color="#B71C1C")
+        self.sem1_percentage_label.pack(pady=(0, 10))
+
+        # Học kỳ 2
+        sem2_frame = CTkFrame(overview_frame, fg_color=("#FFCDD2", "#EF5350"), corner_radius=12, border_width=3, border_color="#D32F2F", width=200, height=100)
+        sem2_frame.pack(side="left", padx=10, pady=5, fill="x", expand=True)
+        sem2_frame.pack_propagate(False)
+        self.sem2_classes_label = CTkLabel(sem2_frame, text="0", font=("Helvetica", 28, "bold"), text_color="#B71C1C")
+        self.sem2_classes_label.pack(pady=(15, 5))
+        self.sem2_percentage_label = CTkLabel(sem2_frame, text="0% tổng số lớp", font=("Helvetica", 14, "bold"), text_color="#B71C1C")
+        self.sem2_percentage_label.pack(pady=(0, 10))
 
         # Frame chứa nội dung (biểu đồ hoặc bảng)
-        self.class_stats_frame = CTkFrame(self.class_stats_tab, fg_color="#FFFFFF", corner_radius=10)
+        self.class_stats_frame = CTkScrollableFrame(self.class_stats_tab, fg_color="#FFFFFF", corner_radius=10)
         self.class_stats_frame.pack(padx=10, pady=10, fill="both", expand=True)
 
+        # Hiển thị dữ liệu mặc định
+        self.show_class_stats_all()
+
     def setup_module_tab(self):
-        CTkLabel(self.module_tab, text="Học phần", font=("Helvetica", 18, "bold"), text_color="black").pack(pady=10)
-        main_frame = CTkFrame(self.module_tab, fg_color="transparent")
-        main_frame.pack(padx=10, pady=10, fill="both", expand=True)
+        # Header with title and add button
+        header_frame = CTkFrame(self.module_tab, fg_color="transparent")
+        header_frame.pack(fill="x", padx=10, pady=10)
+        CTkLabel(header_frame, text="Quản lý học phần", font=("Helvetica", 18, "bold"), text_color="black").pack(side="left")
+        CTkButton(header_frame, text="Thêm học phần mới", fg_color="#0085FF", command=self.add_module).pack(side="right")
 
-        # Form chỉnh sửa học phần
-        form_frame = CTkFrame(main_frame, fg_color="#F0F0F0", corner_radius=10)
-        form_frame.pack(side="left", padx=10, pady=10, fill="y")
-        CTkLabel(form_frame, text="Quản lý Học phần", font=("Helvetica", 16, "bold")).pack(pady=5)
+        # Main container
+        self.module_container = CTkFrame(self.module_tab, fg_color="#FFFFFF", corner_radius=10)
+        self.module_container.pack(padx=10, pady=10, fill="both", expand=True)
 
-        # Tên học phần
-        self.module_name = CTkEntry(form_frame, placeholder_text="Tên học phần", width=200)
-        self.module_name.pack(pady=5)
+        # Heading row
+        heading_frame = CTkFrame(self.module_container, fg_color="#D3D3D3", corner_radius=0)
+        heading_frame.pack(fill="x", padx=5, pady=(5, 0))
+        
+        # Column headers (tăng cỡ chữ và chiều rộng cột)
+        CTkLabel(heading_frame, text="Mã học phần", font=("Helvetica", 14, "bold"), text_color="black", width=80, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Tên học phần", font=("Helvetica", 14, "bold"), text_color="black", width=300, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Số tín chỉ", font=("Helvetica", 14, "bold"), text_color="black", width=100, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Hệ số học phần", font=("Helvetica", 14, "bold"), text_color="black", width=100, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Số tiết", font=("Helvetica", 14, "bold"), text_color="black", width=100, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Khoa", font=("Helvetica", 14, "bold"), text_color="black", width=100, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Thao tác", font=("Helvetica", 14, "bold"), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
 
-        # Số tín chỉ
-        self.module_credits = CTkEntry(form_frame, placeholder_text="Số tín chỉ", width=200)
-        self.module_credits.pack(pady=5)
+        # List frame
+        self.module_list_frame = CTkFrame(self.module_container, fg_color="transparent")
+        self.module_list_frame.pack(fill="both", expand=True, padx=5, pady=5)
 
-        # Hệ số học phần
-        self.module_coefficient = CTkEntry(form_frame, placeholder_text="Hệ số (ví dụ: 1.5)", width=200)
-        self.module_coefficient.pack(pady=5)
-
-        # Số tiết
-        self.module_periods = CTkEntry(form_frame, placeholder_text="Số tiết", width=200)
-        self.module_periods.pack(pady=5)
-
-        # Các nút chức năng
-        button_frame = CTkFrame(form_frame, fg_color="transparent")
-        button_frame.pack(pady=10)
-        CTkButton(button_frame, text="Thêm", fg_color="#0085FF", command=self.add_module).pack(side="left", padx=5)
-        CTkButton(button_frame, text="Sửa", fg_color="#FFC107", command=self.edit_module).pack(side="left", padx=5)
-        CTkButton(button_frame, text="Xóa", fg_color="#F44336", command=self.delete_module).pack(side="left", padx=5)
-        CTkButton(button_frame, text="Reset", fg_color="#6C757D", command=self.reset_module_fields).pack(side="left", padx=5)
-
-        # Bảng học phần
-        table_frame = CTkFrame(main_frame, fg_color="#FFFFFF", corner_radius=10)
-        table_frame.pack(side="right", padx=10, pady=10, fill="both", expand=True)
-        self.module_tree = ttk.Treeview(table_frame, columns=("ID", "Name", "Credits", "Coefficient", "Periods"), show="headings")
-        self.module_tree.heading("ID", text="Mã số")
-        self.module_tree.heading("Name", text="Tên học phần")
-        self.module_tree.heading("Credits", text="Số tín chỉ")
-        self.module_tree.heading("Coefficient", text="Hệ số")
-        self.module_tree.heading("Periods", text="Số tiết")
-        self.module_tree.column("ID", width=100, anchor="center")
-        self.module_tree.column("Name", width=160, anchor="center")
-        self.module_tree.column("Credits", width=80, anchor="center")
-        self.module_tree.column("Coefficient", width=60, anchor="center")
-        self.module_tree.column("Periods", width=100, anchor="center")
-        self.module_tree.pack(padx=10, pady=10, fill="both", expand=True)
-        self.module_tree.bind("<<TreeviewSelect>>", self.on_module_select)
+        # Load module data
         self.load_modules()
 
     
     def setup_class_tab(self):
-        CTkLabel(self.class_tab, text="Lớp học", font=("Helvetica", 18, "bold"), text_color="black").pack(pady=10)
-        main_frame = CTkFrame(self.class_tab, fg_color="transparent")
-        main_frame.pack(padx=10, pady=10, fill="both", expand=True)
+        # Header with title and add button
+        header_frame = CTkFrame(self.class_tab, fg_color="transparent")
+        header_frame.pack(fill="x", padx=10, pady=10)
+        CTkLabel(header_frame, text="Quản lý lớp học phần", font=("Helvetica", 18, "bold"), text_color="black").pack(side="left")
+        CTkButton(header_frame, text="Thêm lớp học phần", fg_color="#0085FF", command=self.add_classes).pack(side="right")
 
-        # Form chỉnh sửa lớp học (bên trái) - điều chỉnh giống tab Giáo viên
-        form_frame = CTkFrame(main_frame, fg_color="#F0F0F0", corner_radius=10)
-        form_frame.pack(side="left", padx=5, pady=10, fill="y")
-        CTkLabel(form_frame, text="Quản lý Lớp học", font=("Helvetica", 16, "bold")).pack(pady=5)
+        # Filter frame (các combobox lọc)
+        filter_frame = CTkFrame(self.class_tab, fg_color="transparent")
+        filter_frame.pack(fill="x", padx=10, pady=5)
 
-        # Kỳ học
-        self.class_semester = CTkComboBox(form_frame, width=150, values=self.get_semesters(), command=self.load_classes)
-        self.class_semester.pack(pady=5)
-        self.class_semester.set(self.get_semesters()[0] if self.get_semesters() else "")
+        # Filter by Semester
+        semester_filter_frame = CTkFrame(filter_frame, fg_color="transparent")
+        semester_filter_frame.pack(side="left", padx=(0, 10))
+        CTkLabel(semester_filter_frame, text="Kỳ học:", font=("Helvetica", 12), text_color="black").pack(side="left", padx=(0, 5))
+        self.semester_filter = CTkComboBox(semester_filter_frame, values=["Tất cả"] + self.get_semesters(), width=150, command=self.filter_classes)
+        self.semester_filter.pack(side="left")
+        self.semester_filter.set("Tất cả")
 
-        # Học phần
-        self.class_module = CTkComboBox(form_frame, width=150, values=self.get_modules())
-        self.class_module.pack(pady=5)
-        self.class_module.set(self.get_modules()[0] if self.get_modules() else "")
+        # Filter by Module
+        module_filter_frame = CTkFrame(filter_frame, fg_color="transparent")
+        module_filter_frame.pack(side="left", padx=(0, 10))
+        CTkLabel(module_filter_frame, text="Học phần:", font=("Helvetica", 12), text_color="black").pack(side="left", padx=(0, 5))
+        self.module_filter = CTkComboBox(module_filter_frame, values=["Tất cả"] + [module.split(":")[1].strip() for module in self.get_modules()], width=200, command=self.filter_classes)
+        self.module_filter.pack(side="left")
+        self.module_filter.set("Tất cả")
 
-        # Số lượng lớp tạo
-        self.class_count = CTkComboBox(form_frame, width=150, values=[str(i) for i in range(1, 9)])
-        self.class_count.pack(pady=5)
-        self.class_count.set("1")
+        # Filter by Assignment Status
+        status_filter_frame = CTkFrame(filter_frame, fg_color="transparent")
+        status_filter_frame.pack(side="left", padx=(0, 10))
+        CTkLabel(status_filter_frame, text="Trạng thái:", font=("Helvetica", 12), text_color="black").pack(side="left", padx=(0, 5))
+        self.status_filter = CTkComboBox(status_filter_frame, values=["Tất cả", "Đã phân công", "Chưa phân công"], width=150, command=self.filter_classes)
+        self.status_filter.pack(side="left")
+        self.status_filter.set("Tất cả")
 
-        # Số sinh viên
-        self.class_size = CTkEntry(form_frame, placeholder_text="Số sinh viên", width=150)
-        self.class_size.pack(pady=5)
+        # Main container
+        self.class_container = CTkFrame(self.class_tab, fg_color="#FFFFFF", corner_radius=10)
+        self.class_container.pack(padx=10, pady=10, fill="both", expand=True)
 
-        # Các nút chức năng
-        button_frame = CTkFrame(form_frame, fg_color="transparent")
-        button_frame.pack(pady=5)  # Giảm padding để giống tab Giáo viên
-        CTkButton(button_frame, text="Thêm", fg_color="#0085FF", command=self.add_class, width=70, font=("Helvetica", 12)).pack(side="left", padx=2)
-        CTkButton(button_frame, text=" Sửa", fg_color="#FFC107", command=self.edit_class, width=70, font=("Helvetica", 12)).pack(side="left", padx=2)
-        CTkButton(button_frame, text="Xóa", fg_color="#F44336", command=self.delete_class, width=70, font=("Helvetica", 12)).pack(side="left", padx=2)
-        CTkButton(button_frame, text="Reset", fg_color="#6C757D", command=self.reset_class_fields, width=70, font=("Helvetica", 12)).pack(side="left", padx=2)
+        # Heading row
+        heading_frame = CTkFrame(self.class_container, fg_color="#D3D3D3", corner_radius=0)
+        heading_frame.pack(fill="x", padx=5, pady=(5, 0))
+        
+        # Column headers
+        CTkLabel(heading_frame, text="Kỳ học", font=("Helvetica", 14, "bold"), text_color="black", width=70, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Học phần", font=("Helvetica", 14, "bold"), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Mã lớp", font=("Helvetica", 14, "bold"), text_color="black", width=70, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Tên lớp", font=("Helvetica", 14, "bold"), text_color="black", width=220, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Số sinh viên", font=("Helvetica", 14, "bold"), text_color="black", width=100, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Giảng viên", font=("Helvetica", 14, "bold"), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Thao tác", font=("Helvetica", 14, "bold"), text_color="black", width=200, anchor="center").pack(side="left", padx=5)
 
-        # Bảng lớp học (bên phải) - mở rộng và điều chỉnh cột
-        table_frame = CTkFrame(main_frame, fg_color="#FFFFFF", corner_radius=10)
-        table_frame.pack(side="right", padx=10, pady=10, fill="both", expand=True)
-        self.class_tree = ttk.Treeview(table_frame, columns=("Semester", "Module", "ID", "Name", "Students"), show="headings")
-        self.class_tree.heading("Semester", text="Thuộc kỳ")
-        self.class_tree.heading("Module", text="Thuộc học phần")
-        self.class_tree.heading("ID", text="Mã lớp")
-        self.class_tree.heading("Name", text="Tên lớp")
-        self.class_tree.heading("Students", text="Số sinh viên")
-        self.class_tree.column("Semester", width=200, anchor="center")  # Tăng chiều rộng để tận dụng không gian
-        self.class_tree.column("Module", width=180, anchor="center")
-        self.class_tree.column("ID", width=100, anchor="center")
-        self.class_tree.column("Name", width=200, anchor="center")
-        self.class_tree.column("Students", width=150, anchor="center")
-        self.class_tree.pack(padx=10, pady=10, fill="both", expand=True)
-        self.class_tree.bind("<<TreeviewSelect>>", self.on_class_select)
+        # List frame (dùng CTkScrollableFrame)
+        self.class_list_frame = CTkScrollableFrame(self.class_container, fg_color="transparent")
+        self.class_list_frame.pack(fill="both", expand=True, padx=5, pady=5)
+
+        # Load class data
         self.load_classes()
 
     def setup_salary_tab(self):
@@ -992,174 +1015,292 @@ class DepartmentView:
         try:
             conn = mysql.connector.connect(**DB_CONFIG)
             cursor = conn.cursor()
-            cursor.execute("SELECT module_id, module_name FROM course_modules")
+            cursor.execute("SELECT module_id, module_name FROM course_modules ORDER BY module_id")
             modules = [f"{row[0]}: {row[1]}" for row in cursor.fetchall()]
-            return modules if modules else ["Không có học phần"]
-        except mysql.connector.Error as e:
-            messagebox.showerror("Lỗi", f"Không thể tải danh sách học phần: {e}")
-            return ["Lỗi tải học phần"]
+            return modules
+        except mysql.connector.Error:
+            return []
         finally:
             cursor.close()
             conn.close()
+
+    def filter_classes(self, event=None):
+        self.load_classes()
 
     import random
 
     def add_degree(self):
-        selected = self.degree_tree.selection()
-        if selected:
-            messagebox.showwarning("Cảnh báo", "Vui lòng reset form trước khi thêm mới!")
-            return
+        # Tạo cửa sổ pop-up
+        add_window = CTkToplevel(self.window)
+        add_window.title("Thêm bằng cấp mới")
+        add_window.geometry("400x300")
+        add_window.resizable(False, False)
 
-        name = self.degree_name.get().strip()
-        abbr = self.degree_abbr.get().strip()
-        coeff = self.degree_coeff.get().strip()
+        # Căn giữa pop-up so với cửa sổ chính
+        window_width = self.window.winfo_width()
+        window_height = self.window.winfo_height()
+        window_x = self.window.winfo_x()
+        window_y = self.window.winfo_y()
+        popup_width = 400
+        popup_height = 300
+        pos_x = window_x + (window_width // 2) - (popup_width // 2)
+        pos_y = window_y + (window_height // 2) - (popup_height // 2)
+        add_window.geometry(f"{popup_width}x{popup_height}+{pos_x}+{pos_y}")
 
-        if not all([name, abbr, coeff]):
-            messagebox.showerror("Lỗi", "Vui lòng nhập đầy đủ thông tin")
-            return
+        # Đè lên cửa sổ chính
+        add_window.transient(self.window)  # Gắn pop-up vào cửa sổ chính
+        add_window.grab_set()  # Độc quyền sự kiện cho pop-up
 
-        # Kiểm tra độ dài tên viết tắt
-        if len(abbr) > 5:
-            messagebox.showerror("Lỗi", "Tên viết tắt bằng cấp phải dưới 5 ký tự!")
-            return
+        # Frame chứa các trường nhập liệu
+        form_frame = CTkFrame(add_window, fg_color="transparent")
+        form_frame.pack(padx=20, pady=20, fill="both", expand=True)
 
-        try:
-            coeff = float(coeff)
-            if coeff <= 0:
-                messagebox.showerror("Lỗi", "Hệ số phải lớn hơn 0")
-                return
-        except ValueError:
-            messagebox.showerror("Lỗi", "Hệ số phải là số hợp lệ")
-            return
+        # Tên bằng cấp
+        CTkLabel(form_frame, text="Tên bằng cấp:", font=("Helvetica", 12)).pack(pady=(5, 0))
+        degree_name = CTkEntry(form_frame, placeholder_text="Tên bằng cấp", width=350)
+        degree_name.pack(pady=5)
 
-        # Kiểm tra trùng tên bằng cấp và tên viết tắt
-        try:
-            conn = mysql.connector.connect(**DB_CONFIG)
-            cursor = conn.cursor()
-            cursor.execute("SELECT degree_name FROM degrees WHERE degree_name = %s", (name,))
-            if cursor.fetchone():
-                messagebox.showerror("Lỗi", "Tên bằng cấp đã tồn tại. Vui lòng chọn tên khác!")
-                return
+        # Tên viết tắt
+        CTkLabel(form_frame, text="Tên viết tắt:", font=("Helvetica", 12)).pack(pady=(5, 0))
+        degree_abbr = CTkEntry(form_frame, placeholder_text="Tên viết tắt", width=350)
+        degree_abbr.pack(pady=5)
 
-            cursor.execute("SELECT degree_abbr FROM degrees WHERE degree_abbr = %s", (abbr,))
-            if cursor.fetchone():
-                messagebox.showerror("Lỗi", "Tên viết tắt đã tồn tại. Vui lòng chọn tên khác!")
-                return
+        # Hệ số
+        CTkLabel(form_frame, text="Hệ số:", font=("Helvetica", 12)).pack(pady=(5, 0))
+        degree_coeff = CTkEntry(form_frame, placeholder_text="Hệ số (ví dụ: 1.5)", width=350)
+        degree_coeff.pack(pady=5)
 
-            while True:
-                random_num = random.randint(0, 99999)
-                degree_id = f"DEG{str(random_num).zfill(5)}"
-                cursor.execute("SELECT degree_id FROM degrees WHERE degree_id = %s", (degree_id,))
-                if not cursor.fetchone():
-                    break
+        # Hàm xử lý khi nhấn nút "Thêm"
+        def save_degree():
+            name = degree_name.get().strip()
+            abbr = degree_abbr.get().strip()
+            coeff = degree_coeff.get().strip()
 
-            cursor.execute("INSERT INTO degrees (degree_id, degree_name, degree_abbr, coefficient) VALUES (%s, %s, %s, %s)",
-                        (degree_id, name, abbr, coeff))
-            conn.commit()
-            messagebox.showinfo("Thành công", f"Thêm bằng cấp thành công với mã số {degree_id}")
-            self.reset_degree_fields()
-            self.load_degrees()
-        except mysql.connector.Error as e:
-            messagebox.showerror("Lỗi", f"Không thể thêm bằng cấp: {e}")
-        finally:
-            cursor.close()
-            conn.close()
-
-    def edit_degree(self):
-        selected_item = self.degree_tree.selection()
-        if not selected_item:
-            messagebox.showwarning("Cảnh báo", "Vui lòng chọn bằng cấp để sửa!")
-            return
-
-        item = self.degree_tree.item(selected_item)
-        degree_id = item["values"][0]
-        name = self.degree_name.get().strip()
-        abbr = self.degree_abbr.get().strip()
-        coeff = self.degree_coeff.get().strip()
-
-        if not all([name, abbr, coeff]):
-            messagebox.showerror("Lỗi", "Vui lòng nhập đầy đủ thông tin")
-            return
-
-        # Kiểm tra độ dài tên viết tắt
-        if len(abbr) > 5:
-            messagebox.showerror("Lỗi", "Tên viết tắt bằng cấp phải dưới 5 ký tự!")
-            return
-
-        try:
-            coeff = float(coeff)
-            if coeff <= 0:
-                messagebox.showerror("Lỗi", "Hệ số phải lớn hơn 0")
-                return
-        except ValueError:
-            messagebox.showerror("Lỗi", "Hệ số phải là số hợp lệ")
-            return
-
-        try:
-            conn = mysql.connector.connect(**DB_CONFIG)
-            cursor = conn.cursor()
-            cursor.execute("SELECT degree_name FROM degrees WHERE degree_name = %s AND degree_id != %s", (name, degree_id))
-            if cursor.fetchone():
-                messagebox.showerror("Lỗi", "Tên bằng cấp đã tồn tại. Vui lòng chọn tên khác!")
+            if not all([name, abbr, coeff]):
+                messagebox.showerror("Lỗi", "Vui lòng nhập đầy đủ thông tin", parent=add_window)
                 return
 
-            cursor.execute("SELECT degree_abbr FROM degrees WHERE degree_abbr = %s AND degree_id != %s", (abbr, degree_id))
-            if cursor.fetchone():
-                messagebox.showerror("Lỗi", "Tên viết tắt đã tồn tại. Vui lòng chọn tên khác!")
+            if len(abbr) > 5:
+                messagebox.showerror("Lỗi", "Tên viết tắt bằng cấp phải dưới 5 ký tự!", parent=add_window)
                 return
 
-            cursor.execute("UPDATE degrees SET degree_name = %s, degree_abbr = %s, coefficient = %s WHERE degree_id = %s",
-                        (name, abbr, coeff, degree_id))
-            conn.commit()
-            messagebox.showinfo("Thành công", "Cập nhật bằng cấp thành công")
-            self.reset_degree_fields()
-            self.load_degrees()
-        except mysql.connector.Error as e:
-            messagebox.showerror("Lỗi", f"Không thể sửa bằng cấp: {e}")
-        finally:
-            cursor.close()
-            conn.close()
+            try:
+                coeff = float(coeff)
+                if coeff <= 0:
+                    messagebox.showerror("Lỗi", "Hệ số phải lớn hơn 0", parent=add_window)
+                    return
+            except ValueError:
+                messagebox.showerror("Lỗi", "Hệ số phải là số hợp lệ", parent=add_window)
+                return
 
-
-    def delete_degree(self):
-        selected_item = self.degree_tree.selection()
-        if not selected_item:
-            messagebox.showwarning("Cảnh báo", "Vui lòng chọn bằng cấp để xóa!")
-            return
-        item = self.degree_tree.item(selected_item)
-        degree_id = item["values"][0]
-        if messagebox.askyesno("Xác nhận", "Bạn có chắc muốn xóa bằng cấp này?"):
             try:
                 conn = mysql.connector.connect(**DB_CONFIG)
                 cursor = conn.cursor()
-                cursor.execute("SELECT 1 FROM teachers WHERE degree_id = %s LIMIT 1", (degree_id,))
+                cursor.execute("SELECT degree_id FROM degrees WHERE degree_name = %s OR degree_abbr = %s", (name, abbr))
                 if cursor.fetchone():
-                    messagebox.showerror("Lỗi", "Không thể xóa bằng cấp vì có giáo viên liên quan")
+                    messagebox.showerror("Lỗi", "Tên bằng cấp hoặc tên viết tắt đã tồn tại!", parent=add_window)
                     return
-                cursor.execute("DELETE FROM degrees WHERE degree_id = %s", (degree_id,))
+
+                cursor.execute("SELECT degree_id FROM degrees ORDER BY CAST(SUBSTRING(degree_id, 4) AS UNSIGNED) DESC LIMIT 1")
+                result = cursor.fetchone()
+                new_num = int(result[0][3:]) + 1 if result else 1
+                degree_id = f"DEG{str(new_num).zfill(5)}"
+
+                cursor.execute("INSERT INTO degrees (degree_id, degree_name, degree_abbr, coefficient) VALUES (%s, %s, %s, %s)",
+                            (degree_id, name, abbr, coeff))
                 conn.commit()
-                messagebox.showinfo("Thành công", "Xóa bằng cấp thành công")
-                self.reset_degree_fields()
+                messagebox.showinfo("Thành công", f"Thêm bằng cấp thành công với mã {degree_id}", parent=add_window)
                 self.load_degrees()
-                self.degree_combobox.configure(values=self.get_degrees())
+                add_window.destroy()
             except mysql.connector.Error as e:
-                messagebox.showerror("Lỗi", f"Không thể xóa bằng cấp: {e}")
+                messagebox.showerror("Lỗi", f"Không thể thêm bằng cấp: {e}", parent=add_window)
             finally:
                 cursor.close()
                 conn.close()
 
+        # Hàm đóng cửa sổ
+        def cancel():
+            add_window.destroy()
+
+        # Nút Thêm và Hủy
+        button_frame = CTkFrame(form_frame, fg_color="transparent")
+        button_frame.pack(pady=10)
+        CTkButton(button_frame, text="Thêm", fg_color="#0085FF", command=save_degree, width=100).pack(side="left", padx=5)
+        CTkButton(button_frame, text="Hủy", fg_color="#6C757D", command=cancel, width=100).pack(side="left", padx=5)
+
+    def edit_degree(self, degree_id):
+        # Lấy thông tin bằng cấp hiện tại
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+            cursor.execute("SELECT degree_name, degree_abbr, coefficient FROM degrees WHERE degree_id = %s", (degree_id,))
+            result = cursor.fetchone()
+            if not result:
+                messagebox.showerror("Lỗi", "Không tìm thấy bằng cấp!")
+                return
+            current_name, current_abbr, current_coeff = result
+        except mysql.connector.Error as e:
+            messagebox.showerror("Lỗi", f"Không thể tải thông tin bằng cấp: {e}")
+            return
+        finally:
+            cursor.close()
+            conn.close()
+
+        # Tạo cửa sổ pop-up
+        edit_window = CTkToplevel(self.window)
+        edit_window.title("Sửa bằng cấp")
+        edit_window.geometry("400x300")
+        edit_window.resizable(False, False)
+
+        # Căn giữa pop-up so với cửa sổ chính
+        window_width = self.window.winfo_width()
+        window_height = self.window.winfo_height()
+        window_x = self.window.winfo_x()
+        window_y = self.window.winfo_y()
+        popup_width = 400
+        popup_height = 300
+        pos_x = window_x + (window_width // 2) - (popup_width // 2)
+        pos_y = window_y + (window_height // 2) - (popup_height // 2)
+        edit_window.geometry(f"{popup_width}x{popup_height}+{pos_x}+{pos_y}")
+
+        # Đè lên cửa sổ chính
+        edit_window.transient(self.window)  # Gắn pop-up vào cửa sổ chính
+        edit_window.grab_set()  # Độc quyền sự kiện cho pop-up
+
+        # Frame chứa các trường nhập liệu
+        form_frame = CTkFrame(edit_window, fg_color="transparent")
+        form_frame.pack(padx=20, pady=20, fill="both", expand=True)
+
+        # Tên bằng cấp
+        CTkLabel(form_frame, text="Tên bằng cấp:", font=("Helvetica", 12)).pack(pady=(5, 0))
+        degree_name = CTkEntry(form_frame, placeholder_text="Tên bằng cấp", width=350)
+        degree_name.insert(0, current_name)
+        degree_name.pack(pady=5)
+
+        # Tên viết tắt
+        CTkLabel(form_frame, text="Tên viết tắt:", font=("Helvetica", 12)).pack(pady=(5, 0))
+        degree_abbr = CTkEntry(form_frame, placeholder_text="Tên viết tắt", width=350)
+        degree_abbr.insert(0, current_abbr)
+        degree_abbr.pack(pady=5)
+
+        # Hệ số
+        CTkLabel(form_frame, text="Hệ số:", font=("Helvetica", 12)).pack(pady=(5, 0))
+        degree_coeff = CTkEntry(form_frame, placeholder_text="Hệ số (ví dụ: 1.5)", width=350)
+        degree_coeff.insert(0, str(current_coeff))
+        degree_coeff.pack(pady=5)
+
+        # Hàm xử lý khi nhấn nút "Lưu"
+        def save_degree():
+            name = degree_name.get().strip()
+            abbr = degree_abbr.get().strip()
+            coeff = degree_coeff.get().strip()
+
+            if not all([name, abbr, coeff]):
+                messagebox.showerror("Lỗi", "Vui lòng nhập đầy đủ thông tin", parent=edit_window)
+                return
+
+            if len(abbr) > 5:
+                messagebox.showerror("Lỗi", "Tên viết tắt không quá 5 kí tự", parent=edit_window)
+                return
+
+            try:
+                coeff = float(coeff)
+                if coeff <= 0:
+                    messagebox.showerror("Lỗi", "Hệ số phải lớn hơn 0", parent=edit_window)
+                    return
+            except ValueError:
+                messagebox.showerror("Lỗi", "Hệ số phải là số hợp lệ", parent=edit_window)
+                return
+
+            try:
+                conn = mysql.connector.connect(**DB_CONFIG)
+                cursor = conn.cursor()
+                cursor.execute("SELECT degree_id FROM degrees WHERE (degree_name = %s OR degree_abbr = %s) AND degree_id != %s",
+                            (name, abbr, degree_id))
+                if cursor.fetchone():
+                    messagebox.showerror("Lỗi", "Tên bằng cấp hoặc tên viết tắt đã tồn tại!", parent=edit_window)
+                    return
+
+                cursor.execute("UPDATE degrees SET degree_name = %s, degree_abbr = %s, coefficient = %s WHERE degree_id = %s",
+                            (name, abbr, coeff, degree_id))
+                conn.commit()
+                messagebox.showinfo("Thành công", "Cập nhật bằng cấp thành công!", parent=edit_window)
+                self.load_degrees()
+                edit_window.destroy()
+            except mysql.connector.Error as e:
+                messagebox.showerror("Lỗi", f"Không thể cập nhật bằng cấp: {e}", parent=edit_window)
+            finally:
+                cursor.close()
+                conn.close()
+
+        # Hàm đóng cửa sổ
+        def cancel():
+            edit_window.destroy()
+
+        # Nút Lưu và Hủy
+        button_frame = CTkFrame(form_frame, fg_color="transparent")
+        button_frame.pack(pady=10)
+        CTkButton(button_frame, text="Lưu", fg_color="#0085FF", command=save_degree, width=100).pack(side="left", padx=5)
+        CTkButton(button_frame, text="Hủy", fg_color="#6C757D", command=cancel, width=100).pack(side="left", padx=5)
+
+
+    def delete_degree(self, degree_id):
+        conn = None
+        cursor = None
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+
+            # Kiểm tra liên quan đến giáo viên
+            cursor.execute("SELECT 1 FROM teachers WHERE degree_id = %s LIMIT 1", (degree_id,))
+            if cursor.fetchone():
+                messagebox.showerror("Lỗi", "Không thể xóa bằng cấp vì có giáo viên đang sử dụng!", parent=self.window)
+                return
+
+            # Xác nhận xóa
+            if messagebox.askyesno("Xác nhận", f"Bạn có chắc muốn xóa bằng cấp {degree_id}?", parent=self.window):
+                cursor.execute("DELETE FROM degrees WHERE degree_id = %s", (degree_id,))
+                conn.commit()
+                messagebox.showinfo("Thành công", f"Xóa bằng cấp {degree_id} thành công", parent=self.window)
+                self.load_degrees()
+        except mysql.connector.Error as e:
+            messagebox.showerror("Lỗi", f"Không thể xóa bằng cấp: {e}", parent=self.window)
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
     def load_degrees(self):
+        # Xóa các widget cũ trong frame
+        for widget in self.degree_list_frame.winfo_children():
+            widget.destroy()
+
         try:
             conn = mysql.connector.connect(**DB_CONFIG)
             cursor = conn.cursor()
             cursor.execute("SELECT degree_id, degree_name, degree_abbr, coefficient FROM degrees")
-            for item in self.degree_tree.get_children():
-                self.degree_tree.delete(item)
             rows = cursor.fetchall()
             if not rows:
-                messagebox.showwarning("Cảnh báo", "Không có dữ liệu bằng cấp")
-            for row in rows:
-                self.degree_tree.insert("", "end", values=row)
+                CTkLabel(self.degree_list_frame, text="Không có dữ liệu bằng cấp", font=("Helvetica", 14), text_color="gray").pack(pady=20, expand=True)
+            else:
+                for idx, row in enumerate(rows, start=1):
+                    degree_id, name, abbr, coeff = row
+                    # Tạo frame cho từng dòng
+                    degree_row_frame = CTkFrame(self.degree_list_frame, fg_color="#F0F0F0", corner_radius=5)
+                    degree_row_frame.pack(fill="x", padx=0, pady=2)
+
+                    # Căn chỉnh các cột với chiều rộng đồng bộ với heading
+                    CTkLabel(degree_row_frame, text=str(idx), font=("Helvetica", 12), text_color="black", width=80, anchor="center").pack(side="left", padx=5)
+                    CTkLabel(degree_row_frame, text=name, font=("Helvetica", 12), text_color="black", width=400, anchor="center").pack(side="left", padx=5)
+                    CTkLabel(degree_row_frame, text=abbr, font=("Helvetica", 12), text_color="black", width=200, anchor="center").pack(side="left", padx=5)
+                    CTkLabel(degree_row_frame, text=str(coeff), font=("Helvetica", 12), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+
+                    # Frame chứa các nút Sửa/Xóa
+                    button_frame = CTkFrame(degree_row_frame, fg_color="transparent", width=200)
+                    button_frame.pack(side="left", padx=35)
+                    CTkButton(button_frame, text="Sửa", fg_color="#FFC107", width=60, command=lambda d_id=degree_id: self.edit_degree(d_id)).pack(side="left", padx=2)
+                    CTkButton(button_frame, text="Xóa", fg_color="#F44336", width=60, command=lambda d_id=degree_id: self.delete_degree(d_id)).pack(side="left", padx=2)
         except mysql.connector.Error as e:
             messagebox.showerror("Lỗi", f"Không thể tải dữ liệu bằng cấp: {e}")
         finally:
@@ -1167,19 +1308,29 @@ class DepartmentView:
             conn.close()
 
     def on_degree_select(self, event):
+        # Xác định vùng click
+        region = self.degree_tree.identify_region(event.x, event.y)
+        if region != "cell":
+            return
+
+        # Xác định dòng được chọn
         selected_item = self.degree_tree.selection()
         if not selected_item:
             return
+
+        # Lấy thông tin dòng
         item = self.degree_tree.item(selected_item)
-        self.degree_name.delete(0, END)
-        self.degree_name.insert(0, item["values"][1])
-        self.degree_name.configure(placeholder_text="")
-        self.degree_abbr.delete(0, END)
-        self.degree_abbr.insert(0, item["values"][2])
-        self.degree_abbr.configure(placeholder_text="")
-        self.degree_coeff.delete(0, END)
-        self.degree_coeff.insert(0, item["values"][3])
-        self.degree_coeff.configure(placeholder_text="")
+        degree_id = self.degree_tree.item(selected_item, "tags")[0]  # Lấy degree_id từ tags
+
+        # Xác định cột được click
+        column = self.degree_tree.identify_column(event.x)
+        if column == "#5":  # Cột "Thao tác" (cột thứ 5)
+            # Xác định vị trí chính xác trong cột
+            x_relative = event.x - self.degree_tree.winfo_rootx() - self.degree_tree.column("#5")["width"] * 4  # Điều chỉnh vị trí x
+            if 0 <= x_relative <= 40:  # Vùng "Sửa"
+                self.edit_degree(degree_id)
+            elif 40 < x_relative <= 80:  # Vùng "Xóa"
+                self.delete_degree(degree_id)
 
     def reset_degree_fields(self):
         self.degree_name.delete(0, END)
@@ -1193,155 +1344,287 @@ class DepartmentView:
             self.degree_tree.selection_remove(item)
 
     def add_dept(self):
-        selected = self.dept_tree.selection()
-        if selected:
-            messagebox.showwarning("Cảnh báo", "Vui lòng reset form trước khi thêm mới!")
-            return
+        # Tạo cửa sổ pop-up
+        add_window = CTkToplevel(self.window)
+        add_window.title("Thêm khoa mới")
+        add_window.geometry("400x300")
+        add_window.resizable(False, False)
 
-        name = self.dept_name.get().strip()
-        abbr = self.dept_abbr.get().strip()
-        description = self.dept_description.get().strip()
+        # Căn giữa pop-up so với cửa sổ chính
+        window_width = self.window.winfo_width()
+        window_height = self.window.winfo_height()
+        window_x = self.window.winfo_x()
+        window_y = self.window.winfo_y()
+        popup_width = 400
+        popup_height = 300
+        pos_x = window_x + (window_width // 2) - (popup_width // 2)
+        pos_y = window_y + (window_height // 2) - (popup_height // 2)
+        add_window.geometry(f"{popup_width}x{popup_height}+{pos_x}+{pos_y}")
 
-        if not all([name, abbr]):
-            messagebox.showerror("Lỗi", "Vui lòng nhập đầy đủ thông tin")
-            return
+        # Đè lên cửa sổ chính
+        add_window.transient(self.window)
+        add_window.grab_set()
 
-        # Kiểm tra độ dài tên viết tắt
-        if len(abbr) > 5:
-            messagebox.showerror("Lỗi", "Tên viết tắt khoa phải dưới 5 ký tự!")
-            return
+        # Frame chứa các trường nhập liệu
+        form_frame = CTkFrame(add_window, fg_color="transparent")
+        form_frame.pack(padx=20, pady=20, fill="both", expand=True)
 
-        try:
-            conn = mysql.connector.connect(**DB_CONFIG)
-            cursor = conn.cursor()
-            cursor.execute("SELECT dept_name FROM departments WHERE dept_name = %s", (name,))
-            if cursor.fetchone():
-                messagebox.showerror("Lỗi", "Tên khoa đã tồn tại. Vui lòng chọn tên khác!")
+        # Tên khoa
+        CTkLabel(form_frame, text="Tên khoa:", font=("Helvetica", 12)).pack(pady=(5, 0))
+        dept_name = CTkEntry(form_frame, placeholder_text="Tên khoa", width=350)
+        dept_name.pack(pady=5)
+
+        # Tên viết tắt
+        CTkLabel(form_frame, text="Tên viết tắt:", font=("Helvetica", 12)).pack(pady=(5, 0))
+        dept_abbr = CTkEntry(form_frame, placeholder_text="Tên viết tắt", width=350)
+        dept_abbr.pack(pady=5)
+
+        # Mô tả nhiệm vụ
+        CTkLabel(form_frame, text="Mô tả nhiệm vụ:", font=("Helvetica", 12)).pack(pady=(5, 0))
+        dept_description = CTkEntry(form_frame, placeholder_text="Mô tả nhiệm vụ", width=350)
+        dept_description.pack(pady=5)
+
+        # Hàm xử lý khi nhấn nút "Thêm"
+        def save_dept():
+            name = dept_name.get().strip()
+            abbr = dept_abbr.get().strip()
+            description = dept_description.get().strip()
+
+            # Kiểm tra đầu vào
+            if not name or not abbr:
+                messagebox.showerror("Lỗi", "Vui lòng nhập đầy đủ tên khoa và tên viết tắt", parent=add_window)
                 return
 
-            cursor.execute("SELECT dept_abbr FROM departments WHERE dept_abbr = %s", (abbr,))
-            if cursor.fetchone():
-                messagebox.showerror("Lỗi", "Tên viết tắt đã tồn tại. Vui lòng chọn tên khác!")
+            if len(name) > 100:
+                messagebox.showerror("Lỗi", "Tên khoa phải dưới 100 ký tự!", parent=add_window)
                 return
 
-            while True:
-                random_num = random.randint(0, 99999)
-                dept_id = f"DEPT{str(random_num).zfill(3)}"
-                cursor.execute("SELECT dept_id FROM departments WHERE dept_id = %s", (dept_id,))
-                if not cursor.fetchone():
-                    break
-
-            cursor.execute("INSERT INTO departments (dept_id, dept_name, dept_abbr, dept_description) VALUES (%s, %s, %s, %s)",
-                        (dept_id, name, abbr, description))
-            conn.commit()
-            messagebox.showinfo("Thành công", f"Thêm khoa thành công với mã {dept_id}")
-            self.reset_dept_fields()
-            self.load_depts()
-        except mysql.connector.Error as e:
-            messagebox.showerror("Lỗi", f"Không thể thêm khoa: {e}")
-        finally:
-            cursor.close()
-            conn.close()
-
-    def edit_dept(self):
-        selected_item = self.dept_tree.selection()
-        if not selected_item:
-            messagebox.showwarning("Cảnh báo", "Vui lòng chọn khoa để sửa!")
-            return
-
-        item = self.dept_tree.item(selected_item)
-        dept_id = item["values"][0]
-        name = self.dept_name.get().strip()
-        abbr = self.dept_abbr.get().strip()
-        description = self.dept_description.get().strip()
-
-        if not all([name, abbr]):
-            messagebox.showerror("Lỗi", "Vui lòng nhập đầy đủ thông tin")
-            return
-
-        # Kiểm tra độ dài tên viết tắt
-        if len(abbr) > 5:
-            messagebox.showerror("Lỗi", "Tên viết tắt khoa phải dưới 5 ký tự!")
-            return
-
-        try:
-            conn = mysql.connector.connect(**DB_CONFIG)
-            cursor = conn.cursor()
-            cursor.execute("SELECT dept_name FROM departments WHERE dept_name = %s AND dept_id != %s", (name, dept_id))
-            if cursor.fetchone():
-                messagebox.showerror("Lỗi", "Tên khoa đã tồn tại. Vui lòng chọn tên khác!")
+            if len(abbr) > 5:
+                messagebox.showerror("Lỗi", "Tên viết tắt không quá 5 kí tự", parent=add_window)
                 return
 
-            cursor.execute("SELECT dept_abbr FROM departments WHERE dept_abbr = %s AND dept_id != %s", (abbr, dept_id))
-            if cursor.fetchone():
-                messagebox.showerror("Lỗi", "Tên viết tắt đã tồn tại. Vui lòng chọn tên khác!")
-                return
-
-            cursor.execute("UPDATE departments SET dept_name = %s, dept_abbr = %s, dept_description = %s WHERE dept_id = %s",
-                        (name, abbr, description, dept_id))
-            conn.commit()
-            messagebox.showinfo("Thành công", "Cập nhật khoa thành công")
-            self.reset_dept_fields()
-            self.load_depts()
-        except mysql.connector.Error as e:
-            messagebox.showerror("Lỗi", f"Không thể sửa khoa: {e}")
-        finally:
-            cursor.close()
-            conn.close()
-
-
-    def delete_dept(self):
-        selected_item = self.dept_tree.selection()
-        if not selected_item:
-            messagebox.showwarning("Cảnh báo", "Vui lòng chọn khoa để xóa!")
-            return
-
-        item = self.dept_tree.item(selected_item)
-        dept_id = item["values"][0]
-
-        # Kiểm tra xem khoa có liên kết với giáo viên không
-        try:
-            conn = mysql.connector.connect(**DB_CONFIG)
-            cursor = conn.cursor()
-            cursor.execute("SELECT 1 FROM teachers WHERE dept_id = %s LIMIT 1", (dept_id,))
-            if cursor.fetchone():
-                messagebox.showerror("Lỗi", "Khoa đang được sử dụng, không thể xóa!")
-                return
-        except mysql.connector.Error as e:
-            messagebox.showerror("Lỗi", f"Không thể kiểm tra liên kết khoa: {e}")
-            return
-        finally:
-            cursor.close()
-            conn.close()
-
-        # Nếu không có liên kết, tiến hành xóa
-        if messagebox.askyesno("Xác nhận", "Bạn có chắc muốn xóa khoa này?"):
             try:
                 conn = mysql.connector.connect(**DB_CONFIG)
                 cursor = conn.cursor()
-                cursor.execute("DELETE FROM departments WHERE dept_id = %s", (dept_id,))
+                # Kiểm tra trùng tên khoa hoặc tên viết tắt
+                cursor.execute("SELECT dept_id FROM departments WHERE dept_name = %s OR dept_abbr = %s", (name, abbr))
+                if cursor.fetchone():
+                    messagebox.showerror("Lỗi", "Tên khoa hoặc tên viết tắt đã tồn tại!", parent=add_window)
+                    return
+
+                # Tạo dept_id mới
+                cursor.execute("SELECT dept_id FROM departments ORDER BY CAST(SUBSTRING(dept_id, 5) AS UNSIGNED) DESC LIMIT 1")
+                result = cursor.fetchone()
+                if result:
+                    last_id = result[0]  # Ví dụ: "DEPT2321"
+                    last_num = int(last_id[4:])  # Lấy từ vị trí thứ 4 trở đi: "2321"
+                    new_num = last_num + 1
+                else:
+                    new_num = 1
+                dept_id = f"DEPT{str(new_num).zfill(4)}"  # Định dạng: DEPTxxxx
+
+                if len(dept_id) > 10:
+                    messagebox.showerror("Lỗi", "Mã khoa vượt quá 10 ký tự!", parent=add_window)
+                    return
+
+                # Chèn bản ghi mới
+                cursor.execute("INSERT INTO departments (dept_id, dept_name, dept_abbr, dept_description) VALUES (%s, %s, %s, %s)",
+                            (dept_id, name, abbr, description if description else None))
                 conn.commit()
-                messagebox.showinfo("Thành công", "Xóa khoa thành công")
-                self.reset_dept_fields()
-                self.load_depts()
+
+                messagebox.showinfo("Thành công", f"Thêm khoa thành công với mã {dept_id}", parent=add_window)
+                self.load_depts()  # Làm mới danh sách
+                add_window.destroy()
             except mysql.connector.Error as e:
-                messagebox.showerror("Lỗi", f"Không thể xóa khoa: {str(e)}")
+                messagebox.showerror("Lỗi", f"Không thể thêm khoa: {e}", parent=add_window)
             finally:
                 cursor.close()
                 conn.close()
 
-    def load_depts(self):
+        # Hàm đóng cửa sổ
+        def cancel():
+            add_window.destroy()
+
+        # Nút Thêm và Hủy
+        button_frame = CTkFrame(form_frame, fg_color="transparent")
+        button_frame.pack(pady=10)
+        CTkButton(button_frame, text="Thêm", fg_color="#0085FF", command=save_dept, width=100).pack(side="left", padx=5)
+        CTkButton(button_frame, text="Hủy", fg_color="#6C757D", command=cancel, width=100).pack(side="left", padx=5)
+
+    def edit_dept(self, dept_id):
+    # Lấy thông tin khoa hiện tại
         try:
             conn = mysql.connector.connect(**DB_CONFIG)
             cursor = conn.cursor()
-            cursor.execute("SELECT dept_id, dept_name, dept_abbr, dept_description FROM departments")
-            for item in self.dept_tree.get_children():
-                self.dept_tree.delete(item)
+            cursor.execute("SELECT dept_name, dept_abbr, dept_description FROM departments WHERE dept_id = %s", (dept_id,))
+            result = cursor.fetchone()
+            if not result:
+                messagebox.showerror("Lỗi", "Không tìm thấy khoa!")
+                return
+            current_name, current_abbr, current_description = result
+        except mysql.connector.Error as e:
+            messagebox.showerror("Lỗi", f"Không thể tải thông tin khoa: {e}")
+            return
+        finally:
+            cursor.close()
+            conn.close()
+
+        # Tạo cửa sổ pop-up
+        edit_window = CTkToplevel(self.window)
+        edit_window.title("Sửa khoa")
+        edit_window.geometry("400x300")
+        edit_window.resizable(False, False)
+
+        # Căn giữa pop-up so với cửa sổ chính
+        window_width = self.window.winfo_width()
+        window_height = self.window.winfo_height()
+        window_x = self.window.winfo_x()
+        window_y = self.window.winfo_y()
+        popup_width = 400
+        popup_height = 300
+        pos_x = window_x + (window_width // 2) - (popup_width // 2)
+        pos_y = window_y + (window_height // 2) - (popup_height // 2)
+        edit_window.geometry(f"{popup_width}x{popup_height}+{pos_x}+{pos_y}")
+
+        # Đè lên cửa sổ chính
+        edit_window.transient(self.window)
+        edit_window.grab_set()
+
+        # Frame chứa các trường nhập liệu
+        form_frame = CTkFrame(edit_window, fg_color="transparent")
+        form_frame.pack(padx=20, pady=20, fill="both", expand=True)
+
+        # Tên khoa
+        CTkLabel(form_frame, text="Tên khoa:", font=("Helvetica", 12)).pack(pady=(5, 0))
+        dept_name = CTkEntry(form_frame, placeholder_text="Tên khoa", width=350)
+        dept_name.insert(0, current_name)
+        dept_name.pack(pady=5)
+
+        # Tên viết tắt
+        CTkLabel(form_frame, text="Tên viết tắt:", font=("Helvetica", 12)).pack(pady=(5, 0))
+        dept_abbr = CTkEntry(form_frame, placeholder_text="Tên viết tắt", width=350)
+        dept_abbr.insert(0, current_abbr)
+        dept_abbr.pack(pady=5)
+
+        # Mô tả nhiệm vụ
+        CTkLabel(form_frame, text="Mô tả nhiệm vụ:", font=("Helvetica", 12)).pack(pady=(5, 0))
+        dept_description = CTkEntry(form_frame, placeholder_text="Mô tả nhiệm vụ", width=350)
+        dept_description.insert(0, current_description if current_description else "")
+        dept_description.pack(pady=5)
+
+        # Hàm xử lý khi nhấn nút "Lưu"
+        def save_dept():
+            name = dept_name.get().strip()
+            abbr = dept_abbr.get().strip()
+            description = dept_description.get().strip()
+
+            # Kiểm tra đầu vào
+            if not name or not abbr:
+                messagebox.showerror("Lỗi", "Vui lòng nhập đầy đủ tên khoa và tên viết tắt", parent=edit_window)
+                return
+
+            if len(name) > 100:
+                messagebox.showerror("Lỗi", "Tên khoa phải dưới 100 ký tự!", parent=edit_window)
+                return
+
+            if len(abbr) > 5:
+                messagebox.showerror("Lỗi", "Tên viết tắt không quá 5 kí tự", parent=edit_window)
+                return
+
+            try:
+                conn = mysql.connector.connect(**DB_CONFIG)
+                cursor = conn.cursor()
+                # Kiểm tra trùng tên khoa hoặc tên viết tắt
+                cursor.execute("SELECT dept_id FROM departments WHERE (dept_name = %s OR dept_abbr = %s) AND dept_id != %s",
+                            (name, abbr, dept_id))
+                if cursor.fetchone():
+                    messagebox.showerror("Lỗi", "Tên khoa hoặc tên viết tắt đã tồn tại!", parent=edit_window)
+                    return
+
+                # Cập nhật bản ghi
+                cursor.execute("UPDATE departments SET dept_name = %s, dept_abbr = %s, dept_description = %s WHERE dept_id = %s",
+                            (name, abbr, description if description else None, dept_id))
+                conn.commit()
+                messagebox.showinfo("Thành công", "Cập nhật khoa thành công!", parent=edit_window)
+                self.load_depts()
+                edit_window.destroy()
+            except mysql.connector.Error as e:
+                messagebox.showerror("Lỗi", f"Không thể cập nhật khoa: {e}", parent=edit_window)
+            finally:
+                cursor.close()
+                conn.close()
+
+        # Hàm đóng cửa sổ
+        def cancel():
+            edit_window.destroy()
+
+        # Nút Lưu và Hủy
+        button_frame = CTkFrame(form_frame, fg_color="transparent")
+        button_frame.pack(pady=10)
+        CTkButton(button_frame, text="Lưu", fg_color="#0085FF", command=save_dept, width=100).pack(side="left", padx=5)
+        CTkButton(button_frame, text="Hủy", fg_color="#6C757D", command=cancel, width=100).pack(side="left", padx=5)
+
+
+    def delete_dept(self, dept_id):
+        conn = None
+        cursor = None
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+
+            # Kiểm tra liên quan đến giáo viên
+            cursor.execute("SELECT 1 FROM teachers WHERE dept_id = %s LIMIT 1", (dept_id,))
+            if cursor.fetchone():
+                messagebox.showerror("Lỗi", "Không thể xóa khoa vì có giáo viên thuộc khoa này!", parent=self.window)
+                return
+
+            # Xác nhận xóa
+            if messagebox.askyesno("Xác nhận", f"Bạn có chắc muốn xóa khoa {dept_id}?", parent=self.window):
+                cursor.execute("DELETE FROM departments WHERE dept_id = %s", (dept_id,))
+                conn.commit()
+                messagebox.showinfo("Thành công", f"Xóa khoa {dept_id} thành công", parent=self.window)
+                self.load_depts()
+        except mysql.connector.Error as e:
+            messagebox.showerror("Lỗi", f"Không thể xóa khoa: {e}", parent=self.window)
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
+    def load_depts(self):
+        # Xóa các widget cũ trong frame
+        for widget in self.dept_list_frame.winfo_children():
+            widget.destroy()
+
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+            
+            # Lấy tất cả khoa
+            query = "SELECT dept_id, dept_name, dept_abbr, dept_description FROM departments"
+            cursor.execute(query)
+
             rows = cursor.fetchall()
             if not rows:
-                messagebox.showwarning("Cảnh báo", "Không có dữ liệu khoa")
-            for row in rows:
-                self.dept_tree.insert("", "end", values=row)
+                CTkLabel(self.dept_list_frame, text="Không có dữ liệu khoa", font=("Helvetica", 14), text_color="gray").pack(pady=20, expand=True)
+            else:
+                for idx, row in enumerate(rows, start=1):
+                    dept_id, name, abbr, description = row
+                    # Tạo frame cho từng dòng
+                    dept_row_frame = CTkFrame(self.dept_list_frame, fg_color="#F0F0F0", corner_radius=5)
+                    dept_row_frame.pack(fill="x", padx=0, pady=2)
+
+                    # Căn chỉnh các cột với chiều rộng đồng bộ với heading
+                    CTkLabel(dept_row_frame, text=dept_id, font=("Helvetica", 12), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+                    CTkLabel(dept_row_frame, text=name, font=("Helvetica", 12), text_color="black", width=200, anchor="center").pack(side="left", padx=5)  # Giảm từ 450 xuống 400
+                    CTkLabel(dept_row_frame, text=abbr, font=("Helvetica", 12), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+                    CTkLabel(dept_row_frame, text=description if description else "N/A", font=("Helvetica", 12), text_color="black", width=300, anchor="center").pack(side="left", padx=5)  # Giảm từ 600 xuống 500
+                    # Frame chứa các nút Sửa/Xóa
+                    button_frame = CTkFrame(dept_row_frame, fg_color="transparent", width=250)  # Tăng từ 250 lên 350
+                    button_frame.pack(side="left", padx=60)
+                    CTkButton(button_frame, text="Sửa", fg_color="#FFC107", width=60, command=lambda d_id=dept_id: self.edit_dept(d_id)).pack(side="left", padx=2)
+                    CTkButton(button_frame, text="Xóa", fg_color="#F44336", width=60, command=lambda d_id=dept_id: self.delete_dept(d_id)).pack(side="left", padx=2)
         except mysql.connector.Error as e:
             messagebox.showerror("Lỗi", f"Không thể tải dữ liệu khoa: {e}")
         finally:
@@ -1374,279 +1657,458 @@ class DepartmentView:
         for item in self.dept_tree.selection():
             self.dept_tree.selection_remove(item)
 
-    def update_teacher_coefficient(self, event=None):
-        degree = self.degree_combobox.get()
-        if not degree or degree in ["Không có bằng cấp", "Lỗi tải bằng cấp"]:
-            self.teacher_coeff.delete(0, END)
-            self.teacher_coeff.insert(0, "1.0")
+    def update_teacher_coefficient(self, degree_combobox, teacher_coeff, window):
+        degree = degree_combobox.get().strip()
+        if not degree or degree == "Không có bằng cấp" or degree == "Lỗi tải bằng cấp":
+            teacher_coeff.delete(0, "end")
+            teacher_coeff.insert(0, "1.0")  # Giá trị mặc định nếu không có bằng cấp
             return
+        degree_id = degree.split(":")[0].strip()
         try:
-            degree_id = degree.split(":")[0]
             conn = mysql.connector.connect(**DB_CONFIG)
             cursor = conn.cursor()
             cursor.execute("SELECT coefficient FROM degrees WHERE degree_id = %s", (degree_id,))
             result = cursor.fetchone()
+            teacher_coeff.delete(0, "end")
             if result:
-                self.teacher_coeff.delete(0, END)
-                self.teacher_coeff.insert(0, str(result[0]))
+                teacher_coeff.insert(0, str(result[0]))
             else:
-                self.teacher_coeff.delete(0, END)
-                self.teacher_coeff.insert(0, "1.0")
+                teacher_coeff.insert(0, "1.0")  # Giá trị mặc định nếu không tìm thấy
         except mysql.connector.Error as e:
-            messagebox.showerror("Lỗi", f"Không thể tải hệ số bằng cấp: {e}")
-            self.teacher_coeff.delete(0, END)
-            self.teacher_coeff.insert(0, "1.0")
+            messagebox.showerror("Lỗi", f"Không thể tải hệ số: {e}", parent=window)
         finally:
             cursor.close()
             conn.close()
 
-    def on_teacher_select(self, event):
-        selected_item = self.teacher_tree.selection()
-        if not selected_item:
-            return
-        item = self.teacher_tree.item(selected_item)
-        values = item["values"]
-        self.teacher_name.delete(0, END)
-        self.teacher_name.insert(0, values[1])
-        self.teacher_name.configure(placeholder_text="")
-        self.date_of_birth.delete(0, END)
-        self.date_of_birth.insert(0, values[2] if values[2] != 'N/A' else '')
-        self.date_of_birth.configure(placeholder_text="")
-        self.phone.delete(0, END)
-        self.phone.insert(0, values[3] if values[3] != 'N/A' else '')
-        self.phone.configure(placeholder_text="")
-        self.email.delete(0, END)
-        self.email.insert(0, values[4] if values[4] != 'N/A' else '')
-        self.email.configure(placeholder_text="")
-        self.dept_combobox.set(values[5])
-        self.degree_combobox.set(values[6])
-        self.teacher_coeff.delete(0, END)
-        self.teacher_coeff.insert(0, values[7])
-        self.teacher_coeff.configure(placeholder_text="")
 
     def add_teacher(self):
-        selected = self.teacher_tree.selection()
-        if selected:
-            messagebox.showwarning("Cảnh báo", "Vui lòng reset form trước khi thêm mới!")
-            return
+    # Tạo cửa sổ pop-up
+        add_window = CTkToplevel(self.window)
+        add_window.title("Thêm giáo viên mới")
+        add_window.geometry("500x400")
+        add_window.resizable(False, False)
 
-        name = self.teacher_name.get().strip()
-        dob = self.date_of_birth.get().strip()
-        phone = self.phone.get().strip()
-        email = self.email.get().strip()
-        dept = self.dept_combobox.get().strip()
-        degree = self.degree_combobox.get().strip()
-        coeff = self.teacher_coeff.get().strip()
+        # Căn giữa cửa sổ popup
+        self.window.update_idletasks()
+        x = self.window.winfo_x()
+        y = self.window.winfo_y()
+        w = self.window.winfo_width()
+        h = self.window.winfo_height()
+        add_window.geometry(f"+{x + w//2 - 250}+{y + h//2 - 200}")
 
-        if not all([name, dob, phone, email, dept, degree, coeff]):
-            messagebox.showerror("Lỗi", "Vui lòng nhập đầy đủ thông tin")
-            return
+        # Đè lên cửa sổ chính
+        add_window.transient(self.window)
+        add_window.grab_set()
 
-        try:
-            dob_date = datetime.strptime(dob, '%Y-%m-%d').date()
-            current_date = datetime.now().date()  # Ngày hiện tại: 26/05/2025
-            if dob_date > current_date:
-                messagebox.showerror("Lỗi", "Ngày sinh không được là ngày trong tương lai!")
-                return
-        except ValueError:
-            messagebox.showerror("Lỗi", "Ngày sinh không hợp lệ. Vui lòng nhập theo định dạng YYYY-MM-DD!")
-            return
+        # Frame chính
+        main_frame = CTkFrame(add_window, fg_color="transparent")
+        main_frame.pack(padx=20, pady=20, fill="both", expand=True)
 
-        try:
-            coeff = float(coeff)
-            if coeff <= 0:
-                messagebox.showerror("Lỗi", "Hệ số phải lớn hơn 0")
-                return
-        except ValueError:
-            messagebox.showerror("Lỗi", "Hệ số phải là số hợp lệ")
-            return
+        # Tiêu đề
+        CTkLabel(main_frame, text="THÊM GIÁO VIÊN MỚI", font=("Helvetica", 18, "bold")).pack(pady=(5, 15))
 
-        if not re.match(r"^\d{10}$", phone):
-            messagebox.showerror("Lỗi", "Số điện thoại phải gồm 10 chữ số")
-            return
+        # Frame nhập liệu
+        form_frame = CTkFrame(main_frame, fg_color="transparent")
+        form_frame.pack(fill="both", expand=True)
 
-        if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", email):
-            messagebox.showerror("Lỗi", "Email không hợp lệ")
-            return
+        def create_row(label, widget, row):
+            CTkLabel(form_frame, text=label, anchor="w", font=("Helvetica", 12)).grid(row=row, column=0, sticky="w", pady=5, padx=(0, 10))
+            widget.grid(row=row, column=1, sticky="ew", pady=5)
 
-        dept_id = dept.split(":")[0].strip()
-        degree_id = degree.split(":")[0].strip()
+        form_frame.columnconfigure(1, weight=1)
 
-        try:
-            conn = mysql.connector.connect(**DB_CONFIG)
-            cursor = conn.cursor()
-            cursor.execute("SELECT email FROM teachers WHERE email = %s", (email,))
-            if cursor.fetchone():
-                messagebox.showerror("Lỗi", "Email đã tồn tại. Vui lòng chọn email khác!")
-                return
+        # Họ tên
+        teacher_name = CTkEntry(form_frame, placeholder_text="Họ tên")
+        create_row("Họ tên:", teacher_name, 0)
 
-            while True:
-                random_num = random.randint(0, 99999)
-                teacher_id = f"TCH{str(random_num).zfill(5)}"
-                cursor.execute("SELECT teacher_id FROM teachers WHERE teacher_id = %s", (teacher_id,))
-                if not cursor.fetchone():
-                    break
+        # Ngày sinh + nút lịch
+        date_frame = CTkFrame(form_frame, fg_color="transparent")
+        date_of_birth = CTkEntry(date_frame, placeholder_text="YYYY-MM-DD")
+        date_of_birth.pack(side="left", fill="x", expand=True)
+        CTkButton(date_frame, text="📅", width=30, fg_color="#0085FF", hover_color="#005BB5", 
+                command=lambda: self.open_calendar(date_of_birth)).pack(side="right")
+        create_row("Ngày sinh:", date_frame, 1)
 
-            cursor.execute("""
-                INSERT INTO teachers (teacher_id, full_name, date_of_birth, phone, email, dept_id, degree_id, coefficient)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            """, (teacher_id, name, dob_date, phone, email, dept_id, degree_id, coeff))
-            conn.commit()
-            messagebox.showinfo("Thành công", f"Thêm giáo viên thành công với mã số {teacher_id}")
-            self.reset_teacher_fields()
-            self.load_teachers()
-        except mysql.connector.Error as e:
-            messagebox.showerror("Lỗi", f"Không thể thêm giáo viên: {e}")
-        finally:
-            cursor.close()
-            conn.close()
+        # Điện thoại
+        phone = CTkEntry(form_frame, placeholder_text="Số điện thoại")
+        create_row("Điện thoại:", phone, 2)
 
+        # Email
+        email = CTkEntry(form_frame, placeholder_text="Email")
+        create_row("Email:", email, 3)
 
-    def edit_teacher(self):
-        selected_item = self.teacher_tree.selection()
-        if not selected_item:
-            messagebox.showwarning("Cảnh báo", "Vui lòng chọn giáo viên để sửa!")
-            return
+        # Khoa
+        dept_combobox = CTkComboBox(form_frame, values=self.get_departments())
+        dept_combobox.set(self.get_departments()[0] if self.get_departments() else "")
+        create_row("Khoa:", dept_combobox, 4)
 
-        item = self.teacher_tree.item(selected_item)
-        teacher_id = item["values"][0]
-        name = self.teacher_name.get().strip()
-        dob = self.date_of_birth.get().strip()
-        phone = self.phone.get().strip()
-        email = self.email.get().strip()
-        dept = self.dept_combobox.get().strip()
-        degree = self.degree_combobox.get().strip()
-        coeff = self.teacher_coeff.get().strip()
+        # Bằng cấp
+        degree_combobox = CTkComboBox(form_frame, values=self.get_degrees())
+        degree_combobox.set(self.get_degrees()[0] if self.get_degrees() else "")
+        create_row("Bằng cấp:", degree_combobox, 5)
 
-        if not all([name, dob, phone, email, dept, degree, coeff]):
-            messagebox.showerror("Lỗi", "Vui lòng nhập đầy đủ thông tin")
-            return
+        # Hàm lưu giáo viên
+        def save_teacher(window):
+            name = teacher_name.get().strip()
+            dob_str = date_of_birth.get().strip()
+            phone_num = phone.get().strip()
+            email_addr = email.get().strip()
+            dept_info = dept_combobox.get().strip()
+            degree_info = degree_combobox.get().strip()
 
-        try:
-            dob_date = datetime.strptime(dob, '%Y-%m-%d').date()
-            current_date = datetime.now().date()  # Ngày hiện tại: 26/05/2025
-            if dob_date > current_date:
-                messagebox.showerror("Lỗi", "Ngày sinh không được là ngày trong tương lai!")
-                return
-        except ValueError:
-            messagebox.showerror("Lỗi", "Ngày sinh không hợp lệ. Vui lòng nhập theo định dạng YYYY-MM-DD!")
-            return
-
-        try:
-            coeff = float(coeff)
-            if coeff <= 0:
-                messagebox.showerror("Lỗi", "Hệ số phải lớn hơn 0")
-                return
-        except ValueError:
-            messagebox.showerror("Lỗi", "Hệ số phải là số hợp lệ")
-            return
-
-        if not re.match(r"^\d{10}$", phone):
-            messagebox.showerror("Lỗi", "Số điện thoại phải gồm 10 chữ số")
-            return
-
-        if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", email):
-            messagebox.showerror("Lỗi", "Email không hợp lệ")
-            return
-
-        dept_id = dept.split(":")[0].strip()
-        degree_id = degree.split(":")[0].strip()
-
-        try:
-            conn = mysql.connector.connect(**DB_CONFIG)
-            cursor = conn.cursor()
-            cursor.execute("SELECT email FROM teachers WHERE email = %s AND teacher_id != %s", (email, teacher_id))
-            if cursor.fetchone():
-                messagebox.showerror("Lỗi", "Email đã tồn tại. Vui lòng chọn email khác!")
+            if not all([name, dept_info, degree_info]):
+                messagebox.showerror("Lỗi", "Vui lòng nhập đầy đủ thông tin bắt buộc (Họ tên, Khoa, Bằng cấp)", parent=window)
                 return
 
-            cursor.execute("""
-                UPDATE teachers
-                SET full_name = %s, date_of_birth = %s, phone = %s, email = %s, dept_id = %s, degree_id = %s, coefficient = %s
-                WHERE teacher_id = %s
-            """, (name, dob_date, phone, email, dept_id, degree_id, coeff, teacher_id))
-            conn.commit()
-            messagebox.showinfo("Thành công", "Cập nhật giáo viên thành công")
-            self.reset_teacher_fields()
-            self.load_teachers()
-        except mysql.connector.Error as e:
-            messagebox.showerror("Lỗi", f"Không thể sửa giáo viên: {e}")
-        finally:
-            cursor.close()
-            conn.close()
+            dob_date = None
+            if dob_str:
+                try:
+                    dob_date = datetime.strptime(dob_str, '%Y-%m-%d').date()
+                    if dob_date > datetime.now().date():
+                        messagebox.showerror("Lỗi", "Ngày sinh không được trong tương lai!", parent=window)
+                        return
+                except ValueError:
+                    messagebox.showerror("Lỗi", "Ngày sinh không hợp lệ (YYYY-MM-DD)!", parent=window)
+                    return
 
-
-    def delete_teacher(self):
-        selected_item = self.teacher_tree.selection()
-        if not selected_item:
-            messagebox.showwarning("Cảnh báo", "Vui lòng chọn giáo viên để xóa!")
-            return
-
-        item = self.teacher_tree.item(selected_item)
-        teacher_id = item["values"][0]
-
-        # Kiểm tra xem giáo viên có đang được phân công không
-        try:
-            conn = mysql.connector.connect(**DB_CONFIG)
-            cursor = conn.cursor()
-            cursor.execute("SELECT 1 FROM assignments WHERE teacher_id = %s LIMIT 1", (teacher_id,))
-            if cursor.fetchone():
-                messagebox.showerror("Lỗi", "Giáo viên đang được phân công, không thể xóa!")
+            if phone_num and not re.match(r"^\d{10,15}$", phone_num):
+                messagebox.showerror("Lỗi", "Số điện thoại phải từ 10 đến 15 chữ số!", parent=window)
                 return
-        except mysql.connector.Error as e:
-            messagebox.showerror("Lỗi", f"Không thể kiểm tra phân công của giáo viên: {e}")
-            return
-        finally:
-            cursor.close()
-            conn.close()
 
-        # Nếu không có phân công, tiến hành xóa
-        if messagebox.askyesno("Xác nhận", "Bạn có chắc muốn xóa giáo viên này?"):
+            if email_addr and not re.match(r"[^@]+@[^@]+\.[^@]+", email_addr):
+                messagebox.showerror("Lỗi", "Email không hợp lệ!", parent=window)
+                return
+
+            dept_id = dept_info.split(":")[0].strip()
+            degree_id = degree_info.split(":")[0].strip()
+
+            conn = None
+            cursor = None
             try:
                 conn = mysql.connector.connect(**DB_CONFIG)
                 cursor = conn.cursor()
-                cursor.execute("DELETE FROM teachers WHERE teacher_id = %s", (teacher_id,))
-                conn.commit()
-                messagebox.showinfo("Thành công", "Xóa giáo viên thành công")
-                self.reset_teacher_fields()
-                self.load_teachers()
-            except mysql.connector.Error as e:
-                messagebox.showerror("Lỗi", f"Không thể xóa giáo viên: {e}")
-            finally:
-                cursor.close()
-                conn.close()
 
-    def load_teachers(self):
+                # Lấy hệ số từ bảng degrees
+                cursor.execute("SELECT coefficient FROM degrees WHERE degree_id = %s", (degree_id,))
+                result = cursor.fetchone()
+                if not result:
+                    messagebox.showerror("Lỗi", "Không tìm thấy bằng cấp!", parent=window)
+                    return
+                teacher_coefficient = result[0]
+
+                # Kiểm tra email trùng lặp
+                if email_addr:
+                    cursor.execute("SELECT teacher_id FROM teachers WHERE email = %s", (email_addr,))
+                    if cursor.fetchone():
+                        messagebox.showerror("Lỗi", "Email đã tồn tại!", parent=window)
+                        return
+
+                # Tạo mã giáo viên ngẫu nhiên
+                import random
+                max_attempts = 100
+                for _ in range(max_attempts):
+                    random_num = random.randint(0, 99999)
+                    teacher_id = f"TCH{str(random_num).zfill(5)}"
+                    cursor.execute("SELECT teacher_id FROM teachers WHERE teacher_id = %s", (teacher_id,))
+                    if not cursor.fetchone():
+                        break
+                else:
+                    messagebox.showerror("Lỗi", "Không thể tạo mã giáo viên duy nhất sau nhiều lần thử!", parent=window)
+                    return
+
+                # Thêm giáo viên
+                cursor.execute(
+                    "INSERT INTO teachers (teacher_id, full_name, date_of_birth, phone, email, dept_id, degree_id, teacher_coefficient) "
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+                    (teacher_id, name, dob_date, phone_num or None, email_addr or None, dept_id, degree_id, teacher_coefficient)
+                )
+                conn.commit()
+                messagebox.showinfo("Thành công", f"Thêm giáo viên thành công với mã {teacher_id}", parent=window)
+                self.load_teachers()
+                window.destroy()
+            except mysql.connector.Error as e:
+                messagebox.showerror("Lỗi", f"Không thể thêm giáo viên: {e}", parent=window)
+            finally:
+                if cursor:
+                    cursor.close()
+                if conn:
+                    conn.close()
+
+        # Nút Thêm và Hủy
+        button_frame = CTkFrame(form_frame, fg_color="transparent")
+        button_frame.grid(row=6, column=0, columnspan=2, pady=(10, 0))
+
+        CTkButton(button_frame, text="Thêm", width=120, fg_color="#007bff", hover_color="#0056b3",
+                command=lambda: save_teacher(add_window)).pack(side="left", padx=10)
+        CTkButton(button_frame, text="Hủy", width=120, fg_color="#6c757d", hover_color="#5a6268",
+                command=add_window.destroy).pack(side="left", padx=10)
+
+        
+    def edit_teacher(self, teacher_id):
+        # Tạo cửa sổ pop-up
+        edit_window = CTkToplevel(self.window)
+        edit_window.title("Sửa thông tin giáo viên")
+        edit_window.geometry("500x400")
+        edit_window.resizable(False, False)
+
+        # Căn giữa pop-up
+        self.window.update_idletasks()
+        x = self.window.winfo_x()
+        y = self.window.winfo_y()
+        w = self.window.winfo_width()
+        h = self.window.winfo_height()
+        edit_window.geometry(f"+{x + w//2 - 250}+{y + h//2 - 200}")
+
+        # Đè lên cửa sổ chính
+        edit_window.transient(self.window)
+        edit_window.grab_set()
+
+        # Frame chính
+        main_frame = CTkFrame(edit_window, fg_color="transparent")
+        main_frame.pack(padx=20, pady=20, fill="both", expand=True)
+
+        # Tiêu đề
+        CTkLabel(main_frame, text="SỬA THÔNG TIN GIÁO VIÊN", font=("Helvetica", 18, "bold")).pack(pady=(5, 15))
+
+        # Frame nhập liệu
+        form_frame = CTkFrame(main_frame, fg_color="transparent")
+        form_frame.pack(fill="both", expand=True)
+
+        def create_row(label, widget, row):
+            CTkLabel(form_frame, text=label, anchor="w", font=("Helvetica", 12)).grid(row=row, column=0, sticky="w", pady=5, padx=(0, 10))
+            widget.grid(row=row, column=1, sticky="ew", pady=5)
+
+        form_frame.columnconfigure(1, weight=1)
+
+        # Lấy thông tin giáo viên hiện tại
+        conn = None
+        cursor = None
         try:
             conn = mysql.connector.connect(**DB_CONFIG)
             cursor = conn.cursor()
-            cursor.execute("""
-                SELECT t.teacher_id, t.full_name, t.date_of_birth, t.phone, t.email, 
-                    d.dept_id, d.dept_name, deg.degree_id, deg.degree_name, t.teacher_coefficient
+            cursor.execute(
+                "SELECT full_name, date_of_birth, phone, email, dept_id, degree_id "
+                "FROM teachers WHERE teacher_id = %s",
+                (teacher_id,)
+            )
+            result = cursor.fetchone()
+            if not result:
+                messagebox.showerror("Lỗi", "Không tìm thấy giáo viên!", parent=edit_window)
+                edit_window.destroy()
+                return
+            current_name, current_dob, current_phone, current_email, current_dept_id, current_degree_id = result
+        except mysql.connector.Error as e:
+            messagebox.showerror("Lỗi", f"Không thể tải thông tin giáo viên: {e}", parent=edit_window)
+            edit_window.destroy()
+            return
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
+        # Họ tên
+        teacher_name = CTkEntry(form_frame, placeholder_text="Họ tên")
+        teacher_name.insert(0, current_name)
+        create_row("Họ tên:", teacher_name, 0)
+
+        # Ngày sinh + nút lịch
+        date_frame = CTkFrame(form_frame, fg_color="transparent")
+        date_of_birth = CTkEntry(date_frame, placeholder_text="YYYY-MM-DD")
+        if current_dob:
+            date_of_birth.insert(0, current_dob.strftime('%Y-%m-%d'))
+        date_of_birth.pack(side="left", fill="x", expand=True)
+        CTkButton(date_frame, text="📅", width=30, fg_color="#0085FF", hover_color="#005BB5", 
+                command=lambda: self.open_calendar(date_of_birth)).pack(side="right")
+        create_row("Ngày sinh:", date_frame, 1)
+
+        # Điện thoại
+        phone = CTkEntry(form_frame, placeholder_text="Số điện thoại")
+        if current_phone:
+            phone.insert(0, current_phone)
+        create_row("Điện thoại:", phone, 2)
+
+        # Email
+        email = CTkEntry(form_frame, placeholder_text="Email")
+        if current_email:
+            email.insert(0, current_email)
+        create_row("Email:", email, 3)
+
+        # Khoa
+        dept_combobox = CTkComboBox(form_frame, values=self.get_departments())
+        dept_values = self.get_departments()
+        for dept in dept_values:
+            if dept.startswith(current_dept_id):
+                dept_combobox.set(dept)
+                break
+        else:
+            dept_combobox.set(dept_values[0] if dept_values else "")
+        create_row("Khoa:", dept_combobox, 4)
+
+        # Bằng cấp
+        degree_combobox = CTkComboBox(form_frame, values=self.get_degrees())
+        degree_values = self.get_degrees()
+        for degree in degree_values:
+            if degree.startswith(current_degree_id):
+                degree_combobox.set(degree)
+                break
+        else:
+            degree_combobox.set(degree_values[0] if degree_values else "")
+        create_row("Bằng cấp:", degree_combobox, 5)
+
+        # Hàm lưu giáo viên
+        def save_teacher(window):
+            name = teacher_name.get().strip()
+            dob_str = date_of_birth.get().strip()
+            phone_num = phone.get().strip()
+            email_addr = email.get().strip()
+            dept_info = dept_combobox.get().strip()
+            degree_info = degree_combobox.get().strip()
+
+            if not all([name, dept_info, degree_info]):
+                messagebox.showerror("Lỗi", "Vui lòng nhập đầy đủ thông tin bắt buộc (Họ tên, Khoa, Bằng cấp)", parent=window)
+                return
+
+            dob_date = None
+            if dob_str:
+                try:
+                    dob_date = datetime.strptime(dob_str, '%Y-%m-%d').date()
+                    if dob_date > datetime.now().date():
+                        messagebox.showerror("Lỗi", "Ngày sinh không được trong tương lai!", parent=window)
+                        return
+                except ValueError:
+                    messagebox.showerror("Lỗi", "Ngày sinh không hợp lệ (YYYY-MM-DD)!", parent=window)
+                    return
+
+            if phone_num and not re.match(r"^\d{10,15}$", phone_num):
+                messagebox.showerror("Lỗi", "Số điện thoại phải từ 10 đến 15 chữ số!", parent=window)
+                return
+
+            if email_addr and not re.match(r"[^@]+@[^@]+\.[^@]+", email_addr):
+                messagebox.showerror("Lỗi", "Email không hợp lệ!", parent=window)
+                return
+
+            dept_id = dept_info.split(":")[0].strip()
+            degree_id = degree_info.split(":")[0].strip()
+
+            conn = None
+            cursor = None
+            try:
+                conn = mysql.connector.connect(**DB_CONFIG)
+                cursor = conn.cursor()
+
+                # Kiểm tra email trùng lặp (trừ chính giáo viên hiện tại)
+                if email_addr:
+                    cursor.execute(
+                        "SELECT teacher_id FROM teachers WHERE email = %s AND teacher_id != %s",
+                        (email_addr, teacher_id)
+                    )
+                    if cursor.fetchone():
+                        messagebox.showerror("Lỗi", "Email đã tồn tại!", parent=window)
+                        return
+
+                # Lấy hệ số từ bảng degrees
+                cursor.execute("SELECT coefficient FROM degrees WHERE degree_id = %s", (degree_id,))
+                result = cursor.fetchone()
+                if not result:
+                    messagebox.showerror("Lỗi", "Không tìm thấy bằng cấp!", parent=window)
+                    return
+                teacher_coefficient = result[0]
+
+                # Cập nhật giáo viên
+                cursor.execute(
+                    "UPDATE teachers SET full_name = %s, date_of_birth = %s, phone = %s, email = %s, "
+                    "dept_id = %s, degree_id = %s, teacher_coefficient = %s WHERE teacher_id = %s",
+                    (name, dob_date, phone_num or None, email_addr or None, dept_id, degree_id, teacher_coefficient, teacher_id)
+                )
+                conn.commit()
+                messagebox.showinfo("Thành công", f"Cập nhật giáo viên {teacher_id} thành công", parent=window)
+                self.load_teachers()
+                window.destroy()
+            except mysql.connector.Error as e:
+                messagebox.showerror("Lỗi", f"Không thể cập nhật giáo viên: {e}", parent=window)
+            finally:
+                if cursor:
+                    cursor.close()
+                if conn:
+                    conn.close()
+
+        # Nút Lưu và Hủy
+        button_frame = CTkFrame(form_frame, fg_color="transparent")
+        button_frame.grid(row=6, column=0, columnspan=2, pady=(10, 0))
+
+        CTkButton(button_frame, text="Lưu", width=120, fg_color="#007bff", hover_color="#0056b3",
+                command=lambda: save_teacher(edit_window)).pack(side="left", padx=10)
+        CTkButton(button_frame, text="Hủy", width=120, fg_color="#6c757d", hover_color="#5a6268",
+                command=edit_window.destroy).pack(side="left", padx=10)
+
+    def delete_teacher(self, teacher_id):
+        conn = None
+        cursor = None
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+
+            # Kiểm tra liên quan đến assignments
+            cursor.execute("SELECT 1 FROM assignments WHERE teacher_id = %s LIMIT 1", (teacher_id,))
+            if cursor.fetchone():
+                messagebox.showerror("Lỗi", "Không thể xóa giáo viên vì đã được phân công!", parent=self.window)
+                return
+
+            # Xác nhận xóa
+            if messagebox.askyesno("Xác nhận", f"Bạn có chắc muốn xóa giáo viên {teacher_id}?", parent=self.window):
+                cursor.execute("DELETE FROM teachers WHERE teacher_id = %s", (teacher_id,))
+                conn.commit()
+                messagebox.showinfo("Thành công", f"Xóa giáo viên {teacher_id} thành công", parent=self.window)
+                self.load_teachers()
+        except mysql.connector.Error as e:
+            messagebox.showerror("Lỗi", f"Không thể xóa giáo viên: {e}", parent=self.window)
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
+    def load_teachers(self):
+        # Xóa các widget cũ trong frame
+        for widget in self.teacher_list_frame.winfo_children():
+            widget.destroy()
+
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+            query = """
+                SELECT t.teacher_id, t.full_name, t.date_of_birth, t.phone, t.email, d.dept_name, deg.degree_name, t.teacher_coefficient
                 FROM teachers t
                 JOIN departments d ON t.dept_id = d.dept_id
                 JOIN degrees deg ON t.degree_id = deg.degree_id
-            """)
-            for item in self.teacher_tree.get_children():
-                self.teacher_tree.delete(item)
+            """
+            cursor.execute(query)
             rows = cursor.fetchall()
             if not rows:
-                messagebox.showwarning("Cảnh báo", "Không có dữ liệu giáo viên")
-            departments = self.get_departments()
-            degrees = self.get_degrees()
-            for row in rows:
-                dept_value = next((d for d in departments if d.startswith(row[5])), row[6])
-                degree_value = next((d for d in degrees if d.startswith(row[7])), row[8])
-                self.teacher_tree.insert("", "end", values=(
-                    row[0],
-                    row[1],
-                    row[2] if row[2] else 'N/A',
-                    row[3] if row[3] else 'N/A',
-                    row[4] if row[4] else 'N/A',
-                    dept_value,
-                    degree_value,
-                    row[9]
-                ))
+                CTkLabel(self.teacher_list_frame, text="Không có dữ liệu giáo viên", font=("Helvetica", 14), text_color="gray").pack(pady=20, expand=True)
+            else:
+                for idx, row in enumerate(rows, start=1):
+                    teacher_id, name, dob, phone, email, dept_name, degree_name, coeff = row
+                    # Tạo frame cho từng dòng
+                    teacher_row_frame = CTkFrame(self.teacher_list_frame, fg_color="#F0F0F0", corner_radius=5)
+                    teacher_row_frame.pack(fill="x", padx=0, pady=2)
+
+                    # Căn chỉnh các cột với chiều rộng đồng bộ với heading
+                    CTkLabel(teacher_row_frame, text=teacher_id, font=("Helvetica", 12), text_color="black", width=80, anchor="center").pack(side="left", padx=5)
+                    CTkLabel(teacher_row_frame, text=name, font=("Helvetica", 12), text_color="black", width=120, anchor="center").pack(side="left", padx=5)
+                    CTkLabel(teacher_row_frame, text=dob.strftime('%Y-%m-%d') if dob else "N/A", font=("Helvetica", 12), text_color="black", width=80, anchor="center").pack(side="left", padx=5)
+                    CTkLabel(teacher_row_frame, text=phone if phone else "N/A", font=("Helvetica", 12), text_color="black", width=80, anchor="center").pack(side="left", padx=5)
+                    CTkLabel(teacher_row_frame, text=email if email else "N/A", font=("Helvetica", 12), text_color="black", width=120, anchor="center").pack(side="left", padx=5)
+                    CTkLabel(teacher_row_frame, text=dept_name, font=("Helvetica", 12), text_color="black", width=200, anchor="center").pack(side="left", padx=5)
+                    CTkLabel(teacher_row_frame, text=degree_name, font=("Helvetica", 12), text_color="black", width=120, anchor="center").pack(side="left", padx=5)
+                    CTkLabel(teacher_row_frame, text=str(coeff), font=("Helvetica", 12), text_color="black", width=60, anchor="center").pack(side="left", padx=5)
+
+                    # Frame chứa các nút Sửa/Xóa
+                    button_frame = CTkFrame(teacher_row_frame, fg_color="transparent", width=100)
+                    button_frame.pack(side="left", padx=20)
+                    CTkButton(button_frame, text="Sửa", fg_color="#FFC107", width=30, command=lambda t_id=teacher_id: self.edit_teacher(t_id)).pack(side="left", padx=2)
+                    CTkButton(button_frame, text="Xóa", fg_color="#F44336", width=30, command=lambda t_id=teacher_id: self.delete_teacher(t_id)).pack(side="left", padx=2)
         except mysql.connector.Error as e:
             messagebox.showerror("Lỗi", f"Không thể tải dữ liệu giáo viên: {e}")
         finally:
@@ -1780,658 +2242,900 @@ class DepartmentView:
             self.stats_tab.winfo_children()[2].winfo_children()[2].create_text(10, 50, text=code_block, anchor="nw", font=("Helvetica", 10))
 
     def add_module(self):
-        selected = self.module_tree.selection()
-        if selected:
-            messagebox.showwarning("Cảnh báo", "Vui lòng reset form trước khi thêm mới!")
-            return
+    # Create popup window
+        add_window = CTkToplevel(self.window)
+        add_window.title("Thêm học phần mới")
+        add_window.resizable(False, False)
 
-        name = self.module_name.get().strip()
-        credits = self.module_credits.get().strip()
-        coefficient = self.module_coefficient.get().strip()
-        periods = self.module_periods.get().strip()
+        # Set window size
+        window_width = 450
+        window_height = 500
+        add_window.geometry(f"{window_width}x{window_height}")
 
-        if not all([name, credits, coefficient, periods]):
-            messagebox.showerror("Lỗi", "Vui lòng nhập đầy đủ thông tin")
-            return
+        # Center the window on the screen
+        screen_width = self.window.winfo_screenwidth()
+        screen_height = self.window.winfo_screenheight()
+        x_position = int((screen_width - window_width) / 2)
+        y_position = int((screen_height - window_height) / 2)
+        add_window.geometry(f"{window_width}x{window_height}+{x_position}+{y_position}")
 
-        try:
-            credits = int(credits)
-            if credits <= 0:
-                messagebox.showerror("Lỗi", "Số tín chỉ phải là số nguyên dương!")
+        # Make window modal
+        add_window.transient(self.window)
+        add_window.grab_set()
+
+        # Form frame
+        form_frame = CTkFrame(add_window, fg_color="#F0F0F0", corner_radius=10)
+        form_frame.pack(padx=20, pady=20, fill="both", expand=True)
+
+        # Title
+        CTkLabel(form_frame, text="Thêm học phần mới", font=("Helvetica", 16, "bold"), text_color="black").pack(pady=10)
+
+        # Module Name
+        name_frame = CTkFrame(form_frame, fg_color="transparent")
+        name_frame.pack(fill="x", pady=5)
+        CTkLabel(name_frame, text="Tên học phần:", font=("Helvetica", 12), text_color="black", width=120, anchor="w").pack(side="left", padx=(0, 5))
+        module_name_entry = CTkEntry(name_frame, placeholder_text="Tên học phần", width=300)
+        module_name_entry.pack(side="left", fill="x", expand=True)
+
+        # Credits (Combobox từ 1-12)
+        credits_frame = CTkFrame(form_frame, fg_color="transparent")
+        credits_frame.pack(fill="x", pady=5)
+        CTkLabel(credits_frame, text="Số tín chỉ:", font=("Helvetica", 12), text_color="black", width=120, anchor="w").pack(side="left", padx=(0, 5))
+        credits_combobox = CTkComboBox(credits_frame, values=[str(i) for i in range(1, 13)], width=300)
+        credits_combobox.pack(side="left", fill="x", expand=True)
+        credits_combobox.set("1")
+
+        # Coefficient
+        coefficient_frame = CTkFrame(form_frame, fg_color="transparent")
+        coefficient_frame.pack(fill="x", pady=5)
+        CTkLabel(coefficient_frame, text="Hệ số học phần:", font=("Helvetica", 12), text_color="black", width=120, anchor="w").pack(side="left", padx=(0, 5))
+        coefficient_entry = CTkEntry(coefficient_frame, placeholder_text="Hệ số (ví dụ: 1.5)", width=300)
+        coefficient_entry.pack(side="left", fill="x", expand=True)
+
+        # Periods
+        periods_frame = CTkFrame(form_frame, fg_color="transparent")
+        periods_frame.pack(fill="x", pady=5)
+        CTkLabel(periods_frame, text="Số tiết:", font=("Helvetica", 12), text_color="black", width=120, anchor="w").pack(side="left", padx=(0, 5))
+        periods_entry = CTkEntry(periods_frame, placeholder_text="Số tiết", width=300)
+        periods_entry.pack(side="left", fill="x", expand=True)
+
+        # Department
+        dept_frame = CTkFrame(form_frame, fg_color="transparent")
+        dept_frame.pack(fill="x", pady=5)
+        CTkLabel(dept_frame, text="Khoa:", font=("Helvetica", 12), text_color="black", width=120, anchor="w").pack(side="left", padx=(0, 5))
+        departments = self.get_departments()
+        dept_combobox = CTkComboBox(dept_frame, width=300, values=departments)
+        dept_combobox.pack(side="left", fill="x", expand=True)
+        if departments and departments[0] not in ["Không có khoa", "Lỗi tải khoa"]:
+            dept_combobox.set(departments[0])
+        else:
+            dept_combobox.set(departments[0])
+
+        # Buttons
+        button_frame = CTkFrame(form_frame, fg_color="transparent")
+        button_frame.pack(pady=20)
+        CTkButton(button_frame, text="Thêm", fg_color="#0085FF", width=100).pack(side="left", padx=5)
+        CTkButton(button_frame, text="Hủy", fg_color="#6C757D", width=100, command=lambda: add_window.destroy()).pack(side="left", padx=5)
+
+        # Save function
+        def save_module():
+            name = module_name_entry.get().strip()
+            credits = credits_combobox.get().strip()
+            coefficient = coefficient_entry.get().strip()
+            periods = periods_entry.get().strip()
+            dept = dept_combobox.get().strip()
+
+            # Validation
+            if not all([name, credits, coefficient, periods, dept]):
+                messagebox.showerror("Lỗi", "Vui lòng nhập đầy đủ thông tin!", parent=add_window)
                 return
-        except ValueError:
-            messagebox.showerror("Lỗi", "Số tín chỉ phải là số nguyên!")
-            return
 
-        try:
-            coefficient = float(coefficient)
-            if coefficient <= 0:
-                messagebox.showerror("Lỗi", "Hệ số học phần phải lớn hơn 0!")
+            try:
+                credits = int(credits)
+            except ValueError:
+                messagebox.showerror("Lỗi", "Số tín chỉ phải là số nguyên!", parent=add_window)
                 return
-        except ValueError:
-            messagebox.showerror("Lỗi", "Hệ số học phần phải là số thực!")
-            return
 
-        try:
-            periods = int(periods)
-            if periods <= 0:
-                messagebox.showerror("Lỗi", "Số tiết phải là số nguyên dương!")
+            try:
+                coefficient = float(coefficient)
+                if coefficient <= 0:
+                    messagebox.showerror("Lỗi", "Hệ số phải lớn hơn 0!", parent=add_window)
+                    return
+            except ValueError:
+                messagebox.showerror("Lỗi", "Hệ số phải là số thực!", parent=add_window)
                 return
-        except ValueError:
-            messagebox.showerror("Lỗi", "Số tiết phải là số nguyên!")
-            return
 
-        # Kiểm tra trùng tên học phần
-        try:
-            conn = mysql.connector.connect(**DB_CONFIG)
-            cursor = conn.cursor()
-            cursor.execute("SELECT module_id FROM course_modules WHERE module_name = %s", (name,))
-            if cursor.fetchone():
-                messagebox.showerror("Lỗi", "Tên học phần đã tồn tại. Vui lòng chọn tên khác!")
+            try:
+                periods = int(periods)
+                if periods <= 0:
+                    messagebox.showerror("Lỗi", "Số tiết phải lớn hơn 0!", parent=add_window)
+                    return
+            except ValueError:
+                messagebox.showerror("Lỗi", "Số tiết phải là số nguyên!", parent=add_window)
                 return
-            cursor.fetchall()  # Đọc hết kết quả để tránh lỗi Unread result
-        except mysql.connector.Error as e:
-            messagebox.showerror("Lỗi", f"Không thể kiểm tra trùng lặp: {e}")
-            return
-        finally:
-            cursor.close()
-            conn.close()
 
-        confirm = messagebox.askyesno("Xác nhận", "Bạn có chắc muốn thêm học phần này?")
-        if not confirm:
-            return
+            dept_id = dept.split(":")[0].strip()
 
-        try:
-            conn = mysql.connector.connect(**DB_CONFIG)
-            cursor = conn.cursor()
-            # Tạo mã số ngẫu nhiên MODxxxxx
-            while True:
-                random_num = random.randint(0, 99999)
-                module_id = f"MOD{str(random_num).zfill(5)}"
-                cursor.execute("SELECT module_id FROM course_modules WHERE module_id = %s", (module_id,))
-                if not cursor.fetchone():
-                    cursor.fetchall()  # Đọc hết kết quả để tránh lỗi Unread result
-                    break
-
-            cursor.execute("INSERT INTO course_modules (module_id, module_name, credits, coefficient, periods) VALUES (%s, %s, %s, %s, %s)",
-                        (module_id, name, credits, coefficient, periods))
-            conn.commit()
-            messagebox.showinfo("Thành công", f"Thêm học phần thành công với mã số {module_id}")
-            self.reset_module_fields()
-            self.load_modules()
-            # Cập nhật combobox ở các tab khác nếu cần
-            if hasattr(self, 'module_combobox'):
-                self.module_combobox.configure(values=self.get_modules())
-        except mysql.connector.Error as e:
-            messagebox.showerror("Lỗi", f"Không thể thêm học phần: {e}")
-        finally:
-            cursor.close()
-            conn.close()
-
-    def edit_module(self):
-        selected_item = self.module_tree.selection()
-        if not selected_item:
-            messagebox.showwarning("Cảnh báo", "Vui lòng chọn học phần để sửa!")
-            return
-
-        item = self.module_tree.item(selected_item)
-        module_id = item["values"][0]
-        name = self.module_name.get().strip()
-        credits = self.module_credits.get().strip()
-        coefficient = self.module_coefficient.get().strip()
-        periods = self.module_periods.get().strip()
-
-        if not all([name, credits, coefficient, periods]):
-            messagebox.showerror("Lỗi", "Vui lòng nhập đầy đủ thông tin")
-            return
-
-        try:
-            credits = int(credits)
-            if credits <= 0:
-                messagebox.showerror("Lỗi", "Số tín chỉ phải là số nguyên dương!")
-                return
-        except ValueError:
-            messagebox.showerror("Lỗi", "Số tín chỉ phải là số nguyên!")
-            return
-
-        try:
-            coefficient = float(coefficient)
-            if coefficient <= 0:
-                messagebox.showerror("Lỗi", "Hệ số học phần phải lớn hơn 0!")
-                return
-        except ValueError:
-            messagebox.showerror("Lỗi", "Hệ số học phần phải là số thực!")
-            return
-
-        try:
-            periods = int(periods)
-            if periods <= 0:
-                messagebox.showerror("Lỗi", "Số tiết phải là số nguyên dương!")
-                return
-        except ValueError:
-            messagebox.showerror("Lỗi", "Số tiết phải là số nguyên!")
-            return
-
-        # Kiểm tra trùng tên học phần (ngoại trừ chính học phần đang sửa)
-        try:
-            conn = mysql.connector.connect(**DB_CONFIG)
-            cursor = conn.cursor()
-            cursor.execute("SELECT module_id FROM course_modules WHERE module_name = %s AND module_id != %s", (name, module_id))
-            if cursor.fetchone():
-                messagebox.showerror("Lỗi", "Tên học phần đã tồn tại. Vui lòng chọn tên khác!")
-                return
-        except mysql.connector.Error as e:
-            messagebox.showerror("Lỗi", f"Không thể kiểm tra trùng lặp: {e}")
-            return
-        finally:
-            cursor.close()
-            conn.close()
-
-        confirm = messagebox.askyesno("Xác nhận", "Bạn có chắc muốn cập nhật thông tin học phần này?")
-        if not confirm:
-            return
-
-        try:
-            conn = mysql.connector.connect(**DB_CONFIG)
-            cursor = conn.cursor()
-            cursor.execute("UPDATE course_modules SET module_name = %s, credits = %s, coefficient = %s, periods = %s WHERE module_id = %s",
-                        (name, credits, coefficient, periods, module_id))
-            conn.commit()
-            messagebox.showinfo("Thành công", "Cập nhật học phần thành công")
-            self.reset_module_fields()
-            self.load_modules()
-            if hasattr(self, 'module_combobox'):
-                self.module_combobox.configure(values=self.get_modules())
-        except mysql.connector.Error as e:
-            messagebox.showerror("Lỗi", f"Không thể sửa học phần: {e}")
-        finally:
-            cursor.close()
-            conn.close()
-
-    def delete_module(self):
-        selected_item = self.module_tree.selection()
-        if not selected_item:
-            messagebox.showwarning("Cảnh báo", "Vui lòng chọn học phần để xóa!")
-            return
-
-        item = self.module_tree.item(selected_item)
-        module_id = item["values"][0]
-
-        # Kiểm tra xem học phần có liên quan đến lớp học không
-        try:
-            conn = mysql.connector.connect(**DB_CONFIG)
-            cursor = conn.cursor()
-            cursor.execute("SELECT 1 FROM classes WHERE module_id = %s LIMIT 1", (module_id,))
-            if cursor.fetchone():
-                messagebox.showerror("Lỗi", "Không thể xóa học phần vì có lớp học liên quan")
-                return
-        except mysql.connector.Error as e:
-            messagebox.showerror("Lỗi", f"Không thể kiểm tra lớp học liên quan: {e}")
-            return
-        finally:
-            cursor.close()
-            conn.close()
-
-        if messagebox.askyesno("Xác nhận", "Bạn có chắc muốn xóa học phần này?"):
+            # Check for duplicate module name
             try:
                 conn = mysql.connector.connect(**DB_CONFIG)
                 cursor = conn.cursor()
-                cursor.execute("DELETE FROM course_modules WHERE module_id = %s", (module_id,))
+                cursor.execute("SELECT module_id FROM course_modules WHERE module_name = %s", (name,))
+                if cursor.fetchone():
+                    messagebox.showerror("Lỗi", "Tên học phần đã tồn tại!", parent=add_window)
+                    return
+
+                # Generate module ID
+                cursor.execute("SELECT module_id FROM course_modules ORDER BY CAST(SUBSTRING(module_id, 4) AS UNSIGNED) DESC LIMIT 1")
+                result = cursor.fetchone()
+                if result:
+                    last_id = result[0]
+                    last_num = int(last_id[3:])
+                    new_num = last_num + 1
+                else:
+                    new_num = 1
+                module_id = f"MOD{str(new_num).zfill(5)}"
+
+                # Insert new module with dept_id
+                cursor.execute("INSERT INTO course_modules (module_id, module_name, credits, coefficient, periods, dept_id) VALUES (%s, %s, %s, %s, %s, %s)",
+                            (module_id, name, credits, coefficient, periods, dept_id))
                 conn.commit()
-                messagebox.showinfo("Thành công", "Xóa học phần thành công")
-                self.reset_module_fields()
+                messagebox.showinfo("Thành công", f"Thêm học phần thành công với mã {module_id}", parent=add_window)
                 self.load_modules()
-                if hasattr(self, 'module_combobox'):
-                    self.module_combobox.configure(values=self.get_modules())
+                self.module_list_frame.update_idletasks()
+                add_window.destroy()
             except mysql.connector.Error as e:
-                messagebox.showerror("Lỗi", f"Không thể xóa học phần: {e}")
+                messagebox.showerror("Lỗi", f"Không thể thêm học phần: {e}", parent=add_window)
             finally:
                 cursor.close()
                 conn.close()
 
-    def load_modules(self):
+        # Bind save function to "Thêm" button
+        button_frame.winfo_children()[0].configure(command=save_module)
+
+    def edit_module(self, module_id):
+        # Load module data into the edit form
         try:
             conn = mysql.connector.connect(**DB_CONFIG)
             cursor = conn.cursor()
-            cursor.execute("SELECT module_id, module_name, credits, coefficient, periods FROM course_modules")
-            for item in self.module_tree.get_children():
-                self.module_tree.delete(item)
-            rows = cursor.fetchall()
-            if not rows:
-                messagebox.showwarning("Cảnh báo", "Không có dữ liệu học phần")
-            for row in rows:
-                self.module_tree.insert("", "end", values=row)
+            cursor.execute("""
+                SELECT module_id, module_name, credits, coefficient, periods, dept_id
+                FROM course_modules
+                WHERE module_id = %s
+            """, (module_id,))
+            module_data = cursor.fetchone()
+            if not module_data:
+                messagebox.showerror("Lỗi", "Không tìm thấy học phần!")
+                return
+
+            module_id, name, credits, coefficient, periods, dept_id = module_data
+
+            # Create popup window
+            edit_window = CTkToplevel(self.window)
+            edit_window.title("Sửa học phần")
+            edit_window.resizable(False, False)
+
+            # Set window size
+            window_width = 450
+            window_height = 500
+            edit_window.geometry(f"{window_width}x{window_height}")
+
+            # Center the window on the screen
+            screen_width = self.window.winfo_screenwidth()
+            screen_height = self.window.winfo_screenheight()
+            x_position = int((screen_width - window_width) / 2)
+            y_position = int((screen_height - window_height) / 2)
+            edit_window.geometry(f"{window_width}x{window_height}+{x_position}+{y_position}")
+
+            # Make window modal
+            edit_window.transient(self.window)
+            edit_window.grab_set()
+
+            # Form frame
+            form_frame = CTkFrame(edit_window, fg_color="#F0F0F0", corner_radius=10)
+            form_frame.pack(padx=20, pady=20, fill="both", expand=True)
+
+            # Title
+            CTkLabel(form_frame, text="Sửa học phần", font=("Helvetica", 16, "bold"), text_color="black").pack(pady=10)
+
+            # Module Name
+            name_frame = CTkFrame(form_frame, fg_color="transparent")
+            name_frame.pack(fill="x", pady=5)
+            CTkLabel(name_frame, text="Tên học phần:", font=("Helvetica", 12), text_color="black", width=120, anchor="w").pack(side="left", padx=(0, 5))
+            module_name_entry = CTkEntry(name_frame, width=300)
+            module_name_entry.pack(side="left", fill="x", expand=True)
+            module_name_entry.insert(0, name)
+
+            # Credits (Combobox từ 1-12)
+            credits_frame = CTkFrame(form_frame, fg_color="transparent")
+            credits_frame.pack(fill="x", pady=5)
+            CTkLabel(credits_frame, text="Số tín chỉ:", font=("Helvetica", 12), text_color="black", width=120, anchor="w").pack(side="left", padx=(0, 5))
+            credits_combobox = CTkComboBox(credits_frame, values=[str(i) for i in range(1, 13)], width=300)
+            credits_combobox.pack(side="left", fill="x", expand=True)
+            credits_combobox.set(str(credits))
+
+            # Coefficient
+            coefficient_frame = CTkFrame(form_frame, fg_color="transparent")
+            coefficient_frame.pack(fill="x", pady=5)
+            CTkLabel(coefficient_frame, text="Hệ số học phần:", font=("Helvetica", 12), text_color="black", width=120, anchor="w").pack(side="left", padx=(0, 5))
+            coefficient_entry = CTkEntry(coefficient_frame, width=300)
+            coefficient_entry.pack(side="left", fill="x", expand=True)
+            coefficient_entry.insert(0, coefficient)
+
+            # Periods
+            periods_frame = CTkFrame(form_frame, fg_color="transparent")
+            periods_frame.pack(fill="x", pady=5)
+            CTkLabel(periods_frame, text="Số tiết:", font=("Helvetica", 12), text_color="black", width=120, anchor="w").pack(side="left", padx=(0, 5))
+            periods_entry = CTkEntry(periods_frame, width=300)
+            periods_entry.pack(side="left", fill="x", expand=True)
+            periods_entry.insert(0, periods)
+
+            # Department
+            dept_frame = CTkFrame(form_frame, fg_color="transparent")
+            dept_frame.pack(fill="x", pady=5)
+            CTkLabel(dept_frame, text="Khoa:", font=("Helvetica", 12), text_color="black", width=120, anchor="w").pack(side="left", padx=(0, 5))
+            departments = self.get_departments()
+            dept_combobox = CTkComboBox(dept_frame, width=300, values=departments)
+            dept_combobox.pack(side="left", fill="x", expand=True)
+            for dept in departments:
+                if dept.startswith(dept_id):
+                    dept_combobox.set(dept)
+                    break
+            else:
+                dept_combobox.set(departments[0] if departments else "Không có khoa")
+
+            # Buttons
+            button_frame = CTkFrame(form_frame, fg_color="transparent")
+            button_frame.pack(pady=20)
+            CTkButton(button_frame, text="Lưu", fg_color="#0085FF", width=100).pack(side="left", padx=5)
+            CTkButton(button_frame, text="Hủy", fg_color="#6C757D", width=100, command=lambda: edit_window.destroy()).pack(side="left", padx=5)
+
+            # Save function
+            def save_module():
+                new_name = module_name_entry.get().strip()
+                new_credits = credits_combobox.get().strip()
+                new_coefficient = coefficient_entry.get().strip()
+                new_periods = periods_entry.get().strip()
+                new_dept = dept_combobox.get().strip()
+
+                if not all([new_name, new_credits, new_coefficient, new_periods, new_dept]):
+                    messagebox.showerror("Lỗi", "Vui lòng nhập đầy đủ thông tin!", parent=edit_window)
+                    return
+
+                try:
+                    new_credits = int(new_credits)
+                except ValueError:
+                    messagebox.showerror("Lỗi", "Số tín chỉ phải là số nguyên!", parent=edit_window)
+                    return
+
+                try:
+                    new_coefficient = float(new_coefficient)
+                    if new_coefficient <= 0:
+                        messagebox.showerror("Lỗi", "Hệ số phải lớn hơn 0!", parent=edit_window)
+                        return
+                except ValueError:
+                    messagebox.showerror("Lỗi", "Hệ số phải là số thực!", parent=edit_window)
+                    return
+
+                try:
+                    new_periods = int(new_periods)
+                    if new_periods <= 0:
+                        messagebox.showerror("Lỗi", "Số tiết phải lớn hơn 0!", parent=edit_window)
+                        return
+                except ValueError:
+                    messagebox.showerror("Lỗi", "Số tiết phải là số nguyên!", parent=edit_window)
+                    return
+
+                new_dept_id = new_dept.split(":")[0].strip()
+
+                try:
+                    conn = mysql.connector.connect(**DB_CONFIG)
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT module_id FROM course_modules WHERE module_name = %s AND module_id != %s", (new_name, module_id))
+                    if cursor.fetchone():
+                        messagebox.showerror("Lỗi", "Tên học phần đã tồn tại!", parent=edit_window)
+                        return
+
+                    cursor.execute("UPDATE course_modules SET module_name = %s, credits = %s, coefficient = %s, periods = %s, dept_id = %s WHERE module_id = %s",
+                                (new_name, new_credits, new_coefficient, new_periods, new_dept_id, module_id))
+                    conn.commit()
+                    messagebox.showinfo("Thành công", "Cập nhật học phần thành công!", parent=edit_window)
+                    self.load_modules()
+                    self.module_list_frame.update_idletasks()
+                    edit_window.destroy()
+                except mysql.connector.Error as e:
+                    messagebox.showerror("Lỗi", f"Không thể cập nhật học phần: {e}", parent=edit_window)
+                finally:
+                    cursor.close()
+                    conn.close()
+
+            # Bind save function to "Lưu" button
+            button_frame.winfo_children()[0].configure(command=save_module)
+
         except mysql.connector.Error as e:
             messagebox.showerror("Lỗi", f"Không thể tải dữ liệu học phần: {e}")
         finally:
             cursor.close()
             conn.close()
 
-    def on_module_select(self, event):
-        selected_item = self.module_tree.selection()
-        if not selected_item:
+    def delete_module(self, module_id):
+        # Hiện hộp thoại xác nhận trước khi xóa
+        if not messagebox.askyesno("Xác nhận", "Bạn có chắc muốn xóa học phần này?"):
             return
-        item = self.module_tree.item(selected_item)
-        values = item['values']
-        self.module_name.delete(0, END)
-        self.module_name.insert(0, values[1])
-        self.module_name.configure(placeholder_text="")
-        self.module_credits.delete(0, END)
-        self.module_credits.insert(0, values[2])
-        self.module_credits.configure(placeholder_text="")
-        self.module_coefficient.delete(0, END)
-        self.module_coefficient.insert(0, values[3])
-        self.module_coefficient.configure(placeholder_text="")
-        self.module_periods.delete(0, END)
-        self.module_periods.insert(0, values[4])
-        self.module_periods.configure(placeholder_text="")
-
-    def reset_module_fields(self):
-        self.module_name.delete(0, END)
-        self.module_name.configure(placeholder_text="Tên học phần")
-        self.module_credits.delete(0, END)
-        self.module_credits.configure(placeholder_text="Số tín chỉ")
-        self.module_coefficient.delete(0, END)
-        self.module_coefficient.configure(placeholder_text="Hệ số (ví dụ: 1.5)")
-        self.module_periods.delete(0, END)
-        self.module_periods.configure(placeholder_text="Số tiết")
-        # Bỏ chọn dòng trong bảng module_tree
-        for item in self.module_tree.selection():
-            self.module_tree.selection_remove(item)
-
-    def add_class(self):
-        selected = self.class_tree.selection()
-        if selected:
-            messagebox.showwarning("Cảnh báo", "Vui lòng reset form trước khi thêm mới!")
-            return
-
-        semester = self.class_semester.get().strip()
-        module = self.class_module.get().strip()
-        class_count = self.class_count.get().strip()
-        num_students = self.class_size.get().strip()
-
-        # Kiểm tra đầu vào
-        if not all([semester, module, class_count, num_students]):
-            messagebox.showerror("Lỗi", "Vui lòng nhập đầy đủ thông tin")
-            return
-
-        semester_id = semester.split(":")[0].strip()
-        module_id = module.split(":")[0].strip()
-        module_name = module.split(":")[1].strip()
-
-        try:
-            class_count = int(class_count)
-            if class_count < 1 or class_count > 8:
-                messagebox.showerror("Lỗi", "Số lượng lớp phải từ 1 đến 8!")
-                return
-        except ValueError:
-            messagebox.showerror("Lỗi", "Số lượng lớp phải là số nguyên!")
-            return
-
-        try:
-            num_students = int(num_students)
-            if num_students <= 0:
-                messagebox.showerror("Lỗi", "Số sinh viên phải lớn hơn 0!")
-                return
-        except ValueError:
-            messagebox.showerror("Lỗi", "Số sinh viên phải là số nguyên!")
-            return
-
-        # Kiểm tra số lớp hiện có của học phần trong kỳ học
+    
         try:
             conn = mysql.connector.connect(**DB_CONFIG)
             cursor = conn.cursor()
-            cursor.execute("SELECT class_name FROM classes WHERE semester_id = %s AND module_id = %s",
-                        (semester_id, module_id))
-            existing_classes = cursor.fetchall()
-            current_count = len(existing_classes)
-
-            # Kiểm tra giới hạn 8 lớp cho học phần trong kỳ học
-            if current_count + class_count > 8:
-                messagebox.showerror("Lỗi", f"Học phần này đã có {current_count} lớp trong kỳ học. Không thể tạo thêm {class_count} lớp vì vượt quá giới hạn 8 lớp!")
+    
+            # Kiểm tra xem có lớp học nào đang sử dụng học phần này không
+            cursor.execute("SELECT 1 FROM classes WHERE module_id = %s LIMIT 1", (module_id,))
+            if cursor.fetchone():
+                messagebox.showerror("Lỗi", "Không thể xóa học phần vì đã có lớp học được tạo!")
                 return
-
-            # Tìm các số thứ tự hiện có và xác định khoảng trống
-            existing_numbers = []
-            for class_tuple in existing_classes:
-                class_name = class_tuple[0]
-                if class_name.startswith(module_name) and "N" in class_name:
-                    number = int(class_name.split("N")[-1])
-                    existing_numbers.append(number)
-            existing_numbers.sort()
-
-            # Tìm các khoảng trống (NXX bị thiếu) và số lớn nhất
-            if existing_numbers:
-                max_number = max(existing_numbers)
-                # Tạo danh sách các số từ 1 đến max_number
-                all_numbers = set(range(1, max_number + 1))
-                existing_numbers_set = set(existing_numbers)
-                # Tìm các số bị thiếu (khoảng trống)
-                missing_numbers = sorted(list(all_numbers - existing_numbers_set))
-                next_number = max_number + 1
-            else:
-                missing_numbers = []
-                next_number = 1
-
-            # Tạo danh sách các số thứ tự sẽ sử dụng để đặt tên lớp
-            numbers_to_use = []
-            for i in range(class_count):
-                if missing_numbers:
-                    # Lấy số nhỏ nhất từ các khoảng trống
-                    numbers_to_use.append(missing_numbers.pop(0))
-                else:
-                    # Nếu không còn khoảng trống, dùng số tiếp theo
-                    numbers_to_use.append(next_number)
-                    next_number += 1
-
-        except mysql.connector.Error as e:
-            messagebox.showerror("Lỗi", f"Không thể kiểm tra số lớp: {e}")
-            return
-        finally:
-            cursor.close()
-            conn.close()
-
-        # Hỏi xác nhận
-        confirm = messagebox.askyesno("Xác nhận", f"Bạn có chắc muốn tạo {class_count} lớp học cho {module_name} trong kỳ {semester.split(':')[1].strip()}?")
-        if not confirm:
-            return
-
-        # Tạo các lớp
-        try:
-            conn = mysql.connector.connect(**DB_CONFIG)
-            cursor = conn.cursor()
-            for number in numbers_to_use:
-                # Tạo tên lớp
-                class_name = f"{module_name} N{str(number).zfill(2)}"
-                # Tạo mã lớp
-                while True:
-                    random_num = random.randint(0, 99999)
-                    class_id = f"CLS{str(random_num).zfill(5)}"
-                    cursor.execute("SELECT class_id FROM classes WHERE class_id = %s", (class_id,))
-                    if not cursor.fetchone():
-                        break
-                # Thêm lớp vào CSDL
-                cursor.execute("INSERT INTO classes (class_id, semester_id, module_id, class_name, num_students) VALUES (%s, %s, %s, %s, %s)",
-                            (class_id, semester_id, module_id, class_name, num_students))
+    
+            # Thực hiện xóa học phần
+            cursor.execute("DELETE FROM course_modules WHERE module_id = %s", (module_id,))
             conn.commit()
-            messagebox.showinfo("Thành công", f"Tạo {class_count} lớp học thành công!")
-            self.reset_class_fields()
-            self.load_classes()
-            if hasattr(self, 'assignment_class_combobox'):
-                self.assignment_class_combobox.configure(values=self.get_classes())
+            
+            messagebox.showinfo("Thành công", "Xóa học phần thành công!")
+            self.load_modules()
+            self.module_list_frame.update_idletasks()
+            
         except mysql.connector.Error as e:
-            messagebox.showerror("Lỗi", f"Không thể tạo lớp học: {e}")
+            messagebox.showerror("Lỗi", f"Không thể xóa học phần: {e}")
         finally:
             cursor.close()
             conn.close()
 
-    def edit_class(self):
-        selected_item = self.class_tree.selection()
-        if not selected_item:
-            messagebox.showwarning("Cảnh báo", "Vui lòng chọn lớp học để sửa!")
-            return
+    def load_modules(self):
+        # Clear existing items in module_list_frame
+        for widget in self.module_list_frame.winfo_children():
+            widget.destroy()
 
-        item = self.class_tree.item(selected_item)
-        values = item['values']
-        class_id = self.selected_class_id  # Lấy class_id từ on_class_select
+        conn = None
+        cursor = None
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+            
+            # Xóa điều kiện WHERE để lấy tất cả học phần
+            query = """
+                SELECT cm.module_id, cm.module_name, cm.credits, cm.coefficient, cm.periods, d.dept_abbr
+                FROM course_modules cm
+                LEFT JOIN departments d ON cm.dept_id = d.dept_id
+            """
+            cursor.execute(query)
+            rows = cursor.fetchall()
 
-        # Lấy thông tin hiện tại của lớp
-        current_semester_display = values[0]
-        current_module_display = values[1]
-        current_class_name = values[3]
-        current_num_students = values[4]
-
-        # Tìm semester_id và module_id hiện tại
-        current_semester_id = None
-        current_module_id = None
-        for sem in self.get_semesters():
-            if sem.endswith(current_semester_display):
-                current_semester_id = sem.split(":")[0]
-                break
-        for mod in self.get_modules():
-            if mod.endswith(current_module_display):
-                current_module_id = mod.split(":")[0]
-                break
-
-        # Tạo cửa sổ pop-up
-        edit_window = CTkToplevel(self.window)
-        edit_window.title("Sửa lớp học")
-        edit_window.geometry("400x450")
-        edit_window.resizable(False, False)
-
-        # Frame chứa các trường nhập liệu
-        form_frame = CTkFrame(edit_window, fg_color="transparent")
-        form_frame.pack(padx=20, pady=20, fill="both", expand=True)
-
-        # Kỳ học
-        CTkLabel(form_frame, text="Học kỳ:", font=("Helvetica", 12)).pack(pady=(5, 0))
-        semester_var = CTkComboBox(form_frame, width=350, values=self.get_semesters())
-        semester_var.pack(pady=5)
-        semester_var.set(current_semester_id + ": " + current_semester_display if current_semester_id else "")
-
-        # Học phần
-        CTkLabel(form_frame, text="Học phần:", font=("Helvetica", 12)).pack(pady=(5, 0))
-        module_var = CTkComboBox(form_frame, width=350, values=self.get_modules())
-        module_var.pack(pady=5)
-        module_var.set(current_module_id + ": " + current_module_display if current_module_id else "")
-
-        # Tên lớp
-        CTkLabel(form_frame, text="Tên lớp:", font=("Helvetica", 12)).pack(pady=(5, 0))
-        class_name_var = CTkEntry(form_frame, width=350)
-        class_name_var.pack(pady=5)
-        class_name_var.insert(0, current_class_name)
-
-        # Số sinh viên
-        CTkLabel(form_frame, text="Số sinh viên:", font=("Helvetica", 12)).pack(pady=(5, 0))
-        num_students_var = CTkEntry(form_frame, width=350)
-        num_students_var.pack(pady=5)
-        num_students_var.insert(0, str(current_num_students))
-
-        # Hàm xử lý khi nhấn nút "Lưu"
-        def save_changes():
-            semester = semester_var.get().strip()
-            module = module_var.get().strip()
-            class_name = class_name_var.get().strip()
-            num_students = num_students_var.get().strip()
-
-            # Kiểm tra đầu vào
-            if not all([semester, module, class_name, num_students]):
-                messagebox.showerror("Lỗi", "Vui lòng nhập đầy đủ thông tin", parent=edit_window)
+            if not rows:
+                CTkLabel(self.module_list_frame, text="Không có dữ liệu học phần", 
+                        font=("Helvetica", 14), text_color="gray").pack(pady=10)
                 return
 
-            semester_id = semester.split(":")[0].strip()
-            module_id = module.split(":")[0].strip()
+            # Create a row for each module
+            for row in rows:
+                module_id, name, credits, coefficient, periods, dept_abbr = row
+
+                # Row frame for each module
+                row_frame = CTkFrame(self.module_list_frame, fg_color="#F5F5F5", corner_radius=0)
+                row_frame.pack(fill="x", pady=2)
+
+                # Data labels
+                CTkLabel(row_frame, text=module_id, font=("Helvetica", 12), 
+                        text_color="black", width=80, anchor="center").pack(side="left", padx=5)
+                CTkLabel(row_frame, text=name, font=("Helvetica", 12),
+                        text_color="black", width=300, anchor="center").pack(side="left", padx=5)
+                CTkLabel(row_frame, text=str(credits), font=("Helvetica", 12),
+                        text_color="black", width=100, anchor="center").pack(side="left", padx=5)
+                CTkLabel(row_frame, text=str(coefficient), font=("Helvetica", 12),
+                        text_color="black", width=100, anchor="center").pack(side="left", padx=5)
+                CTkLabel(row_frame, text=str(periods), font=("Helvetica", 12),
+                        text_color="black", width=100, anchor="center").pack(side="left", padx=5)
+                CTkLabel(row_frame, text=dept_abbr if dept_abbr else "N/A", font=("Helvetica", 12),
+                        text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+
+                # Actions frame
+                actions_frame = CTkFrame(row_frame, fg_color="transparent", width=150)
+                actions_frame.pack(side="left", padx=5)
+
+                # Edit button
+                CTkButton(actions_frame, text="Sửa", width=30, fg_color="#FFC107", hover_color="#E0A800", 
+                        command=lambda m_id=module_id: self.edit_module(m_id)).pack(side="left", padx=2)
+
+                # Delete button
+                CTkButton(actions_frame, text="Xóa", width=30, fg_color="#F44336", hover_color="#D32F2F", 
+                        command=lambda m_id=module_id: self.delete_module(m_id)).pack(side="left", padx=2)
+
+            # Force refresh
+            self.module_list_frame.update_idletasks()
+            
+        except mysql.connector.Error as e:
+            messagebox.showerror("Lỗi", f"Không thể tải dữ liệu học phần: {e}")
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
+
+    def add_classes(self):
+        # Create popup window
+        add_window = CTkToplevel(self.window)
+        add_window.title("Thêm lớp học phần")
+        add_window.resizable(False, False)
+
+        # Set window size
+        window_width = 500
+        window_height = 350
+        add_window.geometry(f"{window_width}x{window_height}")
+
+        # Center the window on the screen
+        screen_width = self.window.winfo_screenwidth()
+        screen_height = self.window.winfo_screenheight()
+        x_position = int((screen_width - window_width) / 2)
+        y_position = int((screen_height - window_height) / 2)
+        add_window.geometry(f"{window_width}x{window_height}+{x_position}+{y_position}")
+
+        # Make window modal
+        add_window.transient(self.window)
+        add_window.grab_set()
+
+        # Form frame
+        form_frame = CTkFrame(add_window, fg_color="#F0F0F0", corner_radius=10)
+        form_frame.pack(padx=20, pady=10, fill="both", expand=True)
+
+        # Title
+        CTkLabel(form_frame, text="Thêm lớp học phần", font=("Helvetica", 16, "bold"), text_color="black").pack(pady=5)
+
+        # Semester Combobox
+        semester_frame = CTkFrame(form_frame, fg_color="transparent")
+        semester_frame.pack(fill="x", pady=2)
+        CTkLabel(semester_frame, text="Học kỳ:", font=("Helvetica", 12), text_color="black", width=120, anchor="w").pack(side="left", padx=(0, 5))
+        semester_combobox = CTkComboBox(semester_frame, values=self.get_semesters(), width=260, height=32)
+        semester_combobox.pack(side="left")
+        if self.get_semesters():
+            semester_combobox.set(self.get_semesters()[0])
+
+        # Module Combobox (hiển thị module_name, giá trị là module_id)
+        module_frame = CTkFrame(form_frame, fg_color="transparent")
+        module_frame.pack(fill="x", pady=2)
+        CTkLabel(module_frame, text="Học phần:", font=("Helvetica", 12), text_color="black", width=120, anchor="w").pack(side="left", padx=(0, 5))
+
+        # Lấy danh sách học phần
+        modules = self.get_modules()
+        module_dict = {module.split(":")[1].strip(): module.split(":")[0].strip() for module in modules}  # {module_name: module_id}
+        module_names = list(module_dict.keys())  # Danh sách tên học phần để hiển thị
+
+        module_combobox = CTkComboBox(module_frame, values=module_names, width=260, height=32)
+        module_combobox.pack(side="left")
+        if module_names:
+            module_combobox.set(module_names[0])
+
+        # Number of Classes (Combobox: 1-8)
+        num_classes_frame = CTkFrame(form_frame, fg_color="transparent")
+        num_classes_frame.pack(fill="x", pady=2)
+        CTkLabel(num_classes_frame, text="Số lớp:", font=("Helvetica", 12), text_color="black", width=120, anchor="w").pack(side="left", padx=(0, 5))
+        num_classes_combobox = CTkComboBox(num_classes_frame, values=[str(i) for i in range(1, 9)], width=260, height=32)
+        num_classes_combobox.pack(side="left")
+        num_classes_combobox.set("1")
+
+        # Number of Students
+        num_students_frame = CTkFrame(form_frame, fg_color="transparent")
+        num_students_frame.pack(fill="x", pady=2)
+        CTkLabel(num_students_frame, text="Số sinh viên:", font=("Helvetica", 12), text_color="black", width=120, anchor="w").pack(side="left", padx=(0, 5))
+        num_students_entry = CTkEntry(num_students_frame, placeholder_text="Số sinh viên", width=260, height=32)
+        num_students_entry.pack(side="left")
+
+        # Buttons
+        button_frame = CTkFrame(form_frame, fg_color="transparent")
+        button_frame.pack(pady=10)
+        CTkButton(button_frame, text="Tạo", fg_color="#0085FF", width=100).pack(side="left", padx=5)
+        CTkButton(button_frame, text="Hủy", fg_color="#6C757D", width=100, command=lambda: add_window.destroy()).pack(side="left", padx=5)
+
+        # Save function
+        def save_classes():
+            semester_id = semester_combobox.get().strip()
+            module_name = module_combobox.get().strip()
+            num_classes_str = num_classes_combobox.get()
+            num_students = num_students_entry.get().strip()
+
+            # Kiểm tra dữ liệu đầu vào
+            if not all([semester_id, module_name, num_classes_str, num_students]):
+                messagebox.showerror("Lỗi", "Vui lòng nhập đầy đủ thông tin!", parent=add_window)
+                return
+
+            try:
+                num_classes = int(num_classes_str)
+                if num_classes < 1 or num_classes > 8:
+                    messagebox.showerror("Lỗi", "Số lớp phải từ 1 đến 8!", parent=add_window)
+                    return
+            except ValueError:
+                messagebox.showerror("Lỗi", "Số lớp không hợp lệ!", parent=add_window)
+                return
 
             try:
                 num_students = int(num_students)
-                if num_students <= 0:
-                    messagebox.showerror("Lỗi", "Số sinh viên phải lớn hơn 0!", parent=edit_window)
+                if num_students < 0:
+                    messagebox.showerror("Lỗi", "Số sinh viên phải lớn hơn hoặc bằng 0!", parent=add_window)
+                    return
+            except ValueError:
+                messagebox.showerror("Lỗi", "Số sinh viên phải là số nguyên!", parent=add_window)
+                return
+
+            # Lấy module_id từ module_name
+            module_id = module_dict.get(module_name)
+            if not module_id:
+                messagebox.showerror("Lỗi", "Học phần không hợp lệ!", parent=add_window)
+                return
+
+            conn = None
+            cursor = None
+            try:
+                conn = mysql.connector.connect(**DB_CONFIG)
+                cursor = conn.cursor()
+
+                # Check number of existing classes for this semester and module
+                cursor.execute("SELECT class_id FROM classes WHERE semester_id = %s AND module_id = %s", (semester_id, module_id))
+                existing_classes = [row[0] for row in cursor.fetchall()]
+                current_count = len(existing_classes)
+
+                if current_count + num_classes > 8:
+                    messagebox.showerror("Lỗi", f"Mỗi kỳ mỗi học phần chỉ được phép có tối đa 8 lớp! Hiện tại đã có {current_count} lớp.", parent=add_window)
+                    return
+
+                # Get module details
+                cursor.execute("SELECT module_name, credits, dept_id FROM course_modules WHERE module_id = %s", (module_id,))
+                module_data = cursor.fetchone()
+                if not module_data:
+                    messagebox.showerror("Lỗi", "Không tìm thấy học phần!", parent=add_window)
+                    return
+                module_name_db, credits, dept_id = module_data
+
+                cursor.execute("SELECT dept_abbr FROM departments WHERE dept_id = %s", (dept_id,))
+                dept_result = cursor.fetchone()
+                if not dept_result:
+                    messagebox.showerror("Lỗi", "Không tìm thấy khoa!", parent=add_window)
+                    return
+                dept_abbr = dept_result[0]
+
+                # Get year from semester
+                cursor.execute("SELECT year FROM semesters WHERE semester_id = %s", (semester_id,))
+                year_result = cursor.fetchone()
+                if not year_result:
+                    messagebox.showerror("Lỗi", "Không tìm thấy kỳ học!", parent=add_window)
+                    return
+                year = year_result[0]
+                year_suffix = year[-2:]  # Lấy 2 số cuối của năm
+
+                # Generate class names and IDs
+                class_names = []
+                # Lấy tất cả class_id hiện có
+                cursor.execute("SELECT class_id FROM classes")
+                all_class_ids = {row[0] for row in cursor.fetchall()}
+
+                # Tạo class_id mới cho từng lớp
+                for class_num in range(num_classes):
+                    # Tên lớp: <Khoa><Mã học phần>-<Nhóm lý thuyết>-<Số tín chỉ>-<Năm>(N<STT nhóm>)
+                    group_num = class_num + 1  # Số thứ tự nhóm từ N01 đến N08
+                    class_name = f"{dept_abbr}{module_id}-LT-{credits}-{year_suffix}(N{str(group_num).zfill(2)})"
+                    # Tìm class_id khả dụng (CLSxxxxx, với xxxxx là 5 số ngẫu nhiên)
+                    found_valid_id = False
+                    attempts = 0
+                    max_attempts = 1000  # Giới hạn số lần thử để tránh vòng lặp vô hạn
+                    while attempts < max_attempts:
+                        random_num = random.randint(0, 99999)  # Số ngẫu nhiên từ 00000 đến 99999
+                        new_class_id = f"CLS{str(random_num).zfill(5)}"
+                        if new_class_id not in all_class_ids:
+                            found_valid_id = True
+                            all_class_ids.add(new_class_id)  # Đánh dấu class_id này đã được sử dụng
+                            break
+                        attempts += 1
+                    if not found_valid_id:
+                        messagebox.showerror("Lỗi", "Không thể tạo thêm lớp học vì đã hết mã lớp khả dụng (CLSxxxxx)!", parent=add_window)
+                        return
+                    class_names.append((class_name, new_class_id, group_num))
+
+                # Confirm creation
+                if not messagebox.askyesno("Xác nhận", f"Bạn có muốn tạo {num_classes} lớp học phần với tên:\n" + "\n".join([name[0] for name in class_names]) + "?", parent=add_window):
+                    return
+
+                # Insert new classes
+                for class_name, new_class_id, group_num in class_names:
+                    cursor.execute("INSERT INTO classes (class_id, semester_id, module_id, class_name, num_students) VALUES (%s, %s, %s, %s, %s)",
+                                (new_class_id, semester_id, module_id, class_name, num_students))
+                conn.commit()
+                messagebox.showinfo("Thành công", f"Đã tạo thành công {num_classes} lớp học phần!", parent=add_window)
+                self.load_classes()
+                self.class_list_frame.update_idletasks()
+                add_window.destroy()
+            except mysql.connector.Error as e:
+                messagebox.showerror("Lỗi", f"Không thể tạo lớp học phần: {e}", parent=add_window)
+            finally:
+                if cursor:
+                    cursor.close()
+                if conn:
+                    conn.close()
+
+        # Bind save function to "Tạo" button
+        button_frame.winfo_children()[0].configure(command=save_classes)
+
+    def edit_class(self, class_id):
+    # Load class data
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT c.semester_id, c.module_id, c.class_name, c.num_students
+                FROM classes c
+                WHERE c.class_id = %s
+            """, (class_id,))
+            class_data = cursor.fetchone()
+            if not class_data:
+                messagebox.showerror("Lỗi", "Không tìm thấy lớp học!")
+                return
+
+            semester_id, module_id, class_name, num_students = class_data
+
+        except mysql.connector.Error as e:
+            messagebox.showerror("Lỗi", f"Không thể tải dữ liệu lớp học: {e}")
+            return
+        finally:
+            cursor.close()
+            conn.close()
+
+        # Create popup window
+        edit_window = CTkToplevel(self.window)
+        edit_window.title("Sửa thông tin lớp")
+        edit_window.resizable(False, False)
+
+        # Set window size
+        window_width = 500
+        window_height = 350
+        edit_window.geometry(f"{window_width}x{window_height}")
+
+        # Center the window on the screen
+        screen_width = self.window.winfo_screenwidth()
+        screen_height = self.window.winfo_screenheight()
+        x_position = int((screen_width - window_width) / 2)
+        y_position = int((screen_height - window_height) / 2)
+        edit_window.geometry(f"{window_width}x{window_height}+{x_position}+{y_position}")
+
+        # Make window modal
+        edit_window.transient(self.window)
+        edit_window.grab_set()
+
+        # Form frame
+        form_frame = CTkFrame(edit_window, fg_color="#F0F0F0", corner_radius=10)
+        form_frame.pack(padx=20, pady=10, fill="both", expand=True)
+
+        # Title
+        CTkLabel(form_frame, text="Sửa thông tin lớp", font=("Helvetica", 16, "bold"), text_color="black").pack(pady=5)
+
+        # Semester Combobox
+        semester_frame = CTkFrame(form_frame, fg_color="transparent")
+        semester_frame.pack(fill="x", pady=2)
+        CTkLabel(semester_frame, text="Học kỳ:", font=("Helvetica", 12), text_color="black", width=120, anchor="w").pack(side="left", padx=(0, 5))
+        semester_combobox = CTkComboBox(semester_frame, values=self.get_semesters(), width=260, height=32)
+        semester_combobox.pack(side="left")
+        semester_combobox.set(semester_id)
+
+        # Module Combobox (hiển thị module_name, giá trị là module_id)
+        module_frame = CTkFrame(form_frame, fg_color="transparent")
+        module_frame.pack(fill="x", pady=2)
+        CTkLabel(module_frame, text="Học phần:", font=("Helvetica", 12), text_color="black", width=120, anchor="w").pack(side="left", padx=(0, 5))
+
+        # Lấy danh sách học phần
+        modules = self.get_modules()  # modules có định dạng ["MOD29934: Lập trình Python", ...]
+        module_dict = {module.split(":")[1].strip(): module.split(":")[0].strip() for module in modules}  # {module_name: module_id}
+        module_names = list(module_dict.keys())  # Danh sách tên học phần để hiển thị
+
+        module_combobox = CTkComboBox(module_frame, values=module_names, width=260, height=32)
+        module_combobox.pack(side="left")
+        # Tìm module_name tương ứng với module_id
+        for name, id in module_dict.items():
+            if id == module_id:
+                module_combobox.set(name)
+                break
+
+        # Class Name
+        name_frame = CTkFrame(form_frame, fg_color="transparent")
+        name_frame.pack(fill="x", pady=2)
+        CTkLabel(name_frame, text="Tên lớp:", font=("Helvetica", 12), text_color="black", width=120, anchor="w").pack(side="left", padx=(0, 5))
+        class_name_entry = CTkEntry(name_frame, placeholder_text="Tên lớp", width=260, height=32)
+        class_name_entry.pack(side="left")
+        class_name_entry.insert(0, class_name)
+
+        # Number of Students
+        num_students_frame = CTkFrame(form_frame, fg_color="transparent")
+        num_students_frame.pack(fill="x", pady=2)
+        CTkLabel(num_students_frame, text="Số sinh viên:", font=("Helvetica", 12), text_color="black", width=120, anchor="w").pack(side="left", padx=(0, 5))
+        num_students_entry = CTkEntry(num_students_frame, placeholder_text="Số sinh viên", width=260, height=32)
+        num_students_entry.pack(side="left")
+        num_students_entry.insert(0, str(num_students))
+
+        # Buttons
+        button_frame = CTkFrame(form_frame, fg_color="transparent")
+        button_frame.pack(pady=10)
+        CTkButton(button_frame, text="Lưu", fg_color="#0085FF", width=100).pack(side="left", padx=5)
+        CTkButton(button_frame, text="Hủy", fg_color="#6C757D", width=100, command=lambda: edit_window.destroy()).pack(side="left", padx=5)
+
+        # Save function
+        def save_class():
+            new_semester_id = semester_combobox.get().strip()
+            new_module_name = module_combobox.get().strip()
+            new_class_name = class_name_entry.get().strip()
+            new_num_students = num_students_entry.get().strip()
+
+            # Lấy module_id từ module_name
+            new_module_id = module_dict.get(new_module_name)
+            if not new_module_id:
+                messagebox.showerror("Lỗi", "Học phần không hợp lệ!", parent=edit_window)
+                return
+
+            # Validation
+            if not all([new_semester_id, new_module_id, new_class_name, new_num_students]):
+                messagebox.showerror("Lỗi", "Vui lòng nhập đầy đủ thông tin!", parent=edit_window)
+                return
+
+            try:
+                new_num_students = int(new_num_students)
+                if new_num_students < 0:
+                    messagebox.showerror("Lỗi", "Số sinh viên phải lớn hơn hoặc bằng 0!", parent=edit_window)
                     return
             except ValueError:
                 messagebox.showerror("Lỗi", "Số sinh viên phải là số nguyên!", parent=edit_window)
                 return
 
-            # Nếu kỳ học hoặc học phần thay đổi, kiểm tra giới hạn 8 lớp
-            if semester_id != current_semester_id or module_id != current_module_id:
-                try:
-                    conn = mysql.connector.connect(**DB_CONFIG)
-                    cursor = conn.cursor()
-                    cursor.execute("SELECT COUNT(*) FROM classes WHERE semester_id = %s AND module_id = %s AND class_id != %s",
-                                (semester_id, module_id, class_id))
-                    current_count = cursor.fetchone()[0]
-                    if current_count >= 8:
-                        messagebox.showerror("Lỗi", f"Học phần này đã có {current_count} lớp trong kỳ học mới. Không thể chuyển vì vượt quá giới hạn 8 lớp!", parent=edit_window)
-                        return
-                except mysql.connector.Error as e:
-                    messagebox.showerror("Lỗi", f"Không thể kiểm tra số lớp: {e}", parent=edit_window)
-                    return
-                finally:
-                    cursor.close()
-                    conn.close()
-
-            # Kiểm tra trùng lặp tên lớp trong cùng kỳ học và học phần (ngoại trừ lớp đang sửa)
             try:
                 conn = mysql.connector.connect(**DB_CONFIG)
                 cursor = conn.cursor()
-                cursor.execute("SELECT class_id FROM classes WHERE semester_id = %s AND module_id = %s AND class_name = %s AND class_id != %s",
-                            (semester_id, module_id, class_name, class_id))
-                if cursor.fetchone():
-                    messagebox.showerror("Lỗi", f"Tên lớp '{class_name}' đã tồn tại trong kỳ học và học phần này!", parent=edit_window)
-                    return
-            except mysql.connector.Error as e:
-                messagebox.showerror("Lỗi", f"Không thể kiểm tra trùng lặp tên lớp: {e}", parent=edit_window)
-                return
-            finally:
-                cursor.close()
-                conn.close()
 
-            # Xác nhận trước khi lưu
-            confirm = messagebox.askyesno("Xác nhận", "Bạn có chắc muốn cập nhật thông tin lớp học này?", parent=edit_window)
-            if not confirm:
-                return
-
-            # Lưu thay đổi vào CSDL
-            try:
-                conn = mysql.connector.connect(**DB_CONFIG)
-                cursor = conn.cursor()
+                # Update class
                 cursor.execute("UPDATE classes SET semester_id = %s, module_id = %s, class_name = %s, num_students = %s WHERE class_id = %s",
-                            (semester_id, module_id, class_name, num_students, class_id))
+                            (new_semester_id, new_module_id, new_class_name, new_num_students, class_id))
                 conn.commit()
-                messagebox.showinfo("Thành công", "Cập nhật lớp học thành công", parent=edit_window)
-                self.reset_class_fields()
+                messagebox.showinfo("Thành công", "Cập nhật thông tin lớp thành công!", parent=edit_window)
                 self.load_classes()
-                edit_window.destroy()  # Đóng cửa sổ sau khi lưu thành công
+                self.class_list_frame.update_idletasks()
+                edit_window.destroy()
             except mysql.connector.Error as e:
-                messagebox.showerror("Lỗi", f"Không thể sửa lớp học: {e}", parent=edit_window)
+                messagebox.showerror("Lỗi", f"Không thể cập nhật lớp học: {e}", parent=edit_window)
             finally:
                 cursor.close()
                 conn.close()
 
-        # Hàm đóng cửa sổ
-        def cancel():
-            edit_window.destroy()
+        # Bind save function to "Lưu" button
+        button_frame.winfo_children()[0].configure(command=save_class)
 
-        # Nút Lưu và Hủy
-        button_frame = CTkFrame(form_frame, fg_color="transparent")
-        button_frame.pack(pady=10)
-        CTkButton(button_frame, text="Lưu", fg_color="#0085FF", command=save_changes, width=100).pack(side="left", padx=5)
-        CTkButton(button_frame, text="Hủy", fg_color="#6C757D", command=cancel, width=100).pack(side="left", padx=5)
-
-    def delete_class(self):
-        selected_item = self.class_tree.selection()
-        if not selected_item:
-            messagebox.showwarning("Cảnh báo", "Vui lòng chọn lớp học để xóa!")
-            return
-
-        item = self.class_tree.item(selected_item)
-        class_id = item["values"][2]
-
-        try:
-            conn = mysql.connector.connect(**DB_CONFIG)
-            cursor = conn.cursor()
-            cursor.execute("SELECT 1 FROM assignments WHERE class_id = %s LIMIT 1", (class_id,))
-            if cursor.fetchone():
-                messagebox.showerror("Lỗi", "Không thể xóa lớp học vì có phân công liên quan")
-                return
-            cursor.execute("SELECT 1 FROM salaries WHERE class_id = %s LIMIT 1", (class_id,))
-            if cursor.fetchone():
-                messagebox.showerror("Lỗi", "Không thể xóa lớp học vì có lương liên quan")
-                return
-        except mysql.connector.Error as e:
-            messagebox.showerror("Lỗi", f"Không thể kiểm tra liên quan: {e}")
-            return
-        finally:
-            cursor.close()
-            conn.close()
-
-        if messagebox.askyesno("Xác nhận", "Bạn có chắc muốn xóa lớp học này?"):
+    def delete_class(self, class_id):
+        if messagebox.askyesno("Xác nhận", "Bạn có chắc muốn xóa lớp học phần này không?\nLưu ý: Nếu lớp đã được phân công giảng viên, dữ liệu lương liên quan cũng sẽ bị xóa."):
+            conn = None
+            cursor = None
             try:
                 conn = mysql.connector.connect(**DB_CONFIG)
                 cursor = conn.cursor()
+
+                # Xóa dữ liệu lương liên quan (sẽ tự động xóa nhờ ràng buộc ON DELETE CASCADE trong bảng salaries)
+                # Xóa phân công (sẽ tự động xóa nhờ ràng buộc ON DELETE CASCADE trong bảng assignments)
+                # Xóa lớp học phần
                 cursor.execute("DELETE FROM classes WHERE class_id = %s", (class_id,))
                 conn.commit()
-                messagebox.showinfo("Thành công", "Xóa lớp học thành công")
-                self.reset_class_fields()
+                messagebox.showinfo("Thành công", "Xóa lớp học phần thành công!")
                 self.load_classes()
-                if hasattr(self, 'assignment_class_combobox'):
-                    self.assignment_class_combobox.configure(values=self.get_classes())
+                self.class_list_frame.update_idletasks()
             except mysql.connector.Error as e:
-                messagebox.showerror("Lỗi", f"Không thể xóa lớp học: {e}")
+                messagebox.showerror("Lỗi", f"Không thể xóa lớp học phần: {e}")
             finally:
                 cursor.close()
                 conn.close()
 
-    def load_classes(self, event=None):
-        semester = self.class_semester.get().strip() if event else None
-        semester_id = semester.split(":")[0].strip() if semester else None
+    def load_classes(self):
+        # Clear existing items in class_list_frame
+        for widget in self.class_list_frame.winfo_children():
+            widget.destroy()
 
+        semester_filter = self.semester_filter.get()
+        module_filter = self.module_filter.get()
+        status_filter = self.status_filter.get()
+
+        conn = None
+        cursor = None
         try:
             conn = mysql.connector.connect(**DB_CONFIG)
             cursor = conn.cursor()
+
+            # Kiểm tra dữ liệu trong các bảng liên quan
+            cursor.execute("SELECT semester_id FROM semesters")
+            available_semesters = [row[0] for row in cursor.fetchall()]
+
+            cursor.execute("SELECT module_id, module_name FROM course_modules")
+            available_modules = {row[1]: row[0] for row in cursor.fetchall()}  # {module_name: module_id}
+
             query = """
-                SELECT s.semester_name, s.year, cm.module_name, c.class_id, c.class_name, c.num_students
+                SELECT c.semester_id, m.module_name, c.class_id, c.class_name, c.num_students, t.full_name
                 FROM classes c
                 JOIN semesters s ON c.semester_id = s.semester_id
-                JOIN course_modules cm ON c.module_id = cm.module_id
+                JOIN course_modules m ON c.module_id = m.module_id
+                LEFT JOIN assignments a ON c.class_id = a.class_id
+                LEFT JOIN teachers t ON a.teacher_id = t.teacher_id
+                WHERE 1=1
             """
             params = []
-            if semester_id:
-                query += " WHERE c.semester_id = %s"
-                params.append(semester_id)
+
+            if semester_filter != "Tất cả":
+                if semester_filter in available_semesters:
+                    query += " AND c.semester_id = %s"
+                    params.append(semester_filter)
+                else:
+                    CTkLabel(self.class_list_frame, text="Không có dữ liệu lớp học", font=("Helvetica", 14), text_color="gray").pack(pady=10)
+                    return
+
+            if module_filter != "Tất cả":
+                # Lọc theo module_name, cần lấy module_id tương ứng
+                module_id = available_modules.get(module_filter)
+                if module_id:
+                    query += " AND c.module_id = %s"
+                    params.append(module_id)
+                else:
+                    CTkLabel(self.class_list_frame, text="Không có dữ liệu lớp học", font=("Helvetica", 14), text_color="gray").pack(pady=10)
+                    return
+
+            if status_filter == "Đã phân công":
+                query += " AND a.teacher_id IS NOT NULL"
+            elif status_filter == "Chưa phân công":
+                query += " AND a.teacher_id IS NULL"
 
             cursor.execute(query, params)
-            for item in self.class_tree.get_children():
-                self.class_tree.delete(item)
             rows = cursor.fetchall()
+
             if not rows:
-                messagebox.showwarning("Cảnh báo", "Không có dữ liệu lớp học phần")
+                CTkLabel(self.class_list_frame, text="Không có dữ liệu lớp học", font=("Helvetica", 14), text_color="gray").pack(pady=10)
+                return
+
+            # Create a row for each class
             for row in rows:
-                semester_display = f"{row[0]} {row[1]}"  # Hiển thị tên kỳ và năm học
-                self.class_tree.insert("", "end", values=(semester_display, row[2], row[3], row[4], row[5]))
+                semester_id, module_name, class_id, class_name, num_students, teacher_name = row
+
+                # Row frame for each class
+                row_frame = CTkFrame(self.class_list_frame, fg_color="#F5F5F5", corner_radius=0)
+                row_frame.pack(fill="x", pady=2)
+
+                # Data labels
+                CTkLabel(row_frame, text=semester_id, font=("Helvetica", 12), text_color="black", width=70, anchor="center").pack(side="left", padx=5)
+                CTkLabel(row_frame, text=module_name, font=("Helvetica", 12), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+                CTkLabel(row_frame, text=class_id, font=("Helvetica", 12), text_color="black", width=70, anchor="center").pack(side="left", padx=5)
+                CTkLabel(row_frame, text=class_name, font=("Helvetica", 12), text_color="black", width=220, anchor="center").pack(side="left", padx=5)
+                CTkLabel(row_frame, text=str(num_students), font=("Helvetica", 12), text_color="black", width=100, anchor="center").pack(side="left", padx=5)
+                CTkLabel(row_frame, text=teacher_name if teacher_name else "Chưa phân công", font=("Helvetica", 12), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+
+                # Actions frame
+                actions_frame = CTkFrame(row_frame, fg_color="transparent", width=200)
+                actions_frame.pack(side="left", padx=5)
+
+                # Assign button
+                CTkButton(actions_frame, text="Phân công", width=50, fg_color="#00C4B4", hover_color="#009688", 
+                        command=lambda c_id=class_id: self.assign_teacher(c_id)).pack(side="left", padx=2)
+
+                # Edit button
+                CTkButton(actions_frame, text="Sửa", width=50, fg_color="#FFC107", hover_color="#E0A800", 
+                        command=lambda c_id=class_id: self.edit_class(c_id)).pack(side="left", padx=2)
+
+                # Delete button
+                CTkButton(actions_frame, text="Xóa", width=50, fg_color="#F44336", hover_color="#D32F2F", 
+                        command=lambda c_id=class_id: self.delete_class(c_id)).pack(side="left", padx=2)
+
         except mysql.connector.Error as e:
             messagebox.showerror("Lỗi", f"Không thể tải dữ liệu lớp học: {e}")
         finally:
-            cursor.close()
-            conn.close()
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
 
-    def on_class_select(self, event):
-        selected_item = self.class_tree.selection()
-        if not selected_item:
-            return
-        item = self.class_tree.item(selected_item)
-        values = item['values']
-        # Tìm semester_id từ semester_display
-        semester_display = values[0]
-        semester_id = None
-        for semester in self.get_semesters():
-            if semester.endswith(semester_display):
-                semester_id = semester.split(":")[0]
-                break
-        # Tìm module_id từ module_display
-        module_display = values[1]
-        module_id = None
-        for module in self.get_modules():
-            if module.endswith(module_display):
-                module_id = module.split(":")[0]
-                break
-        self.class_semester.set(semester_id + ": " + semester_display if semester_id else "")
-        self.class_module.set(module_id + ": " + module_display if module_id else "")
-        self.class_count.set("1")  # Không hiển thị số lượng lớp đã tạo
-        self.class_size.delete(0, END)
-        self.class_size.insert(0, values[4])
-        self.class_size.configure(placeholder_text="")
-        self.selected_class_id = values[2]  # Lưu class_id để sử dụng khi sửa
+        # Làm mới giao diện
+        self.class_list_frame.update_idletasks()
 
-    def reset_class_fields(self):
-        self.class_semester.set(self.get_semesters()[0] if self.get_semesters() else "")
-        self.class_module.set(self.get_modules()[0] if self.get_modules() else "")
-        self.class_count.set("1")
-        self.class_size.delete(0, END)
-        self.class_size.configure(placeholder_text="Số sinh viên")
-        for item in self.class_tree.selection():
-            self.class_tree.selection_remove(item)
-        # Làm mới bảng dữ liệu, hiển thị tất cả lớp học phần
-        self.load_classes()
+    
 
     def load_salaries(self):
         try:
@@ -2627,151 +3331,343 @@ class DepartmentView:
             conn.close()
 
     def add_semester(self):
-        selected = self.semester_tree.selection()
-        if selected:
-            messagebox.showwarning("Cảnh báo", "Vui lòng reset form trước khi thêm mới!")
-            return
+        # Create popup window
+        add_window = CTkToplevel(self.window)
+        add_window.title("Thêm kỳ học mới")
+        add_window.resizable(False, False)
 
-        name = self.semester_name.get().strip()
-        year_range = self.semester_year.get().strip()
-        start_date_str = self.start_date.get().strip()
-        end_date_str = self.end_date.get().strip()
+        # Set window size
+        window_width = 450
+        window_height = 300
+        add_window.geometry(f"{window_width}x{window_height}")
 
-        if not all([name, year_range, start_date_str, end_date_str]):
-            messagebox.showerror("Lỗi", "Vui lòng nhập đầy đủ thông tin")
-            return
+        # Center the window on the screen
+        screen_width = self.window.winfo_screenwidth()
+        screen_height = self.window.winfo_screenheight()
+        x_position = int((screen_width - window_width) / 2)
+        y_position = int((screen_height - window_height) / 2)
+        add_window.geometry(f"{window_width}x{window_height}+{x_position}+{y_position}")
 
-        try:
-            start_year, end_year = map(int, year_range.split('-'))
-            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
-            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
-        except ValueError:
-            messagebox.showerror("Lỗi", "Ngày tháng không hợp lệ. Vui lòng nhập theo định dạng YYYY-MM-DD!")
-            return
+        # Make window modal
+        add_window.transient(self.window)
+        add_window.grab_set()
 
-        if start_date.year != start_year:
-            messagebox.showerror("Lỗi", f"Ngày bắt đầu phải thuộc năm {start_year}")
-            return
-        if end_date.year not in [start_year, end_year]:
-            messagebox.showerror("Lỗi", f"Ngày kết thúc phải thuộc năm {start_year} hoặc {end_year}")
-            return
+        # Form frame
+        form_frame = CTkFrame(add_window, fg_color="#F0F0F0", corner_radius=10)
+        form_frame.pack(padx=20, pady=10, fill="both", expand=True)
 
-        if start_date >= end_date:
-            messagebox.showerror("Lỗi", "Ngày bắt đầu phải nhỏ hơn ngày kết thúc")
-            return
+        # Title
+        CTkLabel(form_frame, text="Thêm kỳ học mới", font=("Helvetica", 16, "bold"), text_color="black").pack(pady=5)
 
-        conn = None
-        cursor = None
-        try:
-            conn = mysql.connector.connect(**DB_CONFIG)
-            cursor = conn.cursor()
-            cursor.execute("SELECT semester_id FROM semesters WHERE semester_name = %s AND year = %s", (name, year_range))
-            if cursor.fetchone():
-                messagebox.showerror("Lỗi", "Kỳ học đã tồn tại trong năm học này!")
+        # Semester Name (Combobox: Kỳ 1, Kỳ 2, ..., Kỳ 5)
+        name_frame = CTkFrame(form_frame, fg_color="transparent")
+        name_frame.pack(fill="x", pady=2)
+        CTkLabel(name_frame, text="Tên kỳ:", font=("Helvetica", 12), text_color="black", width=120, anchor="w").pack(side="left", padx=(0, 5))
+        semester_name_combobox = CTkComboBox(name_frame, values=["Học kỳ 1", "Học kỳ 2", "Học kỳ 3", "Học kỳ 4", "Học kỳ 5"], width=240, height=32)  # Giảm width từ 300 xuống 260
+        semester_name_combobox.pack(side="left")
+        semester_name_combobox.set("Học kỳ 1")
+
+        # Academic Year (Combobox: 10 năm trước đến hiện tại)
+        year_frame = CTkFrame(form_frame, fg_color="transparent")
+        year_frame.pack(fill="x", pady=2)
+        CTkLabel(year_frame, text="Năm học:", font=("Helvetica", 12), text_color="black", width=120, anchor="w").pack(side="left", padx=(0, 5))
+        current_year = datetime.now().year
+        academic_years = [f"{y}-{y+1}" for y in range(current_year - 10, current_year + 1)]
+        semester_year_combobox = CTkComboBox(year_frame, values=academic_years, width=240, height=32)  # Giảm width từ 300 xuống 260
+        semester_year_combobox.pack(side="left")
+        semester_year_combobox.set("2025-2026")
+
+        # Start Date (Calendar)
+        start_date_frame = CTkFrame(form_frame, fg_color="transparent")
+        start_date_frame.pack(fill="x", pady=2)
+        CTkLabel(start_date_frame, text="Ngày bắt đầu:", font=("Helvetica", 12), text_color="black", width=120, anchor="w").pack(side="left", padx=(0, 5))
+        start_date_entry = CTkEntry(start_date_frame, placeholder_text="YYYY-MM-DD", width=210, height=32)  # Giảm width từ 270 xuống 210
+        start_date_entry.pack(side="left")
+        start_date_entry.insert(0, "2025-01-01")
+        calendar_button_start = CTkButton(start_date_frame, text="📅", width=30, height=32, fg_color="#4A4A4A", hover_color="#666666",
+                                        command=lambda: self.open_calendar(start_date_entry))
+        calendar_button_start.pack(side="left", padx=5)
+
+        # End Date (Calendar)
+        end_date_frame = CTkFrame(form_frame, fg_color="transparent")
+        end_date_frame.pack(fill="x", pady=2)
+        CTkLabel(end_date_frame, text="Ngày kết thúc:", font=("Helvetica", 12), text_color="black", width=120, anchor="w").pack(side="left", padx=(0, 5))
+        end_date_entry = CTkEntry(end_date_frame, placeholder_text="YYYY-MM-DD", width=210, height=32)  # Giảm width từ 270 xuống 210
+        end_date_entry.pack(side="left")
+        end_date_entry.insert(0, "2025-12-31")
+        calendar_button_end = CTkButton(end_date_frame, text="📅", width=30, height=32, fg_color="#4A4A4A", hover_color="#666666",
+                                        command=lambda: self.open_calendar(end_date_entry))
+        calendar_button_end.pack(side="left", padx=5)
+
+        # Buttons
+        button_frame = CTkFrame(form_frame, fg_color="transparent")
+        button_frame.pack(pady=10)
+        CTkButton(button_frame, text="Thêm", fg_color="#0085FF", width=100).pack(side="left", padx=5)
+        CTkButton(button_frame, text="Hủy", fg_color="#6C757D", width=100, command=lambda: add_window.destroy()).pack(side="left", padx=5)
+
+        # Save function
+        def save_semester():
+            semester_name = semester_name_combobox.get().strip()
+            year = semester_year_combobox.get().strip()
+            start_date_str = start_date_entry.get().strip()
+            end_date_str = end_date_entry.get().strip()
+
+            # Validation: Check if all fields are filled
+            if not all([semester_name, year, start_date_str, end_date_str]):
+                messagebox.showerror("Lỗi", "Vui lòng nhập đầy đủ thông tin!", parent=add_window)
                 return
 
-            cursor.execute("SELECT semester_id FROM semesters ORDER BY CAST(SUBSTRING(semester_id, 4) AS UNSIGNED) DESC LIMIT 1")
-            result = cursor.fetchone()
-            if result:
-                last_id = result[0]
-                last_num = int(last_id[3:])
-                new_num = last_num + 1
-            else:
-                new_num = 1
-            semester_id = f"SEM{str(new_num).zfill(5)}"
-
-            # Hỏi xác nhận trước khi thêm
-            confirm = messagebox.askyesno("Xác nhận", f"Bạn có chắc muốn thêm kỳ học '{name} {year_range}' với mã {semester_id}?")
-            if not confirm:
+            # Parse dates
+            try:
+                start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+                end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+            except ValueError:
+                messagebox.showerror("Lỗi", "Ngày tháng không hợp lệ. Vui lòng nhập theo định dạng YYYY-MM-DD!", parent=add_window)
                 return
 
-            cursor.execute("INSERT INTO semesters (semester_id, semester_name, year, start_date, end_date) VALUES (%s, %s, %s, %s, %s)",
-                        (semester_id, name, year_range, start_date, end_date))
-            conn.commit()
-            messagebox.showinfo("Thành công", f"Thêm kỳ học thành công với mã {semester_id}")
-            self.reset_semester_fields()
-            self.load_semesters()
-        except mysql.connector.Error as e:
-            messagebox.showerror("Lỗi", f"Không thể thêm kỳ học: {e}")
-        finally:
-            if cursor is not None:
-                cursor.close()
-            if conn is not None:
-                conn.close()
+            # Validation: Start date must be before end date
+            if start_date >= end_date:
+                messagebox.showerror("Lỗi", "Ngày bắt đầu phải trước ngày kết thúc!", parent=add_window)
+                return
 
-    def edit_semester(self):
-        selected = self.semester_tree.selection()
-        if not selected:
-            messagebox.showwarning("Cảnh báo", "Vui lòng chọn kỳ học để sửa!")
-            return
+            # Validation: Dates must belong to the academic year
+            try:
+                start_year, end_year = map(int, year.split('-'))
+            except ValueError:
+                messagebox.showerror("Lỗi", "Năm học không hợp lệ!", parent=add_window)
+                return
 
-        name = self.semester_name.get().strip()
-        year_range = self.semester_year.get().strip()
-        start_date_str = self.start_date.get().strip()
-        end_date_str = self.end_date.get().strip()
+            if start_date.year != start_year:
+                messagebox.showerror("Lỗi", f"Ngày bắt đầu phải thuộc năm {start_year}!", parent=add_window)
+                return
+            if end_date.year not in [start_year, end_year]:
+                messagebox.showerror("Lỗi", f"Ngày kết thúc phải thuộc năm {start_year} hoặc {end_year}!", parent=add_window)
+                return
 
-        if not all([name, year_range, start_date_str, end_date_str]):
-            messagebox.showerror("Lỗi", "Vui lòng nhập đầy đủ thông tin")
-            return
-
-        try:
-            start_year, end_year = map(int, year_range.split('-'))
-            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
-            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
-        except ValueError:
-            messagebox.showerror("Lỗi", "Ngày tháng không hợp lệ. Vui lòng nhập theo định dạng YYYY-MM-DD!")
-            return
-
-        if start_date.year != start_year:
-            messagebox.showerror("Lỗi", f"Ngày bắt đầu phải thuộc năm {start_year}")
-            return
-        if end_date.year not in [start_year, end_year]:
-            messagebox.showerror("Lỗi", f"Ngày kết thúc phải thuộc năm {start_year} hoặc {end_year}")
-            return
-
-        if start_date >= end_date:
-            messagebox.showerror("Lỗi", "Ngày bắt đầu phải nhỏ hơn ngày kết thúc")
-            return
-
-        semester_id = self.semester_tree.item(selected)['values'][0]
-
-        # Sử dụng messagebox.askyesno để xác nhận
-        if messagebox.askyesno("Xác nhận", "Bạn có chắc muốn sửa kỳ học này?"):
-            conn = None
-            cursor = None
+            # Validation: Check for overlapping semesters
             try:
                 conn = mysql.connector.connect(**DB_CONFIG)
                 cursor = conn.cursor()
-                cursor.execute("SELECT semester_id FROM semesters WHERE semester_name = %s AND year = %s AND semester_id != %s",
-                            (name, year_range, semester_id))
+                cursor.execute("""
+                    SELECT semester_id FROM semesters
+                    WHERE (start_date <= %s AND end_date >= %s)
+                    OR (start_date <= %s AND end_date >= %s)
+                    OR (%s <= start_date AND %s >= end_date)
+                """, (end_date, start_date, end_date, start_date, start_date, end_date))
                 if cursor.fetchone():
-                    messagebox.showerror("Lỗi", "Kỳ học đã tồn tại trong năm học này!")
+                    messagebox.showerror("Lỗi", "Thời gian kỳ học này trùng với một kỳ học khác!", parent=add_window)
                     return
 
-                cursor.execute("UPDATE semesters SET semester_name = %s, year = %s, start_date = %s, end_date = %s WHERE semester_id = %s",
-                            (name, year_range, start_date, end_date, semester_id))
+                # Generate semester ID
+                semester_num = semester_name.split()[-1]  # Lấy số kỳ từ "Kỳ 1", "Kỳ 2", ...
+                year_suffix = year[-2:]  # Lấy 2 số cuối của năm
+                semester_id = f"HK{semester_num}-{year_suffix}"
+
+                # Check if semester ID already exists
+                cursor.execute("SELECT semester_id FROM semesters WHERE semester_id = %s", (semester_id,))
+                if cursor.fetchone():
+                    messagebox.showerror("Lỗi", f"Kỳ học {semester_id} đã tồn tại!", parent=add_window)
+                    return
+
+                # Insert new semester
+                cursor.execute("INSERT INTO semesters (semester_id, semester_name, year, start_date, end_date) VALUES (%s, %s, %s, %s, %s)",
+                            (semester_id, semester_name, year, start_date, end_date))
                 conn.commit()
-                messagebox.showinfo("Thành công", "Cập nhật kỳ học thành công!")
-                self.reset_semester_fields()
+                messagebox.showinfo("Thành công", f"Thêm kỳ học thành công với mã {semester_id}", parent=add_window)
                 self.load_semesters()
+                self.semester_list_frame.update_idletasks()
+                add_window.destroy()
             except mysql.connector.Error as e:
-                messagebox.showerror("Lỗi", f"Không thể cập nhật kỳ học: {e}")
+                messagebox.showerror("Lỗi", f"Không thể thêm kỳ học: {e}", parent=add_window)
             finally:
-                if cursor is not None:
+                cursor.close()
+                conn.close()
+
+        # Bind save function to "Thêm" button
+        button_frame.winfo_children()[0].configure(command=save_semester)
+
+    def edit_semester(self, semester_id):
+        # Load semester data
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT semester_id, semester_name, year, start_date, end_date
+                FROM semesters
+                WHERE semester_id = %s
+            """, (semester_id,))
+            semester_data = cursor.fetchone()
+            if not semester_data:
+                messagebox.showerror("Lỗi", "Không tìm thấy kỳ học!")
+                return
+
+            _, semester_name, year, start_date, end_date = semester_data
+
+            # Create popup window
+            edit_window = CTkToplevel(self.window)
+            edit_window.title("Sửa kỳ học")
+            edit_window.resizable(False, False)
+
+            # Set window size
+            window_width = 450
+            window_height = 300
+            edit_window.geometry(f"{window_width}x{window_height}")
+
+            # Center the window on the screen
+            screen_width = self.window.winfo_screenwidth()
+            screen_height = self.window.winfo_screenheight()
+            x_position = int((screen_width - window_width) / 2)
+            y_position = int((screen_height - window_height) / 2)
+            edit_window.geometry(f"{window_width}x{window_height}+{x_position}+{y_position}")
+
+            # Make window modal
+            edit_window.transient(self.window)
+            edit_window.grab_set()
+
+            # Form frame
+            form_frame = CTkFrame(edit_window, fg_color="#F0F0F0", corner_radius=10)
+            form_frame.pack(padx=20, pady=10, fill="both", expand=True)
+
+            # Title
+            CTkLabel(form_frame, text="Sửa kỳ học", font=("Helvetica", 16, "bold"), text_color="black").pack(pady=5)
+
+            # Semester Name (Combobox: Kỳ 1, Kỳ 2, ..., Kỳ 5)
+            name_frame = CTkFrame(form_frame, fg_color="transparent")
+            name_frame.pack(fill="x", pady=2)
+            CTkLabel(name_frame, text="Tên kỳ:", font=("Helvetica", 12), text_color="black", width=120, anchor="w").pack(side="left", padx=(0, 5))
+            semester_name_combobox = CTkComboBox(name_frame, values=["Học kỳ 1", "Học kỳ 2", "Học kỳ 3", "Học kỳ 4", "Học kỳ 5"], width=240, height=32)  # Giảm width từ 300 xuống 260
+            semester_name_combobox.pack(side="left")
+            semester_name_combobox.set(semester_name)
+
+            # Academic Year (Combobox: 10 năm trước đến hiện tại)
+            year_frame = CTkFrame(form_frame, fg_color="transparent")
+            year_frame.pack(fill="x", pady=2)
+            CTkLabel(year_frame, text="Năm học:", font=("Helvetica", 12), text_color="black", width=120, anchor="w").pack(side="left", padx=(0, 5))
+            current_year = datetime.now().year
+            academic_years = [f"{y}-{y+1}" for y in range(current_year - 10, current_year + 1)]
+            semester_year_combobox = CTkComboBox(year_frame, values=academic_years, width=240, height=32)  # Giảm width từ 300 xuống 260
+            semester_year_combobox.pack(side="left")
+            semester_year_combobox.set(year)
+
+            # Start Date (Calendar)
+            start_date_frame = CTkFrame(form_frame, fg_color="transparent")
+            start_date_frame.pack(fill="x", pady=2)
+            CTkLabel(start_date_frame, text="Ngày bắt đầu:", font=("Helvetica", 12), text_color="black", width=120, anchor="w").pack(side="left", padx=(0, 5))
+            start_date_entry = CTkEntry(start_date_frame, placeholder_text="YYYY-MM-DD", width=210, height=32)  # Giảm width từ 270 xuống 210
+            start_date_entry.pack(side="left")
+            start_date_entry.insert(0, start_date.strftime('%Y-%m-%d'))
+            calendar_button_start = CTkButton(start_date_frame, text="📅", width=30, height=32, fg_color="#4A4A4A", hover_color="#666666",
+                                            command=lambda: self.open_calendar(start_date_entry))
+            calendar_button_start.pack(side="left", padx=5)
+
+            # End Date (Calendar)
+            end_date_frame = CTkFrame(form_frame, fg_color="transparent")
+            end_date_frame.pack(fill="x", pady=2)
+            CTkLabel(end_date_frame, text="Ngày kết thúc:", font=("Helvetica", 12), text_color="black", width=120, anchor="w").pack(side="left", padx=(0, 5))
+            end_date_entry = CTkEntry(end_date_frame, placeholder_text="YYYY-MM-DD", width=210, height=32)  # Giảm width từ 270 xuống 210
+            end_date_entry.pack(side="left")
+            end_date_entry.insert(0, end_date.strftime('%Y-%m-%d'))
+            calendar_button_end = CTkButton(end_date_frame, text="📅", width=30, height=32, fg_color="#4A4A4A", hover_color="#666666",
+                                            command=lambda: self.open_calendar(end_date_entry))
+            calendar_button_end.pack(side="left", padx=5)
+
+            # Buttons
+            button_frame = CTkFrame(form_frame, fg_color="transparent")
+            button_frame.pack(pady=10)
+            CTkButton(button_frame, text="Lưu", fg_color="#0085FF", width=100).pack(side="left", padx=5)
+            CTkButton(button_frame, text="Hủy", fg_color="#6C757D", width=100, command=lambda: edit_window.destroy()).pack(side="left", padx=5)
+
+            # Save function
+            def save_semester():
+                new_semester_name = semester_name_combobox.get().strip()
+                new_year = semester_year_combobox.get().strip()
+                new_start_date_str = start_date_entry.get().strip()
+                new_end_date_str = end_date_entry.get().strip()
+
+                # Validation: Check if all fields are filled
+                if not all([new_semester_name, new_year, new_start_date_str, new_end_date_str]):
+                    messagebox.showerror("Lỗi", "Vui lòng nhập đầy đủ thông tin!", parent=edit_window)
+                    return
+
+                # Parse dates
+                try:
+                    new_start_date = datetime.strptime(new_start_date_str, '%Y-%m-%d').date()
+                    new_end_date = datetime.strptime(new_end_date_str, '%Y-%m-%d').date()
+                except ValueError:
+                    messagebox.showerror("Lỗi", "Ngày tháng không hợp lệ. Vui lòng nhập theo định dạng YYYY-MM-DD!", parent=edit_window)
+                    return
+
+                # Validation: Start date must be before end date
+                if new_start_date >= new_end_date:
+                    messagebox.showerror("Lỗi", "Ngày bắt đầu phải trước ngày kết thúc!", parent=edit_window)
+                    return
+
+                # Validation: Dates must belong to the academic year
+                try:
+                    start_year, end_year = map(int, new_year.split('-'))
+                except ValueError:
+                    messagebox.showerror("Lỗi", "Năm học không hợp lệ!", parent=edit_window)
+                    return
+
+                if new_start_date.year != start_year:
+                    messagebox.showerror("Lỗi", f"Ngày bắt đầu phải thuộc năm {start_year}!", parent=edit_window)
+                    return
+                if new_end_date.year not in [start_year, end_year]:
+                    messagebox.showerror("Lỗi", f"Ngày kết thúc phải thuộc năm {start_year} hoặc {end_year}!", parent=edit_window)
+                    return
+
+                # Validation: Check for overlapping semesters
+                try:
+                    conn = mysql.connector.connect(**DB_CONFIG)
+                    cursor = conn.cursor()
+                    cursor.execute("""
+                        SELECT semester_id FROM semesters
+                        WHERE semester_id != %s
+                        AND (
+                            (start_date <= %s AND end_date >= %s)
+                            OR (start_date <= %s AND end_date >= %s)
+                            OR (%s <= start_date AND %s >= end_date)
+                        )
+                    """, (semester_id, new_end_date, new_start_date, new_end_date, new_start_date, new_start_date, new_end_date))
+                    if cursor.fetchone():
+                        messagebox.showerror("Lỗi", "Thời gian kỳ học này trùng với một kỳ học khác!", parent=edit_window)
+                        return
+
+                    # Generate new semester ID
+                    semester_num = new_semester_name.split()[-1]
+                    year_suffix = new_year[-2:]
+                    new_semester_id = f"HK{semester_num}-{year_suffix}"
+
+                    # Check if new semester ID already exists (excluding current semester)
+                    cursor.execute("SELECT semester_id FROM semesters WHERE semester_id = %s AND semester_id != %s", (new_semester_id, semester_id))
+                    if cursor.fetchone():
+                        messagebox.showerror("Lỗi", f"Kỳ học {new_semester_id} đã tồn tại!", parent=edit_window)
+                        return
+
+                    # Update semester
+                    cursor.execute("UPDATE semesters SET semester_id = %s, semester_name = %s, year = %s, start_date = %s, end_date = %s WHERE semester_id = %s",
+                                (new_semester_id, new_semester_name, new_year, new_start_date, new_end_date, semester_id))
+                    conn.commit()
+                    messagebox.showinfo("Thành công", "Cập nhật kỳ học thành công!", parent=edit_window)
+                    self.load_semesters()
+                    self.semester_list_frame.update_idletasks()
+                    edit_window.destroy()
+                except mysql.connector.Error as e:
+                    messagebox.showerror("Lỗi", f"Không thể cập nhật kỳ học: {e}", parent=edit_window)
+                finally:
                     cursor.close()
-                if conn is not None:
                     conn.close()
 
-    def delete_semester(self):
-        selected_item = self.semester_tree.selection()
-        if not selected_item:
-            messagebox.showwarning("Cảnh báo", "Vui lòng chọn kỳ học để xóa!")
-            return
+            # Bind save function to "Lưu" button
+            button_frame.winfo_children()[0].configure(command=save_semester)
 
-        item = self.semester_tree.item(selected_item)
-        semester_id = item["values"][0]
+        except mysql.connector.Error as e:
+            messagebox.showerror("Lỗi", f"Không thể tải dữ liệu kỳ học: {e}")
+        finally:
+            cursor.close()
+            conn.close()
 
-        # Kiểm tra xác nhận bằng messagebox
+    def delete_semester(self, semester_id):
         if messagebox.askyesno("Xác nhận", "Bạn có chắc muốn xóa kỳ học này?"):
             conn = None
             cursor = None
@@ -2787,93 +3683,75 @@ class DepartmentView:
                 cursor.execute("DELETE FROM semesters WHERE semester_id = %s", (semester_id,))
                 conn.commit()
                 messagebox.showinfo("Thành công", "Xóa kỳ học thành công")
-                self.reset_semester_fields()
                 self.load_semesters()
+                self.semester_list_frame.update_idletasks()
             except mysql.connector.Error as e:
                 messagebox.showerror("Lỗi", f"Không thể xóa kỳ học: {str(e)}")
             finally:
-                if cursor is not None:
+                if cursor:
                     cursor.close()
-                if conn is not None:
+                if conn:
                     conn.close()
 
     def load_semesters(self):
+        # Clear existing items in semester_list_frame
+        for widget in self.semester_list_frame.winfo_children():
+            widget.destroy()
+
+        conn = None
+        cursor = None
         try:
             conn = mysql.connector.connect(**DB_CONFIG)
             cursor = conn.cursor()
-            cursor.execute("SELECT semester_id, semester_name, year, start_date, end_date FROM semesters")
-            for item in self.semester_tree.get_children():
-                self.semester_tree.delete(item)
+            query = """
+                SELECT semester_id, semester_name, year, start_date, end_date
+                FROM semesters
+            """
+            cursor.execute(query)
             rows = cursor.fetchall()
+
             if not rows:
-                messagebox.showwarning("Cảnh báo", "Không có dữ liệu kỳ học")
+                CTkLabel(self.semester_list_frame, text="Không có dữ liệu kỳ học", font=("Helvetica", 14), text_color="gray").pack(pady=10)
+                return
+
+            # Create a row for each semester
             for row in rows:
                 semester_id, semester_name, year, start_date, end_date = row
-                # Đảm bảo định dạng ngày đầy đủ
-                start_date = start_date.strftime('%Y-%m-%d') if start_date else "N/A"
-                end_date = end_date.strftime('%Y-%m-%d') if end_date else "N/A"
-                print(f"semester_id={semester_id}, start_date={start_date}, end_date={end_date}")
-                self.semester_tree.insert("", "end", values=(semester_id, semester_name, year, start_date, end_date))
+
+                # Row frame for each semester
+                row_frame = CTkFrame(self.semester_list_frame, fg_color="#F5F5F5", corner_radius=0)
+                row_frame.pack(fill="x", pady=2)
+
+                # Data labels (khớp với heading)
+                CTkLabel(row_frame, text=semester_id, font=("Helvetica", 12), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+                CTkLabel(row_frame, text=semester_name, font=("Helvetica", 12), text_color="black", width=200, anchor="center").pack(side="left", padx=5)
+                CTkLabel(row_frame, text=year, font=("Helvetica", 12), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+                CTkLabel(row_frame, text=start_date.strftime('%Y-%m-%d'), font=("Helvetica", 12), text_color="black", width=200, anchor="center").pack(side="left", padx=5)
+                CTkLabel(row_frame, text=end_date.strftime('%Y-%m-%d'), font=("Helvetica", 12), text_color="black", width=200, anchor="center").pack(side="left", padx=5)
+
+                # Actions frame
+                actions_frame = CTkFrame(row_frame, fg_color="transparent", width=150)
+                actions_frame.pack(side="left", padx=5)
+
+                # Edit button
+                CTkButton(actions_frame, text="Sửa", width=50, fg_color="#FFC107", hover_color="#E0A800", 
+                        command=lambda s_id=semester_id: self.edit_semester(s_id)).pack(side="left", padx=5)
+
+                # Delete button
+                CTkButton(actions_frame, text="Xóa", width=50, fg_color="#F44336", hover_color="#D32F2F", 
+                        command=lambda s_id=semester_id: self.delete_semester(s_id)).pack(side="left", padx=5)
+
         except mysql.connector.Error as e:
             messagebox.showerror("Lỗi", f"Không thể tải dữ liệu kỳ học: {e}")
         finally:
-            cursor.close()
-            conn.close()
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
 
-    def on_semester_select(self, event):
-        selected = self.semester_tree.selection()
-        if not selected:
-            return
-        item = self.semester_tree.item(selected)
-        values = item['values']
-        # print(f"values={values}")  # Debug giá trị từ Treeview
-        semester_id, name, year, start_date, end_date = values
+        # Làm mới giao diện
+        self.semester_list_frame.update_idletasks()
         
-        self.semester_name.set(name)
-        self.semester_year.set(year)
-        
-        # Hiển thị ngày bắt đầu
-        # print(f"Trước khi chèn start_date: {self.start_date.get()}")  # Debug giá trị trước khi chèn
-        self.start_date.delete(0, "end")
-        if start_date != "N/A" and start_date:
-            try:
-                datetime.strptime(start_date, '%Y-%m-%d')
-                self.start_date.insert(0, start_date)
-            except ValueError:
-                messagebox.showwarning("Cảnh báo", f"Ngày bắt đầu không hợp lệ: {start_date}. Đặt về mặc định.")
-                self.start_date.insert(0, "2025-01-01")
-        else:
-            self.start_date.insert(0, "2025-01-01")
-        # print(f"Sau khi chèn start_date: {self.start_date.get()}")  # Debug giá trị sau khi chèn
-        
-        # Hiển thị ngày kết thúc
-        print(f"Trước khi chèn end_date: {self.end_date.get()}")  # Debug giá trị trước khi chèn
-        self.end_date.delete(0, "end")
-        if end_date != "N/A" and end_date:
-            try:
-                datetime.strptime(end_date, '%Y-%m-%d')
-                self.end_date.insert(0, end_date)
-            except ValueError:
-                messagebox.showwarning("Cảnh báo", f"Ngày kết thúc không hợp lệ: {end_date}. Đặt về mặc định.")
-                self.end_date.insert(0, "2025-12-31")
-        else:
-            self.end_date.insert(0, "2025-12-31")
-        print(f"Sau khi chèn end_date: {self.end_date.get()}")  # Debug giá trị sau khi chèn
-        
-        # Tạm thời bỏ gọi update_date_years để kiểm tra
-        # self.update_date_years()
-        
-    def reset_semester_fields(self):
-        self.semester_name.set("Học kỳ 1")
-        self.semester_year.set("2025-2026")
-        self.start_date.delete(0, "end")
-        self.start_date.insert(0, "2025-01-01")
-        self.end_date.delete(0, "end")
-        self.end_date.insert(0, "2025-12-31")
-        # Bỏ chọn dòng trong bảng semester_tree
-        for item in self.semester_tree.selection():
-            self.semester_tree.selection_remove(item)
-
     
     def get_classes(self):
         try:
@@ -3150,12 +4028,11 @@ class DepartmentView:
         try:
             conn = mysql.connector.connect(**DB_CONFIG)
             cursor = conn.cursor()
-            cursor.execute("SELECT semester_id, semester_name, year FROM semesters")
-            semesters = [f"{row[0]}: {row[1]} {row[2]}" for row in cursor.fetchall()]
-            return semesters if semesters else ["Không có kỳ học"]
-        except mysql.connector.Error as e:
-            messagebox.showerror("Lỗi", f"Không thể tải danh sách kỳ học: {e}")
-            return ["Lỗi tải kỳ học"]
+            cursor.execute("SELECT semester_id FROM semesters ORDER BY semester_id")
+            semesters = [row[0] for row in cursor.fetchall()]
+            return semesters
+        except mysql.connector.Error:
+            return []
         finally:
             cursor.close()
             conn.close()
@@ -3204,96 +4081,133 @@ class DepartmentView:
             conn.close()
 
 
-    def assign_teacher(self):
-        if not hasattr(self, 'selected_class_id'):
-            messagebox.showwarning("Cảnh báo", "Vui lòng chọn lớp học phần!")
-            return
-
-        class_id = self.selected_class_id
-
-        # Kiểm tra lớp học đã được phân công chưa
+    def assign_teacher(self, class_id):
+        # Lấy thông tin lớp học để xác định khoa của học phần
         try:
             conn = mysql.connector.connect(**DB_CONFIG)
             cursor = conn.cursor()
-            cursor.execute("SELECT assignment_id, teacher_id FROM assignments WHERE class_id = %s", (class_id,))
-            existing_assignment = cursor.fetchone()
-            if existing_assignment:
-                messagebox.showwarning("Cảnh báo", "Lớp học này đã được phân công! Vui lòng xóa phân công cũ trước.")
+            cursor.execute("""
+                SELECT m.dept_id, a.teacher_id
+                FROM classes c
+                JOIN course_modules m ON c.module_id = m.module_id
+                LEFT JOIN assignments a ON c.class_id = a.class_id
+                WHERE c.class_id = %s
+            """, (class_id,))
+            result = cursor.fetchone()
+            if not result:
+                messagebox.showerror("Lỗi", "Không tìm thấy lớp học!", parent=self.window)
                 return
+            dept_id, current_teacher = result
+
+            # Lấy danh sách giảng viên thuộc khoa của học phần
+            cursor.execute("SELECT teacher_id, full_name FROM teachers WHERE dept_id = %s", (dept_id,))
+            teachers = [f"{row[0]}: {row[1]}" for row in cursor.fetchall()]
+
         except mysql.connector.Error as e:
-            messagebox.showerror("Lỗi", f"Không thể kiểm tra phân công: {e}")
+            messagebox.showerror("Lỗi", f"Không thể tải dữ liệu: {e}", parent=self.window)
             return
         finally:
             cursor.close()
             conn.close()
 
-        # Tạo cửa sổ pop-up
+        # Create popup window
         assign_window = CTkToplevel(self.window)
         assign_window.title("Phân công giảng viên")
-        assign_window.geometry("400x200")
         assign_window.resizable(False, False)
 
-        # Frame chứa các trường nhập liệu
-        form_frame = CTkFrame(assign_window, fg_color="transparent")
-        form_frame.pack(padx=20, pady=20, fill="both", expand=True)
+        # Set window size
+        window_width = 500
+        window_height = 350
+        assign_window.geometry(f"{window_width}x{window_height}")
 
-        # Giáo viên
-        CTkLabel(form_frame, text="Chọn giảng viên:", font=("Helvetica", 12)).pack(pady=(5, 0))
-        teachers = self.get_teachers()
-        teacher_var = CTkComboBox(form_frame, width=350, values=teachers)
-        teacher_var.pack(pady=5)
-        if teachers and teachers[0] not in ["Không có giáo viên", "Lỗi tải giáo viên"]:
-            teacher_var.set(teachers[0])
-        else:
-            teacher_var.set(teachers[0])
+        # Center the window on the screen
+        screen_width = self.window.winfo_screenwidth()
+        screen_height = self.window.winfo_screenheight()
+        x_position = int((screen_width - window_width) / 2)
+        y_position = int((screen_height - window_height) / 2)
+        assign_window.geometry(f"{window_width}x{window_height}+{x_position}+{y_position}")
 
-        # Hàm xử lý khi nhấn nút "Phân công"
+        # Make window modal
+        assign_window.transient(self.window)
+        assign_window.grab_set()
+
+        # Form frame
+        form_frame = CTkFrame(assign_window, fg_color="#F0F0F0", corner_radius=10)
+        form_frame.pack(padx=20, pady=10, fill="both", expand=True)
+
+        # Title
+        CTkLabel(form_frame, text="Phân công giảng viên", font=("Helvetica", 16, "bold"), text_color="black").pack(pady=5)
+
+        # Teacher Combobox
+        teacher_frame = CTkFrame(form_frame, fg_color="transparent")
+        teacher_frame.pack(fill="x", pady=2)
+        CTkLabel(teacher_frame, text="Giảng viên:", font=("Helvetica", 12), text_color="black", width=120, anchor="w").pack(side="left", padx=(0, 5))
+        teacher_combobox = CTkComboBox(teacher_frame, values=teachers, width=260, height=32)
+        teacher_combobox.pack(side="left")
+        if current_teacher:
+            for teacher in teachers:
+                if teacher.startswith(current_teacher):
+                    teacher_combobox.set(teacher)
+                    break
+        elif teachers:
+            teacher_combobox.set(teachers[0])
+
+        # Buttons
+        button_frame = CTkFrame(form_frame, fg_color="transparent")
+        button_frame.pack(pady=10)
+        CTkButton(button_frame, text="Phân công", fg_color="#0085FF", width=100).pack(side="left", padx=5)
+        CTkButton(button_frame, text="Hủy", fg_color="#6C757D", width=100, command=lambda: assign_window.destroy()).pack(side="left", padx=5)
+
+        # Save function
         def save_assignment():
-            teacher = teacher_var.get().strip()
-
-            if not teacher or teacher in ["Không có giáo viên", "Lỗi tải giáo viên"]:
-                messagebox.showerror("Lỗi", "Không có giáo viên để phân công!", parent=assign_window)
+            selected_teacher = teacher_combobox.get().strip()
+            if not selected_teacher:
+                messagebox.showerror("Lỗi", "Vui lòng chọn giảng viên!", parent=assign_window)
                 return
 
-            teacher_id = teacher.split(":")[0].strip()
+            teacher_id = selected_teacher.split(":")[0].strip()
 
-            # Hỏi xác nhận
-            confirm = messagebox.askyesno("Xác nhận", "Bạn có chắc muốn phân công giảng viên này?", parent=assign_window)
-            if not confirm:
-                return
-
-            # Tạo phân công mới
             try:
                 conn = mysql.connector.connect(**DB_CONFIG)
                 cursor = conn.cursor()
-                while True:
-                    random_num = random.randint(0, 99999)
-                    assignment_id = f"ASN{str(random_num).zfill(5)}"
-                    cursor.execute("SELECT assignment_id FROM assignments WHERE assignment_id = %s", (assignment_id,))
-                    if not cursor.fetchone():
-                        break
-                assigned_at = datetime.now().strftime('%Y-%m-%d')
-                cursor.execute("INSERT INTO assignments (assignment_id, class_id, teacher_id, assigned_at) VALUES (%s, %s, %s, %s)",
-                            (assignment_id, class_id, teacher_id, assigned_at))
+
+                # Check if class is already assigned
+                cursor.execute("SELECT assignment_id FROM assignments WHERE class_id = %s", (class_id,))
+                existing_assignment = cursor.fetchone()
+
+                if existing_assignment:
+                    # Update existing assignment
+                    cursor.execute("UPDATE assignments SET teacher_id = %s, assigned_at = CURRENT_TIMESTAMP WHERE class_id = %s",
+                                (teacher_id, class_id))
+                else:
+                    # Generate assignment ID
+                    cursor.execute("SELECT assignment_id FROM assignments ORDER BY CAST(SUBSTRING(assignment_id, 4) AS UNSIGNED) DESC LIMIT 1")
+                    result = cursor.fetchone()
+                    if result:
+                        last_id = result[0]
+                        last_num = int(last_id[3:])
+                        new_num = last_num + 1
+                    else:
+                        new_num = 1
+                    assignment_id = f"ASN{str(new_num).zfill(5)}"
+
+                    # Insert new assignment
+                    cursor.execute("INSERT INTO assignments (assignment_id, class_id, teacher_id) VALUES (%s, %s, %s)",
+                                (assignment_id, class_id, teacher_id))
+
                 conn.commit()
-                messagebox.showinfo("Thành công", f"Phân công thành công với mã {assignment_id}", parent=assign_window)
-                self.load_classes_by_semester(None)
+                messagebox.showinfo("Thành công", "Phân công giảng viên thành công!", parent=assign_window)
+                self.load_classes()
+                self.class_list_frame.update_idletasks()
                 assign_window.destroy()
             except mysql.connector.Error as e:
-                messagebox.showerror("Lỗi", f"Không thể phân công: {e}", parent=assign_window)
+                messagebox.showerror("Lỗi", f"Không thể phân công giảng viên: {e}", parent=assign_window)
             finally:
                 cursor.close()
                 conn.close()
 
-        # Hàm đóng cửa sổ
-        def cancel():
-            assign_window.destroy()
-
-        # Nút Phân công và Hủy
-        button_frame = CTkFrame(form_frame, fg_color="transparent")
-        button_frame.pack(pady=10)
-        CTkButton(button_frame, text="Phân công", fg_color="#0085FF", command=save_assignment, width=100).pack(side="left", padx=5)
-        CTkButton(button_frame, text="Hủy", fg_color="#6C757D", command=cancel, width=100).pack(side="left", padx=5)
+        # Bind save function to "Phân công" button
+        button_frame.winfo_children()[0].configure(command=save_assignment)
 
     def show_class_stats(self):
         year = self.stats_year_combobox.get().strip()
@@ -3352,7 +4266,7 @@ class DepartmentView:
             ax.set_xlabel("Học phần", fontsize=12)
             ax.set_ylabel("Số lớp mở", fontsize=12)
             ax.set_ylim(0, max(num_classes) + 1 if num_classes else 1)
-            plt.xticks(rotation=45, ha="right")
+            plt.xticks(rotation=0, ha="right")
 
             # Nhúng biểu đồ vào giao diện
             canvas = FigureCanvasTkAgg(fig, master=self.class_stats_frame)
@@ -3374,126 +4288,106 @@ class DepartmentView:
     def export_excel(self):
         import pandas as pd
 
-        year = self.stats_year_combobox.get().strip()
-        if not year or not hasattr(self, 'stats_data') or not self.stats_data:
+        data = self.get_class_stats_data()
+        if not data:
             messagebox.showwarning("Cảnh báo", "Không có dữ liệu để xuất báo cáo!")
             return
 
         try:
-            # Tạo DataFrame từ dữ liệu thống kê
-            df = pd.DataFrame(self.stats_data)
+            df = pd.DataFrame(data["stats_data"])
+            year = self.stats_year_combobox.get().strip()
             output_file = f"Class_Stats_Report_{year}.xlsx"
             df.to_excel(output_file, index=False)
             messagebox.showinfo("Thành công", f"Báo cáo đã được xuất dưới dạng Excel: {output_file}")
         except Exception as e:
-            messagebox.showerror("Lỗi", f"Không thể lưu file Excel. Vui lòng kiểm tra thư mục: {e}")
+            messagebox.showerror("Lỗi", f"Không thể lưu file Excel: {e}")
 
 
     def show_class_stats_table(self):
-        year = self.stats_year_combobox.get().strip()
-        if not year:
-            messagebox.showwarning("Cảnh báo", "Vui lòng chọn năm học!")
+        # Xóa nội dung cũ
+        for widget in self.class_stats_frame.winfo_children():
+            widget.destroy()
+
+        data = self.get_class_stats_data()
+        if not data:
+            CTkLabel(self.class_stats_frame, text="Không có dữ liệu để hiển thị.", font=("Helvetica", 14), text_color="gray").pack(pady=10)
             return
 
-        # Lấy dữ liệu thống kê
-        try:
-            conn = mysql.connector.connect(**DB_CONFIG)
-            cursor = conn.cursor()
-            query = """
-                SELECT cm.module_name, COUNT(c.class_id) as num_classes, SUM(c.num_students) as total_students
-                FROM classes c
-                JOIN semesters s ON c.semester_id = s.semester_id
-                JOIN course_modules cm ON c.module_id = cm.module_id
-                WHERE s.year = %s
-                GROUP BY cm.module_id, cm.module_name
-            """
-            cursor.execute(query, (year,))
-            rows = cursor.fetchall()
-            if not rows:
-                messagebox.showwarning("Cảnh báo", "Không có dữ liệu để thống kê.")
-                return
+        # Cập nhật các nhãn tổng quan
+        self.total_classes_label.configure(text=str(data["total_classes"]))
+        self.total_modules_label.configure(text=f"{data['total_modules']} học phần")
+        self.total_students_label.configure(text=str(data["total_students"]))
+        self.avg_students_label.configure(text=f"Trung bình {data['avg_students']} SV/lớp")
+        self.sem1_classes_label.configure(text=str(data["sem1_count"]))
+        self.sem1_percentage_label.configure(text=f"{data['sem1_percentage']:.1f}% tổng số lớp")
+        self.sem2_classes_label.configure(text=str(data["sem2_count"]))
+        self.sem2_percentage_label.configure(text=f"{data['sem2_percentage']:.1f}% tổng số lớp")
 
-            # Lưu dữ liệu để dùng cho xuất báo cáo
-            self.stats_data = [{"Module": row[0], "Num Classes": row[1], "Total Students": row[2]} for row in rows]
+        # Hiển thị bảng
+        table_frame = CTkFrame(self.class_stats_frame, fg_color="#FFFFFF", corner_radius=10)
+        table_frame.pack(padx=10, pady=10, fill="both", expand=True)
 
-            # Xóa nội dung cũ trong class_stats_frame
-            for widget in self.class_stats_frame.winfo_children():
-                widget.destroy()
+        # Heading row
+        heading_frame = CTkFrame(table_frame, fg_color="#D3D3D3", corner_radius=0)
+        heading_frame.pack(fill="x", padx=5, pady=(5, 0))
+        CTkLabel(heading_frame, text="Học phần", font=("Helvetica", 14, "bold"), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Số lớp HK1", font=("Helvetica", 14, "bold"), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Số lớp HK2", font=("Helvetica", 14, "bold"), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Tổng số lớp", font=("Helvetica", 14, "bold"), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Tổng sinh viên", font=("Helvetica", 14, "bold"), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Trung bình SV/lớp", font=("Helvetica", 14, "bold"), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
 
-            # Tạo stats_table_frame để hiển thị bảng
-            self.stats_table_frame = CTkFrame(self.class_stats_frame, fg_color="#FFFFFF", corner_radius=10)
-            self.stats_table_frame.pack(padx=10, pady=10, fill="both", expand=True)
-            self.class_stats_tree = ttk.Treeview(self.stats_table_frame, columns=("Module", "Num Classes", "Total Students"), show="headings")
-            self.class_stats_tree.heading("Module", text="Học phần")
-            self.class_stats_tree.heading("Num Classes", text="Số lớp mở")
-            self.class_stats_tree.heading("Total Students", text="Tổng số sinh viên")
-            self.class_stats_tree.column("Module", width=200, anchor="center")
-            self.class_stats_tree.column("Num Classes", width=100, anchor="center")
-            self.class_stats_tree.column("Total Students", width=100, anchor="center")
-            self.class_stats_tree.pack(padx=10, pady=10, fill="both", expand=True)
-
-            # Hiển thị bảng
-            for item in self.class_stats_tree.get_children():
-                self.class_stats_tree.delete(item)
-            for row in rows:
-                self.class_stats_tree.insert("", "end", values=row)
-        except mysql.connector.Error as e:
-            messagebox.showerror("Lỗi", f"Không thể tải dữ liệu thống kê: {e}")
-        finally:
-            cursor.close()
-            conn.close()
+        # Dữ liệu bảng
+        for row in data["stats_data"]:
+            row_frame = CTkFrame(table_frame, fg_color="#F5F5F5", corner_radius=0)
+            row_frame.pack(fill="x", pady=2)
+            CTkLabel(row_frame, text=row["Module"], font=("Helvetica", 12), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+            CTkLabel(row_frame, text=str(row["CountSem1"]), font=("Helvetica", 12), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+            CTkLabel(row_frame, text=str(row["CountSem2"]), font=("Helvetica", 12), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+            CTkLabel(row_frame, text=str(row["TotalClasses"]), font=("Helvetica", 12), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+            CTkLabel(row_frame, text=str(row["TotalStudents"]), font=("Helvetica", 12), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+            CTkLabel(row_frame, text=str(row["AvgStudents"]), font=("Helvetica", 12), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
 
     def show_class_stats_chart(self):
-        year = self.stats_year_combobox.get().strip()
-        if not year:
-            messagebox.showwarning("Cảnh báo", "Vui lòng chọn năm học!")
+        # Xóa nội dung cũ
+        for widget in self.class_stats_frame.winfo_children():
+            widget.destroy()
+
+        data = self.get_class_stats_data()
+        if not data:
+            CTkLabel(self.class_stats_frame, text="Không có dữ liệu để hiển thị.", font=("Helvetica", 14), text_color="gray").pack(pady=10)
             return
 
-        # Lấy dữ liệu thống kê
-        try:
-            conn = mysql.connector.connect(**DB_CONFIG)
-            cursor = conn.cursor()
-            query = """
-                SELECT cm.module_name, COUNT(c.class_id) as num_classes, SUM(c.num_students) as total_students
-                FROM classes c
-                JOIN semesters s ON c.semester_id = s.semester_id
-                JOIN course_modules cm ON c.module_id = cm.module_id
-                WHERE s.year = %s
-                GROUP BY cm.module_id, cm.module_name
-            """
-            cursor.execute(query, (year,))
-            rows = cursor.fetchall()
-            if not rows:
-                messagebox.showwarning("Cảnh báo", "Không có dữ liệu để thống kê.")
-                return
+        # Cập nhật các nhãn tổng quan
+        self.total_classes_label.configure(text=str(data["total_classes"]))
+        self.total_modules_label.configure(text=f"{data['total_modules']} học phần")
+        self.total_students_label.configure(text=str(data["total_students"]))
+        self.avg_students_label.configure(text=f"Trung bình {data['avg_students']} SV/lớp")
+        self.sem1_classes_label.configure(text=str(data["sem1_count"]))
+        self.sem1_percentage_label.configure(text=f"{data['sem1_percentage']:.1f}% tổng số lớp")
+        self.sem2_classes_label.configure(text=str(data["sem2_count"]))
+        self.sem2_percentage_label.configure(text=f"{data['sem2_percentage']:.1f}% tổng số lớp")
 
-            # Lưu dữ liệu để dùng cho xuất báo cáo
-            self.stats_data = [{"Module": row[0], "Num Classes": row[1], "Total Students": row[2]} for row in rows]
+        # Vẽ biểu đồ
+        labels = [row["Module"] for row in data["stats_data"]]
+        counts_sem1 = [row["CountSem1"] for row in data["stats_data"]]
+        counts_sem2 = [row["CountSem2"] for row in data["stats_data"]]
+        fig, ax = plt.subplots(figsize=(6, 4))
+        x = range(len(labels))
+        ax.bar(x, counts_sem1, width=0.4, label="Học kỳ 1", color="#FF6384")
+        ax.bar([i + 0.4 for i in x], counts_sem2, width=0.4, label="Học kỳ 2", color="#36A2EB")
+        ax.set_xticks([i + 0.2 for i in x])
+        ax.set_xticklabels(labels, rotation=0, ha="center")
+        ax.set_title(f"Số lớp mở theo học phần ({self.stats_year_combobox.get()})", fontsize=14, pad=15)
+        ax.set_xlabel("Học phần", fontsize=12)
+        ax.set_ylabel("Số lớp mở", fontsize=12)
+        ax.legend()
+        plt.tight_layout()
 
-            # Xóa nội dung cũ trong class_stats_frame
-            for widget in self.class_stats_frame.winfo_children():
-                widget.destroy()
-
-            # Vẽ biểu đồ
-            labels = [row[0] for row in rows]
-            num_classes = [row[1] for row in rows]
-            fig, ax = plt.subplots(figsize=(5, 2))
-            ax.bar(labels, num_classes, color="#36A2EB")
-            ax.set_title(f"Số lớp mở theo học phần ({year})", fontsize=14, pad=15)
-            ax.set_xlabel("Học phần", fontsize=12)
-            ax.set_ylabel("Số lớp mở", fontsize=12)
-            ax.set_ylim(0, max(num_classes) + 1 if num_classes else 1)
-            plt.xticks(rotation=0, ha="right")
-
-            # Nhúng biểu đồ vào giao diện
-            canvas = FigureCanvasTkAgg(fig, master=self.class_stats_frame)
-            canvas.draw()
-            canvas.get_tk_widget().pack(fill="both", expand=True)
-        except mysql.connector.Error as e:
-            messagebox.showerror("Lỗi", f"Không thể tải dữ liệu thống kê: {e}")
-        finally:
-            cursor.close()
-            conn.close()
+        # Nhúng biểu đồ vào giao diện
+        canvas = FigureCanvasTkAgg(fig, master=self.class_stats_frame)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill="both", expand=True)
 
 
     def toggle_submenu(self, main_item):
@@ -3656,3 +4550,205 @@ class DepartmentView:
         button_frame.pack(pady=10)
         CTkButton(button_frame, text="Lưu", fg_color="#0085FF", command=save_assignment, width=100).pack(side="left", padx=5)
         CTkButton(button_frame, text="Hủy", fg_color="#6C757D", command=cancel, width=100).pack(side="left", padx=5)
+
+    def open_calendar(self, entry_field):
+        # Tạo cửa sổ lịch
+        calendar_window = CTkToplevel(self.window)
+        calendar_window.title("Chọn ngày")
+        calendar_window.resizable(False, False)
+
+        # Đè lên cửa sổ chính
+        calendar_window.transient(self.window)
+        calendar_window.grab_set()
+
+        # Tạo lịch
+        cal = Calendar(calendar_window, selectmode="day", date_pattern="yyyy-mm-dd", font=("Helvetica", 12))
+        cal.pack(padx=10, pady=10)
+
+        # Căn giữa cửa sổ lịch so với cửa sổ chính
+        self.window.update_idletasks()  # Cập nhật kích thước cửa sổ chính
+        window_width = self.window.winfo_width()
+        window_height = self.window.winfo_height()
+        window_x = self.window.winfo_x()
+        window_y = self.window.winfo_y()
+        cal_width = calendar_window.winfo_reqwidth()
+        cal_height = calendar_window.winfo_reqheight()
+        pos_x = window_x + (window_width // 2) - (cal_width // 2)
+        pos_y = window_y + (window_height // 2) - (cal_height // 2)
+        calendar_window.geometry(f"+{pos_x}+{pos_y}")
+
+        # Hàm chọn ngày
+        def select_date():
+            selected_date = cal.get_date()
+            entry_field.delete(0, "end")
+            entry_field.insert(0, selected_date)
+            calendar_window.destroy()
+
+        # Nút chọn ngày
+        CTkButton(calendar_window, text="Chọn", fg_color="#0085FF", hover_color="#005BB5", width=100, height=30, font=("Helvetica", 12, "bold"), command=select_date).pack(pady=5)
+
+
+    def get_class_stats_data(self):
+        year = self.stats_year_combobox.get().strip()
+        if not year:
+            return None
+
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+
+            # Tổng số lớp và sinh viên
+            cursor.execute("""
+                SELECT COUNT(c.class_id), SUM(c.num_students)
+                FROM classes c
+                JOIN semesters s ON c.semester_id = s.semester_id
+                WHERE s.year = %s
+            """, (year,))
+            total_result = cursor.fetchone()
+            total_classes = total_result[0] if total_result else 0
+            total_students = total_result[1] if total_result and total_result[1] is not None else 0
+            avg_students = round(total_students / total_classes, 2) if total_classes else 0
+
+            # Số học phần
+            cursor.execute("""
+                SELECT COUNT(DISTINCT c.module_id)
+                FROM classes c
+                JOIN semesters s ON c.semester_id = s.semester_id
+                WHERE s.year = %s
+            """, (year,))
+            module_result = cursor.fetchone()
+            total_modules = module_result[0] if module_result else 0
+
+            # Số lớp theo học kỳ
+            cursor.execute("""
+                SELECT s.semester_name, COUNT(c.class_id)
+                FROM classes c
+                JOIN semesters s ON c.semester_id = s.semester_id
+                WHERE s.year = %s
+                GROUP BY s.semester_name
+            """, (year,))
+            sem_counts = cursor.fetchall()
+            sem1_count = 0
+            sem2_count = 0
+            for sem_name, count in sem_counts:
+                if "1" in sem_name:
+                    sem1_count = count
+                elif "2" in sem_name:
+                    sem2_count = count
+            sem1_percentage = (sem1_count / total_classes * 100) if total_classes else 0
+            sem2_percentage = (sem2_count / total_classes * 100) if total_classes else 0
+
+            # Dữ liệu chi tiết theo học phần
+            cursor.execute("""
+                SELECT cm.module_name, 
+                    SUM(CASE WHEN s.semester_name LIKE '%1%' THEN 1 ELSE 0 END) as count_sem1,
+                    SUM(CASE WHEN s.semester_name LIKE '%2%' THEN 1 ELSE 0 END) as count_sem2,
+                    COUNT(c.class_id) as total_classes,
+                    SUM(c.num_students) as total_students
+                FROM classes c
+                JOIN semesters s ON c.semester_id = s.semester_id
+                JOIN course_modules cm ON c.module_id = cm.module_id
+                WHERE s.year = %s
+                GROUP BY cm.module_id, cm.module_name
+            """, (year,))
+            stats_data = []
+            rows = cursor.fetchall()
+            for row in rows:
+                module_name, count_sem1, count_sem2, total_classes_mod, total_students_mod = row
+                avg_students_mod = round(total_students_mod / total_classes_mod, 2) if total_classes_mod else 0
+                stats_data.append({
+                    "Module": module_name,
+                    "CountSem1": count_sem1,
+                    "CountSem2": count_sem2,
+                    "TotalClasses": total_classes_mod,
+                    "TotalStudents": total_students_mod,
+                    "AvgStudents": avg_students_mod
+                })
+
+            return {
+                "total_classes": total_classes,
+                "total_modules": total_modules,
+                "total_students": total_students,
+                "avg_students": avg_students,
+                "sem1_count": sem1_count,
+                "sem2_count": sem2_count,
+                "sem1_percentage": sem1_percentage,
+                "sem2_percentage": sem2_percentage,
+                "stats_data": stats_data
+            }
+        except mysql.connector.Error as e:
+            messagebox.showerror("Lỗi", f"Không thể tải dữ liệu thống kê: {e}")
+            return None
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
+    def show_class_stats_all(self):
+        # Xóa nội dung cũ
+        for widget in self.class_stats_frame.winfo_children():
+            widget.destroy()
+
+        data = self.get_class_stats_data()
+        if not data:
+            CTkLabel(self.class_stats_frame, text="Không có dữ liệu để hiển thị.", font=("Helvetica", 14), text_color="gray").pack(pady=10)
+            return
+
+        # Cập nhật các nhãn tổng quan
+        self.total_classes_label.configure(text=str(data["total_classes"]))
+        self.total_modules_label.configure(text=f"{data['total_modules']} học phần")
+        self.total_students_label.configure(text=str(data["total_students"]))
+        self.avg_students_label.configure(text=f"Trung bình {data['avg_students']} SV/lớp")
+        self.sem1_classes_label.configure(text=str(data["sem1_count"]))
+        self.sem1_percentage_label.configure(text=f"{data['sem1_percentage']:.1f}% tổng số lớp")
+        self.sem2_classes_label.configure(text=str(data["sem2_count"]))
+        self.sem2_percentage_label.configure(text=f"{data['sem2_percentage']:.1f}% tổng số lớp")
+
+        # Vẽ biểu đồ
+        labels = [row["Module"] for row in data["stats_data"]]
+        counts_sem1 = [row["CountSem1"] for row in data["stats_data"]]
+        counts_sem2 = [row["CountSem2"] for row in data["stats_data"]]
+        fig, ax = plt.subplots(figsize=(6, 4))
+        x = range(len(labels))
+        ax.bar(x, counts_sem1, width=0.4, label="Học kỳ 1", color="#FF6384")
+        ax.bar([i + 0.4 for i in x], counts_sem2, width=0.4, label="Học kỳ 2", color="#36A2EB")
+        ax.set_xticks([i + 0.2 for i in x])
+        ax.set_xticklabels(labels, rotation=0, ha="center")
+        ax.set_title(f"Số lớp mở theo học phần ({self.stats_year_combobox.get()})", fontsize=14, pad=15)
+        ax.set_xlabel("Học phần", fontsize=12)
+        ax.set_ylabel("Số lớp mở", fontsize=12)
+        ax.legend()
+        plt.tight_layout()
+
+        # Nhúng biểu đồ vào giao diện
+        canvas = FigureCanvasTkAgg(fig, master=self.class_stats_frame)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill="both", expand=True)
+
+        # Hiển thị bảng
+        table_frame = CTkFrame(self.class_stats_frame, fg_color="#FFFFFF", corner_radius=10)
+        table_frame.pack(padx=10, pady=10, fill="both", expand=True)
+
+        # Heading row
+        heading_frame = CTkFrame(table_frame, fg_color="#D3D3D3", corner_radius=0)
+        heading_frame.pack(fill="x", padx=5, pady=(5, 0))
+        CTkLabel(heading_frame, text="Học phần", font=("Helvetica", 14, "bold"), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Số lớp HK1", font=("Helvetica", 14, "bold"), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Số lớp HK2", font=("Helvetica", 14, "bold"), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Tổng số lớp", font=("Helvetica", 14, "bold"), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Tổng sinh viên", font=("Helvetica", 14, "bold"), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Trung bình SV/lớp", font=("Helvetica", 14, "bold"), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+
+        # Dữ liệu bảng
+        for row in data["stats_data"]:
+            row_frame = CTkFrame(table_frame, fg_color="#F5F5F5", corner_radius=0)
+            row_frame.pack(fill="x", pady=2)
+            CTkLabel(row_frame, text=row["Module"], font=("Helvetica", 12), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+            CTkLabel(row_frame, text=str(row["CountSem1"]), font=("Helvetica", 12), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+            CTkLabel(row_frame, text=str(row["CountSem2"]), font=("Helvetica", 12), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+            CTkLabel(row_frame, text=str(row["TotalClasses"]), font=("Helvetica", 12), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+            CTkLabel(row_frame, text=str(row["TotalStudents"]), font=("Helvetica", 12), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+            CTkLabel(row_frame, text=str(row["AvgStudents"]), font=("Helvetica", 12), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+    
+    
