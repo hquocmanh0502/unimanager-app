@@ -3,7 +3,7 @@ from customtkinter import *
 from PIL import Image
 from auth import verify_user
 from teacher_view import TeacherView
-from department_view import DepartmentView
+from admin_view import AdminView
 from accountant_view import AccountantView
 import os
 
@@ -14,7 +14,7 @@ class LoginPage(object):
         self.window = window
         self.window.title("Login Page")
         self.window.config(bg="white")
-        self.window.resizable(False, False)
+        # self.window.resizable(False, False)
 
         # Biến lưu trữ hình ảnh để giữ tham chiếu
         self.bg_img = None
@@ -61,7 +61,7 @@ class LoginPage(object):
         self.password_entry.grid(row=2, column=0, sticky="nwe", padx=30, pady=20)
 
         # Combobox chọn vai trò
-        self.role_combobox = CTkComboBox(self.frame1, values=["Department", "Teacher", "Accountant"],
+        self.role_combobox = CTkComboBox(self.frame1, values=["Admin", "Teacher", "Department"],
                                          variable=self.var_role, font=("", 14, "bold"), width=200,
                                          height=45, corner_radius=15, dropdown_font=("", 14))
         self.role_combobox.grid(row=3, column=0, sticky="nwe", padx=30, pady=10)
@@ -104,9 +104,9 @@ class LoginPage(object):
         new_window = Toplevel(self.window)
         if user['role'] == 'Teacher':
             self.app = TeacherView(new_window, user)
+        elif user['role'] == 'Admin':
+            self.app = AdminView(new_window, user)
         elif user['role'] == 'Department':
-            self.app = DepartmentView(new_window, user)
-        elif user['role'] == 'Accountant':
             self.app = AccountantView(new_window, user)
         else:
             print(f"Đăng nhập thành công với vai trò {user['role']}. User info: {user}")
@@ -115,7 +115,7 @@ class LoginPage(object):
     def reset(self):
         self.var_email.set("")
         self.var_password.set("")
-        self.var_role.set("Department")
+        self.var_role.set("Admin")
 
     def show(self):
         self.window.update()
@@ -125,3 +125,4 @@ if __name__ == '__main__':
     window = CTk()
     obj = LoginPage(window)
     window.mainloop()
+
