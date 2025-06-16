@@ -16,6 +16,7 @@ from PIL import Image, ImageTk
 import customtkinter as ctk
 import pandas as pd
 import tkinter as tk
+from a import ModernNavbar
 
 class AdminView:
     def __init__(self, window, user):
@@ -23,7 +24,6 @@ class AdminView:
         self.user = user
         self.window.title("Giao diện Khoa")
         self.window.geometry("1700x700")
-        self.window.resizable(False, False)
 
         # Khởi tạo admin_id nếu là tài khoản admin
         if self.user['role'] == 'Admin':
@@ -34,14 +34,13 @@ class AdminView:
                 result = cursor.fetchone()
                 if result:
                     self.user['admin_id'] = result[0]
-                    # Thêm dept_id mặc định cho admin (có thể lấy dept_id đầu tiên)
                     cursor.execute("SELECT dept_id FROM departments LIMIT 1")
                     dept_result = cursor.fetchone()
                     if dept_result:
                         self.user['dept_id'] = dept_result[0]
                     print(f"Debug: User admin_id: {self.user['admin_id']}, dept_id: {self.user['dept_id']}")
                 else:
-                    messagebox.showerror("Lỗi", "Không tìm thấy admin tương ứng") 
+                    messagebox.showerror("Lỗi", "Không tìm thấy admin tương ứng")
                     self.window.destroy()
                     return
             except mysql.connector.Error as e:
@@ -49,217 +48,164 @@ class AdminView:
                 self.window.destroy()
                 return
             finally:
-                cursor.close()
-                conn.close()
-        elif 'admin_id' not in self.user:
-            messagebox.showerror("Lỗi", "Thiếu thông tin admin cho tài khoản")
-            self.window.destroy()
-            return
+                if cursor:
+                    cursor.close()
+                if conn:
+                    conn.close()
         
-        self.teacher_name_label = None
-        self.teacher_id_label = None
-        self.degree_label = None
-        self.dept_label = None
-        self.teacher_coeff_label = None
-        self.rate_label = None
-        self.period_label = None
-
-        style = ttk.Style()
-        style.configure("Treeview", 
-                        font=("Helvetica", 10),  # Font đồng bộ cho nội dung
-                        rowheight=20,           # Chiều cao hàng phù hợp
-                        background="#FFFFFF", 
-                        foreground="black", 
-                        fieldbackground="#F0F0F0")
-        style.configure("Treeview.Heading", 
-                        font=("Helvetica", 10, "bold"),  # Font đồng bộ cho tiêu đề
-                        background="#D3D3D3", 
-                        foreground="black")
-
-        # Frame chính với gradient nền
-        self.main_frame = CTkFrame(self.window, fg_color=("#E6F0FA", "#B0C4DE"))
+        # Frame chính chứa toàn bộ giao diện 
+        self.main_frame = CTkFrame(self.window)
         self.main_frame.pack(fill="both", expand=True)
 
-        # Cấu hình style cho tiêu đề bảng (in đậm)
-        style = ttk.Style()
-        style.configure("Treeview.Heading", font=("Helvetica", 10, "bold"))
+        # Định nghĩa menu_items cho navbar
+        self.navbar_menu_items = [
+            {
+                "label": "Quản lý giáo viên",
+                "icon": "👨‍🏫",
+                "fg_color": "#3E54AC",
+                "hover_color": "#4B67D6",
+                "text_color": "white",
+                "command": None,
+                "submenu": [
+                    {"label": "Bằng cấp", "command": lambda: self.switch_tab("Bằng cấp")},
+                    {"label": "Khoa", "command": lambda: self.switch_tab("Khoa")},
+                    {"label": "Giáo viên", "command": lambda: self.switch_tab("Giáo viên")}
+                ]
+            },
+            {
+                "label": "Quản lý lớp học phần",
+                "icon": "📚",
+                "fg_color": "#3E54AC",
+                "hover_color": "#4B67D6",
+                "text_color": "white",
+                "command": None,
+                "submenu": [
+                    {"label": "Học phần", "command": lambda: self.switch_tab("Học phần")},
+                    {"label": "Kỳ học", "command": lambda: self.switch_tab("Kỳ học")},
+                    {"label": "Lớp học", "command": lambda: self.switch_tab("Lớp học")}
+                ]
+            },
+            {
+                "label": "Thống kê",
+                "icon": "📊",
+                "fg_color": "#3E54AC",
+                "hover_color": "#4B67D6",
+                "text_color": "white",
+                "command": None,
+                "submenu": [
+                    {"label": "Thống kê giáo viên", "command": lambda: self.switch_tab("Thống kê giáo viên")},
+                    {"label": "Thống kê lớp", "command": lambda: self.switch_tab("Thống kê lớp")}
+                ]
+            },
+            {
+                "label": "Tiền dạy",
+                "icon": "💰",
+                "fg_color": "#3E54AC",
+                "hover_color": "#4B67D6",
+                "text_color": "white",
+                "command": None,
+                "submenu": [
+                    {"label": "Định mức tiền theo tiết", "command": lambda: self.switch_tab("Định mức tiền theo tiết")},
+                    {"label": "Hệ số giáo viên", "command": lambda: self.switch_tab("Hệ số giáo viên")},
+                    {"label": "Hệ số lớp", "command": lambda: self.switch_tab("Hệ số lớp")},
+                    {"label": "Tính tiền dạy", "command": lambda: self.switch_tab("Tính tiền dạy")}
+                ]
+            },
+            {
+                "label": "Báo cáo",
+                "icon": "📈",
+                "fg_color": "#3E54AC",
+                "hover_color": "#4B67D6",
+                "text_color": "white",
+                "command": None,
+                "submenu": [
+                    {"label": "Tiền dạy theo năm", "command": lambda: self.switch_tab("Tiền dạy theo năm")},
+                    {"label": "Tổng tiền dạy", "command": lambda: self.switch_tab("Tổng tiền dạy")}
+                ]
+            }
+        ]
 
-        # Sidebar
-        self.sidebar = CTkFrame(self.main_frame, width=250, fg_color="#1E3A8A")
-        self.sidebar.pack(side="left", fill="y")
+        # Tạo navbar với menu_items và logout_callback
+        self.navbar = ModernNavbar(self.main_frame, fg_color="#2B3467", menu_items=self.navbar_menu_items, logout_callback=self.logout)
+        self.navbar.pack(side="left", fill="y")
 
-        # Thêm logo ở vị trí cao nhất
-        try:
-            logo_image = Image.open("logo.png")  # Giả định logo.png nằm trong thư mục dự án
-            logo_image = logo_image.resize((150, 50), Image.Resampling.LANCZOS)  # Điều chỉnh kích thước logo
-            self.logo_photo = ImageTk.PhotoImage(logo_image)
-            self.logo = CTkLabel(self.sidebar, image=CTkImage(light_image=logo_image, dark_image=logo_image, size=(115,75)), text="")
-            self.logo.pack(pady=(10, 15))  # Tăng pady để tạo khoảng cách với mép trên và mục chính bên dưới
-        except Exception as e:
-            # Nếu không tìm thấy logo, hiển thị placeholder
-            CTkLabel(self.sidebar, text="[Logo Placeholder]", font=("Helvetica", 14, "italic"), text_color="white").pack(pady=(10, 15))
+        # Cập nhật thông tin người dùng trong footer của navbar
+        self.navbar.footer.winfo_children()[1].winfo_children()[0].configure(text=self.user['username'])
+        self.navbar.footer.winfo_children()[1].winfo_children()[1].configure(text=self.user['role'])
 
-        # Initialize submenu dictionaries
-        self.submenu_visible = {
-            "Quản lý giáo viên": False,
-            "Quản lý lớp học phần": False,
-            "Thống kê": False,
-            "Tiền dạy": False
-        }
-        self.submenu_items = {
-            "Quản lý giáo viên": ["Bằng cấp", "Khoa", "Giáo viên"],
-            "Quản lý lớp học phần": ["Học phần", "Kỳ học", "Lớp học"],
-            "Thống kê": ["Thống kê giáo viên", "Thống kê lớp"],
-            "Tiền dạy": ["Định mức tiền theo tiết", "Hệ số giáo viên", "Hệ số lớp", "Tính tiền dạy"]
-        }
-        self.submenu_frames = {
-            "Quản lý giáo viên": None,
-            "Quản lý lớp học phần": None,
-            "Thống kê": None,
-            "Tiền dạy": None
-        }
-        self.submenu_buttons = {
-            "Quản lý giáo viên": [],
-            "Quản lý lớp học phần": [],
-            "Thống kê": [],
-            "Tiền dạy": []
-        }
-
-        # Dictionary để ánh xạ mục chính với các tab con
-        self.submenu_items = {
-            "Quản lý giáo viên": ["Bằng cấp", "Khoa", "Giáo viên"],
-            "Quản lý lớp học phần": ["Học phần", "Kỳ học", "Lớp học"],  # Xóa "Phân công"
-            "Thống kê": ["Thống kê giáo viên", "Thống kê lớp"],
-            "Tiền dạy": ["Định mức tiền theo tiết", "Hệ số giáo viên", "Hệ số lớp", "Tính tiền dạy"]
-        }
-        self.submenu_frames = {
-            "Quản lý giáo viên": None,
-            "Quản lý lớp học phần": None,
-            "Thống kê": None,
-            "Tiền dạy": None
-        }
-
-        # Menu sidebar với cơ chế drop down
-        # Mục chính: Quản lý giáo viên
-        # Menu buttons
-        self.teacher_info_button = CTkButton(self.sidebar, text="▶ Quản lý giáo viên", font=("Helvetica", 18, "bold"), fg_color="#2A4B8D",
-                                            text_color="white", hover_color="#4A78E0", anchor="w",
-                                            command=lambda: self.toggle_submenu("Quản lý giáo viên"))
-        self.teacher_info_button.pack(pady=(15, 0), padx=10, fill="x")
-        self.submenu_frames["Quản lý giáo viên"] = CTkFrame(self.sidebar, fg_color="transparent", height=0)
-        self.submenu_frames["Quản lý giáo viên"].pack(pady=0, padx=5, fill="x")
-
-        self.class_management_button = CTkButton(self.sidebar, text="▶ Quản lý lớp học phần", font=("Helvetica", 18, "bold"), fg_color="#2A4B8D",
-                                                text_color="white", hover_color="#4A78E0", anchor="w",
-                                                command=lambda: self.toggle_submenu("Quản lý lớp học phần"))
-        self.class_management_button.pack(pady=(15, 0), padx=10, fill="x")
-        self.submenu_frames["Quản lý lớp học phần"] = CTkFrame(self.sidebar, fg_color="transparent", height=0)
-        self.submenu_frames["Quản lý lớp học phần"].pack(pady=0, padx=5, fill="x")
-
-        self.stats_button = CTkButton(self.sidebar, text="▶ Thống kê", font=("Helvetica", 18, "bold"), fg_color="#2A4B8D",
-                                    text_color="white", hover_color="#4A78E0", anchor="w",
-                                    command=lambda: self.toggle_submenu("Thống kê"))
-        self.stats_button.pack(pady=(15, 0), padx=10, fill="x")
-        self.submenu_frames["Thống kê"] = CTkFrame(self.sidebar, fg_color="transparent", height=0)
-        self.submenu_frames["Thống kê"].pack(pady=0, padx=5, fill="x")
-
-        self.salary_management_button = CTkButton(self.sidebar, text="▶ Tiền dạy", font=("Helvetica", 18, "bold"), fg_color="#2A4B8D",
-                                                text_color="white", hover_color="#4A78E0", anchor="w",
-                                                command=lambda: self.toggle_submenu("Tiền dạy"))
-        self.salary_management_button.pack(pady=(15, 0), padx=10, fill="x")
-        self.submenu_frames["Tiền dạy"] = CTkFrame(self.sidebar, fg_color="transparent", height=0)
-        self.submenu_frames["Tiền dạy"].pack(pady=0, padx=5, fill="x")
-
-        self.report_button = CTkButton(
-        self.sidebar,
-        text="▶ Báo cáo",
-        font=("Helvetica", 18, "bold"),
-        fg_color="#2A4B8D",
-        text_color="white",
-        hover_color="#4A78E0",
-        anchor="w",
-        command=lambda: self.toggle_submenu("Báo cáo")
-    )
-        self.report_button.pack(pady=(15, 0), padx=10, fill="x")
-        self.submenu_frames["Báo cáo"] = CTkFrame(self.sidebar, fg_color="transparent", height=0)
-        self.submenu_frames["Báo cáo"].pack(pady=0, padx=5, fill="x")
-
-        # Thêm submenu items
-        self.submenu_items["Báo cáo"] = ["Tiền dạy theo năm", "Tổng tiền dạy"]
-        self.submenu_visible["Báo cáo"] = False
-        self.submenu_buttons["Báo cáo"] = []
-        
-
-        # Frame chính (bên phải)
-        self.content_frame = CTkFrame(self.main_frame, fg_color="transparent")
-        self.content_frame.pack(side="right", padx=10, pady=10, fill="both", expand=True)
+        # Frame chính bên phải chứa nội dung
+        self.content_frame = CTkFrame(self.main_frame, fg_color=("#E6F0FA", "#B0C4DE"))
+        self.content_frame.pack(side="right", fill="both", expand=True)
 
         # Frame chứa các tab
         self.tab_frame = CTkFrame(self.content_frame, fg_color="transparent")
-        self.tab_frame.pack(fill="both", expand=True)
+        self.tab_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Tab Bằng cấp
+        # Khởi tạo các tab
         self.degree_tab = CTkFrame(self.tab_frame, fg_color="#FFFFFF", corner_radius=10)
-        self.setup_degree_tab()
-
-        # Tab Khoa
         self.dept_tab = CTkFrame(self.tab_frame, fg_color="#FFFFFF", corner_radius=10)
-        self.setup_dept_tab()
-
-        # Tab Quản lý Giáo viên
         self.teacher_tab = CTkFrame(self.tab_frame, fg_color="#FFFFFF", corner_radius=10)
-        self.setup_teacher_tab()
-
-        # Tab Thống kê
         self.stats_tab = CTkFrame(self.tab_frame, fg_color="#FFFFFF", corner_radius=10)
-        self.setup_stats_tab()
-
-        # Tab Quản lý Học phần
         self.module_tab = CTkFrame(self.tab_frame, fg_color="#FFFFFF", corner_radius=10)
-        self.setup_module_tab()
-
-        # Tab Quản lý Lớp học
         self.class_tab = CTkFrame(self.tab_frame, fg_color="#FFFFFF", corner_radius=10)
-        self.setup_class_tab()
-
-        
-
-        # Tab Kỳ học
         self.semester_tab = CTkFrame(self.tab_frame, fg_color="#FFFFFF", corner_radius=10)
-        self.setup_semester_tab()
-
-        # Tab Thống kê số lớp
         self.class_stats_tab = CTkFrame(self.tab_frame, fg_color="#FFFFFF", corner_radius=10)
-        self.setup_class_stats_tab()
-
         self.teacher_coefficient_tab = CTkFrame(self.tab_frame, fg_color="#FFFFFF", corner_radius=10)
-        self.setup_teacher_coefficient_tab()
-
         self.teaching_rate_tab = CTkFrame(self.tab_frame, fg_color="#FFFFFF", corner_radius=10)
-        self.setup_teaching_rate_tab()
-
-        # Tab Hệ số lớp
         self.class_coefficient_tab = CTkFrame(self.tab_frame, fg_color="#FFFFFF", corner_radius=10)
-        self.setup_class_coefficient_tab()
-
-        # Tab Tính tiền dạy
         self.salary_calc_tab = CTkFrame(self.tab_frame, fg_color="#FFFFFF", corner_radius=10)
-        self.setup_salary_calc_tab()
-
         self.salary_report_tab = CTkFrame(self.tab_frame, fg_color="#FFFFFF", corner_radius=10)
+
+        # Gọi các hàm setup cho các tab
+        self.setup_degree_tab()
+        self.setup_dept_tab()
+        self.setup_teacher_tab()
+        self.setup_stats_tab()
+        self.setup_module_tab()
+        self.setup_class_tab()
+        self.setup_semester_tab()
+        self.setup_class_stats_tab()
+        self.setup_teacher_coefficient_tab()
+        self.setup_teaching_rate_tab()
+        self.setup_class_coefficient_tab()
+        self.setup_salary_calc_tab()
         self.setup_salary_report_tab()
 
-        # Tab Tổng tiền dạy
-        # self.total_salary_report_tab = CTkFrame(self.tab_frame, fg_color="#FFFFFF", corner_radius=10)
-        # self.setup_total_salary_report_tab()
-
-        # Hiển thị tab đầu tiên và gán current_tab
+        # Hiển thị tab mặc định
         self.current_tab = self.teacher_tab
         self.current_tab.pack(fill="both", expand=True)
 
-        # Nút đăng xuất
-        CTkButton(self.content_frame, text="Đăng xuất", font=("Helvetica", 14, "bold"), fg_color="#DC3545",
-                  hover_color="#B02A37", command=self.logout).pack(pady=10, side="bottom", anchor="se")
+        # Khởi tạo các biến cho tính lương
+        self.salary_calc_teacher_name_value = None
+        self.salary_calc_teacher_id_value = None
+        self.salary_calc_degree_value = None
+        self.salary_calc_dept_value = None
+        self.salary_calc_teacher_coeff_value = None
+        self.salary_calc_rate_value = None
+        self.salary_calc_period_value = None
+
+        # Khởi tạo các biến cho báo cáo lương
+        self.salary_report_teacher_name_value = None
+        self.salary_report_teacher_id_value = None
+        self.salary_report_teacher_degree_value = None
+        self.salary_report_teacher_dept_value = None
+        self.salary_report_total_salary_label = None
+        self.salary_report_total_classes_label = None
+        self.salary_report_total_periods_label = None
+        self.salary_report_total_salary_temp_label = None
+
+        # Cấu hình style cho Treeview
+        style = ttk.Style()
+        style.configure("Treeview",
+                        font=("Helvetica", 10),
+                        rowheight=20,
+                        background="#FFFFFF",
+                        foreground="black",
+                        fieldbackground="#F0F0F0")
+        style.configure("Treeview.Heading",
+                        font=("Helvetica", 10, "bold"),
+                        background="#D3D3D3",
+                        foreground="black")
 
     def setup_degree_tab(self):
         # Tiêu đề tab
@@ -433,55 +379,85 @@ class AdminView:
         ratios = [f"{(count/total*100):.1f}%" if total > 0 else "0.0%" for count in age_data]
 
         # Frame chính
-        main_frame = CTkFrame(self.chart_frame, fg_color="transparent")
-        main_frame.pack(fill="both", expand=True, pady=20)
+        main_frame = CTkFrame(self.chart_frame, fg_color="transparent") 
+        main_frame.pack(fill="both", expand=True)
 
-        # Tiêu đề
-        CTkLabel(main_frame, text="Phân bố độ tuổi giáo viên", font=("Helvetica", 18, "bold"), text_color="black").pack(pady=5)
+        # Frame tiêu đề
+        title_frame = CTkFrame(main_frame, fg_color="transparent")
+        title_frame.pack(pady=(5,10))
+        CTkLabel(title_frame, text="Phân bố độ tuổi giáo viên", 
+                font=("Helvetica", 16, "bold"), 
+                text_color="#0D47A1").pack()
 
-        # Frame biểu đồ và bảng
+        # Frame chứa biểu đồ và bảng
         content_frame = CTkFrame(main_frame, fg_color="transparent")
         content_frame.pack(fill="both", expand=True)
-
-        # Frame biểu đồ
-        chart_container = CTkFrame(content_frame, fg_color="#FFFFFF")
-        chart_container.pack(side="left", padx=10, pady=10, fill="both", expand=True)
-
-        # Biểu đồ
-        fig, ax = plt.subplots(figsize=(4, 2.5))
-        ax.bar(age_labels, age_data, color=["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"])
-        ax.set_title("Phân bố độ tuổi", fontsize=12, pad=15)
-        ax.set_xlabel("Nhóm tuổi", fontsize=10)
-        ax.set_ylabel("Số giáo viên", fontsize=10)
-        ax.set_ylim(0, max(age_data) + 1 if age_data else 1)
-        plt.xticks(rotation=0, ha="center", fontsize=8)  # Không xoay nhãn
-        plt.tight_layout()
         
+        # Chia frame thành 2 cột với tỷ lệ 7:3
+        content_frame.grid_columnconfigure(0, weight=7)  # Biểu đồ chiếm 70%
+        content_frame.grid_columnconfigure(1, weight=3)  # Bảng chiếm 30%
+
+        # Frame biểu đồ với viền và nền trắng 
+        chart_container = CTkFrame(content_frame, fg_color="#FFFFFF", corner_radius=10, border_width=1, border_color="#E0E0E0")
+        chart_container.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+
+        # Vẽ biểu đồ
+        fig, ax = plt.subplots(figsize=(8, 4))  # Điều chỉnh kích thước biểu đồ
+        bars = ax.bar(age_labels, age_data, color=["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"])
+
+        # Thêm giá trị và tỉ lệ phần trăm lên đỉnh của mỗi cột
+        for bar, ratio in zip(bars, ratios):
+            height = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width()/2., height,
+                    f'{int(height)}\n{ratio}',
+                    ha='center', va='bottom')
+
+        ax.set_xlabel("Nhóm tuổi", fontsize=10)
+        ax.set_ylabel("Số giáo viên", fontsize=10) 
+        ax.set_ylim(0, max(age_data) + 1 if age_data else 1)
+        plt.xticks(rotation=0)
+        plt.tight_layout()
+
         canvas = FigureCanvasTkAgg(fig, master=chart_container)
         canvas.draw()
-        canvas.get_tk_widget().pack(fill="x", expand=True)
+        canvas.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Frame bảng
-        table_container = CTkFrame(content_frame, fg_color="#FFFFFF")
-        table_container.pack(side="right", padx=10, pady=10, fill="both", expand=True)
+        # Frame bảng thống kê chi tiết
+        table_container = CTkFrame(content_frame, fg_color="#FFFFFF", corner_radius=10, border_width=1, border_color="#E0E0E0")
+        table_container.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
 
         # Tiêu đề bảng
-        CTkLabel(table_container, text="Chi tiết thống kê", font=("Helvetica", 14, "bold"), text_color="black").pack(pady=5)
+        CTkLabel(table_container, 
+                text="Chi tiết thống kê", 
+                font=("Helvetica", 14, "bold"),
+                text_color="#0D47A1").pack(pady=5)
 
-        # Bảng
+        # Tạo frame riêng cho bảng với chiều cao cố định
+        tree_frame = CTkFrame(table_container, fg_color="transparent", height=150)  # Chiều cao cố định
+        tree_frame.pack(fill="x", padx=5, pady=5)
+        tree_frame.pack_propagate(False)  # Ngăn frame tự co giãn
+
+        # Style cho bảng
         style = ttk.Style()
-        style.configure("Stats.Treeview", font=("Helvetica", 10))
+        style.configure("Stats.Treeview", font=("Helvetica", 10), rowheight=25)
         style.configure("Stats.Treeview.Heading", font=("Helvetica", 10, "bold"))
         
-        tree = ttk.Treeview(table_container, columns=("Age", "Count", "Ratio"), show="headings", style="Stats.Treeview")
-        tree.heading("Age", text="Độ tuổi", anchor="center")
-        tree.heading("Count", text="Số lượng", anchor="center")
-        tree.heading("Ratio", text="Tỷ lệ", anchor="center")
-        tree.column("Age", width=100, anchor="center", stretch=True)
-        tree.column("Count", width=80, anchor="center", stretch=True)
-        tree.column("Ratio", width=80, anchor="center", stretch=True)
+        # Tạo bảng
+        tree = ttk.Treeview(tree_frame, columns=("Age", "Count", "Ratio"), 
+                        show="headings", style="Stats.Treeview", height=5)
+        
+        # Định dạng cột
+        tree.heading("Age", text="Độ tuổi")
+        tree.heading("Count", text="Số lượng") 
+        tree.heading("Ratio", text="Tỷ lệ")
+        
+        tree.column("Age", width=80, anchor="center")
+        tree.column("Count", width=80, anchor="center")
+        tree.column("Ratio", width=80, anchor="center")
+        
         tree.pack(fill="both", expand=True)
 
+        # Thêm dữ liệu vào bảng
         for label, count, ratio in zip(age_labels, age_data, ratios):
             tree.insert("", "end", values=(label, count, ratio))
 
@@ -490,60 +466,82 @@ class AdminView:
         
         degree_labels, degree_data = self.get_degree_distribution()
         if not degree_labels or not degree_data:
-            messagebox.showwarning("Cảnh báo!", "Không có dữ liệu bằng cấp để xem!")
+            messagebox.showwarning("Cảnh báo", "Không có dữ liệu bằng cấp để hiển thị.")
             return
 
         total = sum(degree_data)
         ratios = [f"{(count/total*100):.1f}%" if total > 0 else "0.0%" for count in degree_data]
 
         # Frame chính
-        main_frame = CTkFrame(self.chart_frame, fg_color="transparent")
-        main_frame.pack(fill="both", expand=True, pady=20)
+        main_frame = CTkFrame(self.chart_frame, fg_color="transparent") 
+        main_frame.pack(fill="both", expand=True)
 
-        # Tiêu đề
-        CTkLabel(main_frame, text="Phân bố bằng cấp giáo viên", font=("Helvetica", 18, "bold"), text_color="black").pack(pady=5)
+        # Frame tiêu đề
+        title_frame = CTkFrame(main_frame, fg_color="transparent")
+        title_frame.pack(pady=(5,10))
+        CTkLabel(title_frame, text="Phân bố bằng cấp giáo viên", 
+                font=("Helvetica", 16, "bold"), 
+                text_color="#0D47A1").pack()
 
-        # Frame biểu đồ và bảng
+        # Frame chứa biểu đồ và bảng
         content_frame = CTkFrame(main_frame, fg_color="transparent")
         content_frame.pack(fill="both", expand=True)
+        
+        content_frame.grid_columnconfigure(0, weight=7)
+        content_frame.grid_columnconfigure(1, weight=3)
 
         # Frame biểu đồ
-        chart_container = CTkFrame(content_frame, fg_color="#FFFFFF")
-        chart_container.pack(side="left", padx=10, pady=10, fill="both", expand=True)
+        chart_container = CTkFrame(content_frame, fg_color="#FFFFFF", corner_radius=10, border_width=1, border_color="#E0E0E0")
+        chart_container.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
 
-        # Biểu đồ
-        fig, ax = plt.subplots(figsize=(4, 2.5))
-        ax.bar(degree_labels, degree_data, color=["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"])
-        ax.set_title("Phân bố bằng cấp", fontsize=12, pad=15)
+        # Vẽ biểu đồ
+        fig, ax = plt.subplots(figsize=(8, 4))
+        bars = ax.bar(degree_labels, degree_data, color=["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0"])
+
+        # Thêm giá trị và tỉ lệ lên đỉnh cột
+        for bar, ratio in zip(bars, ratios):
+            height = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width()/2., height,
+                    f'{int(height)}\n{ratio}',
+                    ha='center', va='bottom')
+
         ax.set_xlabel("Bằng cấp", fontsize=10)
         ax.set_ylabel("Số giáo viên", fontsize=10)
         ax.set_ylim(0, max(degree_data) + 1 if degree_data else 1)
-        plt.xticks(rotation=0, ha="center", fontsize=8)  # Không xoay nhãn
+        plt.xticks(rotation=15)
         plt.tight_layout()
-        
+
         canvas = FigureCanvasTkAgg(fig, master=chart_container)
         canvas.draw()
-        canvas.get_tk_widget().pack(fill="x", expand=True)
+        canvas.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Frame bảng
-        table_container = CTkFrame(content_frame, fg_color="#FFFFFF")
-        table_container.pack(side="right", padx=10, pady=10, fill="both", expand=True)
+        # Frame bảng thống kê
+        table_container = CTkFrame(content_frame, fg_color="#FFFFFF", corner_radius=10, border_width=1, border_color="#E0E0E0")
+        table_container.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
 
-        # Tiêu đề bảng
-        CTkLabel(table_container, text="Chi tiết thống kê", font=("Helvetica", 14, "bold"), text_color="black").pack(pady=5)
+        CTkLabel(table_container, text="Chi tiết thống kê", 
+                font=("Helvetica", 14, "bold"),
+                text_color="#0D47A1").pack(pady=5)
 
-        # Bảng
+        tree_frame = CTkFrame(table_container, fg_color="transparent", height=150)
+        tree_frame.pack(fill="x", padx=5, pady=5)
+        tree_frame.pack_propagate(False)
+
         style = ttk.Style()
-        style.configure("Stats.Treeview", font=("Helvetica", 10))
+        style.configure("Stats.Treeview", font=("Helvetica", 10), rowheight=25)
         style.configure("Stats.Treeview.Heading", font=("Helvetica", 10, "bold"))
         
-        tree = ttk.Treeview(table_container, columns=("Degree", "Count", "Ratio"), show="headings", style="Stats.Treeview")
-        tree.heading("Degree", text="Bằng cấp", anchor="center")
-        tree.heading("Count", text="Số lượng", anchor="center")
-        tree.heading("Ratio", text="Tỷ lệ", anchor="center")
-        tree.column("Degree", width=100, anchor="center", stretch=True)
-        tree.column("Count", width=80, anchor="center", stretch=True)
-        tree.column("Ratio", width=80, anchor="center", stretch=True)
+        tree = ttk.Treeview(tree_frame, columns=("Degree", "Count", "Ratio"), 
+                        show="headings", style="Stats.Treeview", height=5)
+        
+        tree.heading("Degree", text="Bằng cấp")
+        tree.heading("Count", text="Số lượng")
+        tree.heading("Ratio", text="Tỷ lệ")
+        
+        tree.column("Degree", width=80, anchor="center")
+        tree.column("Count", width=80, anchor="center")
+        tree.column("Ratio", width=80, anchor="center")
+        
         tree.pack(fill="both", expand=True)
 
         for label, count, ratio in zip(degree_labels, degree_data, ratios):
@@ -552,93 +550,88 @@ class AdminView:
     def show_dept_chart(self):
         self.clear_chart_frame()
         
-        # Lấy cả tên viết tắt và tên đầy đủ
-        try:
-            conn = mysql.connector.connect(**DB_CONFIG)
-            cursor = conn.cursor()
-            query = """
-                SELECT d.dept_abbr, d.dept_name, COUNT(t.teacher_id) 
-                FROM departments d 
-                LEFT JOIN teachers t ON d.dept_id = t.dept_id
-                GROUP BY d.dept_id, d.dept_abbr, d.dept_name
-            """
-            cursor.execute(query)
-            dept_abbrs = []  # Tên viết tắt cho biểu đồ
-            dept_names = []  # Tên đầy đủ cho bảng
-            dept_data = []
-            for row in cursor.fetchall():
-                dept_abbr, dept_name, count = row
-                dept_abbrs.append(dept_abbr)
-                dept_names.append(dept_name)
-                dept_data.append(count)
-        except mysql.connector.Error as e:
-            messagebox.showerror("Lỗi", f"Không thể tải dữ liệu khoa: {e}")
-            return [], []
-        finally:
-            if cursor:
-                cursor.close()
-            if conn:
-                conn.close()
-
-        if not dept_abbrs or not dept_data:
-            messagebox.showwarning("Cảnh báo!", "Không có dữ liệu khoa để xem!")
+        dept_labels, dept_data = self.get_dept_distribution()
+        if not dept_labels or not dept_data:
+            messagebox.showwarning("Cảnh báo", "Không có dữ liệu khoa để hiển thị.")
             return
 
         total = sum(dept_data)
         ratios = [f"{(count/total*100):.1f}%" if total > 0 else "0.0%" for count in dept_data]
 
         # Frame chính
-        main_frame = CTkFrame(self.chart_frame, fg_color="transparent")
-        main_frame.pack(fill="both", expand=True, pady=20)
+        main_frame = CTkFrame(self.chart_frame, fg_color="transparent") 
+        main_frame.pack(fill="both", expand=True)
 
-        # Tiêu đề
-        CTkLabel(main_frame, text="Phân bố giáo viên theo khoa", font=("Helvetica", 18, "bold"), text_color="black").pack(pady=5)
+        # Frame tiêu đề
+        title_frame = CTkFrame(main_frame, fg_color="transparent")
+        title_frame.pack(pady=(5,10))
+        CTkLabel(title_frame, text="Phân bố giáo viên theo khoa", 
+                font=("Helvetica", 16, "bold"), 
+                text_color="#0D47A1").pack()
 
-        # Frame biểu đồ và bảng
+        # Frame chứa biểu đồ và bảng
         content_frame = CTkFrame(main_frame, fg_color="transparent")
         content_frame.pack(fill="both", expand=True)
+        
+        content_frame.grid_columnconfigure(0, weight=7)
+        content_frame.grid_columnconfigure(1, weight=3)
 
         # Frame biểu đồ
-        chart_container = CTkFrame(content_frame, fg_color="#FFFFFF")
-        chart_container.pack(side="left", padx=10, pady=10, fill="both", expand=True)
+        chart_container = CTkFrame(content_frame, fg_color="#FFFFFF", corner_radius=10, border_width=1, border_color="#E0E0E0")
+        chart_container.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
 
-        # Biểu đồ cột
-        fig, ax = plt.subplots(figsize=(4, 2.5))
-        ax.bar(dept_abbrs, dept_data, color=["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"])
-        ax.set_title("Phân bố theo khoa", fontsize=12, pad=15)
-        ax.set_xlabel("Khoa (viết tắt)", fontsize=10)
+        # Vẽ biểu đồ
+        fig, ax = plt.subplots(figsize=(8, 4))
+        bars = ax.bar(dept_labels, dept_data, color=["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"])
+
+        # Thêm giá trị và tỉ lệ lên đỉnh cột
+        for bar, ratio in zip(bars, ratios):
+            height = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width()/2., height,
+                    f'{int(height)}\n{ratio}',
+                    ha='center', va='bottom')
+
+        ax.set_xlabel("Khoa", fontsize=10)
         ax.set_ylabel("Số giáo viên", fontsize=10)
         ax.set_ylim(0, max(dept_data) + 1 if dept_data else 1)
-        plt.xticks(rotation=0, ha="center", fontsize=8)  # Không xoay nhãn
+        plt.xticks(rotation=15)
         plt.tight_layout()
-        
+
         canvas = FigureCanvasTkAgg(fig, master=chart_container)
         canvas.draw()
-        canvas.get_tk_widget().pack(fill="x", expand=True)
+        canvas.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Frame bảng
-        table_container = CTkFrame(content_frame, fg_color="#FFFFFF")
-        table_container.pack(side="right", padx=10, pady=10, fill="both", expand=True)
+        # Frame bảng thống kê
+        table_container = CTkFrame(content_frame, fg_color="#FFFFFF", corner_radius=10, border_width=1, border_color="#E0E0E0")
+        table_container.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
 
-        # Tiêu đề bảng
-        CTkLabel(table_container, text="Chi tiết thống kê", font=("Helvetica", 14, "bold"), text_color="black").pack(pady=5)
+        CTkLabel(table_container, text="Chi tiết thống kê", 
+                font=("Helvetica", 14, "bold"),
+                text_color="#0D47A1").pack(pady=5)
 
-        # Bảng
+        tree_frame = CTkFrame(table_container, fg_color="transparent", height=150)
+        tree_frame.pack(fill="x", padx=5, pady=5)
+        tree_frame.pack_propagate(False)
+
         style = ttk.Style()
-        style.configure("Stats.Treeview", font=("Helvetica", 10))
+        style.configure("Stats.Treeview", font=("Helvetica", 10), rowheight=25)
         style.configure("Stats.Treeview.Heading", font=("Helvetica", 10, "bold"))
         
-        tree = ttk.Treeview(table_container, columns=("Dept", "Count", "Ratio"), show="headings", style="Stats.Treeview")
-        tree.heading("Dept", text="Khoa", anchor="center")
-        tree.heading("Count", text="Số lượng", anchor="center")
-        tree.heading("Ratio", text="Tỷ lệ", anchor="center")
-        tree.column("Dept", width=120, anchor="center", stretch=True)
-        tree.column("Count", width=80, anchor="center", stretch=True)
-        tree.column("Ratio", width=80, anchor="center", stretch=True)
+        tree = ttk.Treeview(tree_frame, columns=("Dept", "Count", "Ratio"), 
+                        show="headings", style="Stats.Treeview", height=5)
+        
+        tree.heading("Dept", text="Khoa")
+        tree.heading("Count", text="Số lượng")
+        tree.heading("Ratio", text="Tỷ lệ")
+        
+        tree.column("Dept", width=80, anchor="center")
+        tree.column("Count", width=80, anchor="center")
+        tree.column("Ratio", width=80, anchor="center")
+        
         tree.pack(fill="both", expand=True)
 
-        for name, count, ratio in zip(dept_names, dept_data, ratios):
-            tree.insert("", "end", values=(name, count, ratio))
+        for label, count, ratio in zip(dept_labels, dept_data, ratios):
+            tree.insert("", "end", values=(label, count, ratio))
 
     def export_stats(self):
         import pandas as pd
@@ -820,71 +813,61 @@ class AdminView:
         self.load_classes_by_semester(None)  # Tải danh sách lớp học phần khi khởi tạo
 
     def setup_class_stats_tab(self):
-    # Tiêu đề
+        # Tiêu đề
         ctk.CTkLabel(self.class_stats_tab, text="Thống kê lớp học phần", font=("Helvetica", 18, "bold"), text_color="black").pack(pady=10)
 
-        # Frame bộ lọc
+        # Frame bộ lọc 
         filter_frame = ctk.CTkFrame(self.class_stats_tab, fg_color="#F0F0F0", corner_radius=10)
         filter_frame.pack(padx=10, pady=10, fill="x")
         ctk.CTkLabel(filter_frame, text="Năm học:", font=("Helvetica", 14), text_color="black").pack(side="left", padx=5)
         self.stats_year_combobox = ctk.CTkComboBox(filter_frame, width=200, values=self.get_academic_years(), command=self.update_class_stats)
         self.stats_year_combobox.pack(side="left", padx=5)
-        self.stats_year_combobox.set("2025-2026")  # Đặt mặc định là 2025-2026
+        self.stats_year_combobox.set("2025-2026")
 
         # Frame nút điều hướng
         button_frame = ctk.CTkFrame(self.class_stats_tab, fg_color="transparent")
         button_frame.pack(pady=5)
-        ctk.CTkButton(button_frame, text="Tất cả", fg_color="#0085FF", hover_color="#005BB5", command=self.show_class_stats_all).pack(side="left", padx=5)
         ctk.CTkButton(button_frame, text="Biểu đồ", fg_color="#FF6384", hover_color="#E55773", command=self.show_class_stats_chart).pack(side="left", padx=5)
         ctk.CTkButton(button_frame, text="Bảng", fg_color="#36A2EB", hover_color="#2A82C5", command=self.show_class_stats_table).pack(side="left", padx=5)
         ctk.CTkButton(button_frame, text="Xuất Excel", fg_color="#FFCE56", hover_color="#E5B74C", command=self.export_excel).pack(side="left", padx=5)
-        ctk.CTkButton(button_frame, text="Cập nhật ngay", fg_color="#28A745", hover_color="#218838", command=self.refresh_data_realtime).pack(side="left", padx=5)
 
         # Frame tổng quan với 4 ô thẻ thông tin
         overview_frame = ctk.CTkFrame(self.class_stats_tab, fg_color="transparent")
         overview_frame.pack(fill="x", padx=10, pady=10)
 
-        # Ô 1: Tổng số lớp học phần
-        total_classes_frame = ctk.CTkFrame(overview_frame, fg_color="#BBDEFB", corner_radius=12, border_width=3, border_color="#1976D2", width=200, height=100)
-        total_classes_frame.pack(side="left", padx=10, pady=5, fill="x", expand=True)
-        total_classes_frame.pack_propagate(False)
-        ctk.CTkLabel(total_classes_frame, text="Tổng số lớp học phần", font=("Helvetica", 12, "bold"), text_color="#0D47A1").pack(pady=(5, 0))
-        self.total_classes_label = ctk.CTkLabel(total_classes_frame, text="15", font=("Helvetica", 24, "bold"), text_color="#0D47A1")
-        self.total_classes_label.pack(pady=(0, 5))
-        self.total_modules_label = ctk.CTkLabel(total_classes_frame, text="4 học phần", font=("Helvetica", 12, "bold"), text_color="#0D47A1")
-        self.total_modules_label.pack(pady=(0, 5))
+        # Tổng số lớp
+        total_classes_card = ctk.CTkFrame(overview_frame, fg_color=("#BBDEFB", "#64B5F6"), corner_radius=12, border_width=3, border_color="#1976D2")
+        total_classes_card.pack(side="left", padx=5, pady=5, fill="x", expand=True)
+        self.total_classes_label = ctk.CTkLabel(total_classes_card, text="0", font=("Helvetica", 28, "bold"), text_color="#0D47A1")
+        self.total_classes_label.pack(pady=(15, 5))
+        ctk.CTkLabel(total_classes_card, text="Tổng số lớp", font=("Helvetica", 14, "bold"), text_color="#0D47A1").pack(pady=(0, 10))
 
-        # Ô 2: Tổng số sinh viên (loại bỏ dòng dưới cùng)
-        total_students_frame = ctk.CTkFrame(overview_frame, fg_color="#FFECB3", corner_radius=12, border_width=3, border_color="#F57C00", width=200, height=100)
-        total_students_frame.pack(side="left", padx=10, pady=5, fill="x", expand=True)
-        total_students_frame.pack_propagate(False)
-        ctk.CTkLabel(total_students_frame, text="Tổng số sinh viên", font=("Helvetica", 12, "bold"), text_color="#E65100").pack(pady=(5, 0))
-        self.total_students_label = ctk.CTkLabel(total_students_frame, text="640", font=("Helvetica", 24, "bold"), text_color="#E65100")
-        self.total_students_label.pack(pady=(0, 10))  # Tăng pady để cân đối không gian
+        # Tổng số học phần
+        total_modules_card = ctk.CTkFrame(overview_frame, fg_color=("#C8E6C9", "#81C784"), corner_radius=12, border_width=3, border_color="#388E3C")
+        total_modules_card.pack(side="left", padx=5, pady=5, fill="x", expand=True)
+        self.total_modules_label = ctk.CTkLabel(total_modules_card, text="0 học phần", font=("Helvetica", 28, "bold"), text_color="#1B5E20")
+        self.total_modules_label.pack(pady=(15, 5))
+        ctk.CTkLabel(total_modules_card, text="Học phần", font=("Helvetica", 14, "bold"), text_color="#1B5E20").pack(pady=(0, 10))
 
-        # Ô 3: Trung bình SV/lớp
-        avg_students_frame = ctk.CTkFrame(overview_frame, fg_color="#FFCDD2", corner_radius=12, border_width=3, border_color="#D32F2F", width=200, height=100)
-        avg_students_frame.pack(side="left", padx=10, pady=5, fill="x", expand=True)
-        avg_students_frame.pack_propagate(False)
-        ctk.CTkLabel(avg_students_frame, text="Trung bình SV/lớp", font=("Helvetica", 12, "bold"), text_color="#B71C1C").pack(pady=(5, 0))
-        self.avg_per_class_label = ctk.CTkLabel(avg_students_frame, text="42.67", font=("Helvetica", 24, "bold"), text_color="#B71C1C")
-        self.avg_per_class_label.pack(pady=(0, 5))
-        ctk.CTkLabel(avg_students_frame, text=" ", font=("Helvetica", 12, "bold"), text_color="#B71C1C").pack(pady=(0, 5))
+        # Tổng sinh viên
+        total_students_card = ctk.CTkFrame(overview_frame, fg_color=("#FFECB3", "#FFB300"), corner_radius=12, border_width=3, border_color="#F57C00")
+        total_students_card.pack(side="left", padx=5, pady=5, fill="x", expand=True)
+        self.total_students_label = ctk.CTkLabel(total_students_card, text="0", font=("Helvetica", 28, "bold"), text_color="#E65100")
+        self.total_students_label.pack(pady=(15, 5))
+        ctk.CTkLabel(total_students_card, text="Tổng sinh viên", font=("Helvetica", 14, "bold"), text_color="#E65100").pack(pady=(0, 10))
 
-        # Ô 4: Môn đông SV nhất (giữ nguyên)
-        top_module_frame = ctk.CTkFrame(overview_frame, fg_color="#D1C4E9", corner_radius=12, border_width=3, border_color="#673AB7", width=200, height=100)
-        top_module_frame.pack(side="left", padx=10, pady=5, fill="x", expand=True)
-        top_module_frame.pack_propagate(False)
-        ctk.CTkLabel(top_module_frame, text="Môn đông SV nhất", font=("Helvetica", 12, "bold"), text_color="#311B92").pack(pady=(5, 0))
-        self.top_module_label = ctk.CTkLabel(top_module_frame, text="N/A", font=("Helvetica", 24, "bold"), text_color="#311B92")
-        self.top_module_label.pack(pady=(0, 5))
-        ctk.CTkLabel(top_module_frame, text=" ", font=("Helvetica", 12, "bold"), text_color="#311B92").pack(pady=(0, 5))
+        # Trung bình sinh viên/lớp
+        avg_card = ctk.CTkFrame(overview_frame, fg_color=("#E1BEE7", "#BA68C8"), corner_radius=12, border_width=3, border_color="#7B1FA2")
+        avg_card.pack(side="left", padx=5, pady=5, fill="x", expand=True)
+        self.avg_per_class_label = ctk.CTkLabel(avg_card, text="0", font=("Helvetica", 28, "bold"), text_color="#4A148C")
+        self.avg_per_class_label.pack(pady=(15, 5))
+        ctk.CTkLabel(avg_card, text="TB SV/Lớp", font=("Helvetica", 14, "bold"), text_color="#4A148C").pack(pady=(0, 10))
 
         # Frame nội dung (biểu đồ và bảng)
-        self.class_stats_frame = ctk.CTkScrollableFrame(self.class_stats_tab, fg_color="#FFFFFF", corner_radius=10)
+        self.class_stats_frame = ctk.CTkFrame(self.class_stats_tab, fg_color="#FFFFFF", corner_radius=10)
         self.class_stats_frame.pack(padx=10, pady=10, fill="both", expand=True)
 
-        # Cập nhật dữ liệu mặc định
+        # Cập nhật dữ liệu mặc định - hiển thị biểu đồ
         self.update_class_stats()
 
     def setup_module_tab(self):
@@ -970,6 +953,7 @@ class AdminView:
         CTkLabel(heading_frame, text="Mã lớp", font=("Helvetica", 14, "bold"), text_color="black", width=70, anchor="center").pack(side="left", padx=5)
         CTkLabel(heading_frame, text="Tên lớp", font=("Helvetica", 14, "bold"), text_color="black", width=220, anchor="center").pack(side="left", padx=5)
         CTkLabel(heading_frame, text="Số sinh viên", font=("Helvetica", 14, "bold"), text_color="black", width=100, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Số SV thực tế", font=("Helvetica", 14, "bold"), text_color="black", width=120, anchor="center").pack(side="left", padx=5)  # Thêm cột mới
         CTkLabel(heading_frame, text="Giảng viên", font=("Helvetica", 14, "bold"), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
         CTkLabel(heading_frame, text="Thao tác", font=("Helvetica", 14, "bold"), text_color="black", width=200, anchor="center").pack(side="left", padx=5)
 
@@ -983,44 +967,41 @@ class AdminView:
     
 
     def setup_teacher_coefficient_tab(self):
-        # Header
-        header_frame = CTkFrame(self.teacher_coefficient_tab, fg_color="transparent")
+        self.teacher_coefficient_tab.configure(fg_color="#FFFFFF")
+        main_frame = CTkFrame(self.teacher_coefficient_tab, fg_color="transparent")
+        main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        # Header frame
+        header_frame = CTkFrame(main_frame, fg_color="transparent")
         header_frame.pack(fill="x", padx=10, pady=10)
         CTkLabel(header_frame, text="Hệ số giáo viên", font=("Helvetica", 18, "bold"), text_color="black").pack(side="left")
-        CTkButton(header_frame, text="Thêm hệ số mới", fg_color="#0085FF", command=self.add_teacher_coefficient).pack(side="right")
+        CTkButton(header_frame, text="Đặt lại thành mặc định", fg_color="#0085FF", command=self.reset_to_default_coefficient_table).pack(side="right")
 
-        # Filter by academic year
-        filter_frame = CTkFrame(self.teacher_coefficient_tab, fg_color="transparent")
+        # Filter frame
+        filter_frame = CTkFrame(main_frame, fg_color="#FFFFFF", corner_radius=10)
         filter_frame.pack(fill="x", padx=10, pady=5)
-        CTkLabel(filter_frame, text="Năm học:", font=("Helvetica", 12), text_color="black").pack(side="left", padx=(0, 5))
-        self.coefficient_year_filter = CTkComboBox(filter_frame, values=self.get_academic_years(), width=150, command=self.load_teacher_coefficients)
-        self.coefficient_year_filter.pack(side="left")
-        self.coefficient_year_filter.set(self.get_academic_years()[0] if self.get_academic_years() else "2025-2026")
 
-        # Main container
-        self.coefficient_container = CTkFrame(self.teacher_coefficient_tab, fg_color="#FFFFFF", corner_radius=10)
-        self.coefficient_container.pack(padx=10, pady=10, fill="both", expand=True)
-
-        # Heading
-        heading_frame = CTkFrame(self.coefficient_container, fg_color="#D3D3D3", corner_radius=0)
-        heading_frame.pack(fill="x", padx=5, pady=(5, 0))
-        CTkLabel(heading_frame, text="STT", font=("Helvetica", 14, "bold"), text_color="black", width=160, anchor="center").pack(side="left", padx=5)
-        CTkLabel(heading_frame, text="Bằng cấp", font=("Helvetica", 14, "bold"), text_color="black", width=500, anchor="center").pack(side="left", padx=5)
-        CTkLabel(heading_frame, text="Hệ số", font=("Helvetica", 14, "bold"), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
-        CTkLabel(heading_frame, text="Thao tác", font=("Helvetica", 14, "bold"), text_color="black", width=200, anchor="center").pack(side="left", padx=5)
+        year_label = CTkLabel(filter_frame, text="Năm học:", font=("Helvetica", 12, "bold"))
+        year_label.pack(side="left", padx=5)
+        self.coefficient_year_filter = CTkComboBox(filter_frame, values=[f"{y}-{y+1}" for y in range(2020, 2030)], width=150, command=self.load_teacher_coefficients)
+        self.coefficient_year_filter.pack(side="left", padx=5)
+        self.coefficient_year_filter.set(f"{datetime.now().year}-{datetime.now().year + 1}")
 
         # List frame
-        self.coefficient_list_frame = CTkFrame(self.coefficient_container, fg_color="transparent")
-        self.coefficient_list_frame.pack(fill="both", expand=True, padx=5, pady=5)
+        self.coefficient_list_frame = CTkFrame(main_frame, fg_color="transparent")
+        self.coefficient_list_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Load data
+        # Tải dữ liệu hiện có khi khởi tạo
         self.load_teacher_coefficients()
 
+
+
     def setup_teaching_rate_tab(self):
-        # Header
+    # Header
         header_frame = CTkFrame(self.teaching_rate_tab, fg_color="transparent")
         header_frame.pack(fill="x", padx=10, pady=10)
         CTkLabel(header_frame, text="Định mức tiền theo tiết", font=("Helvetica", 18, "bold"), text_color="black").pack(side="left")
+        # CTkButton(header_frame, text="Thêm định mức mới", fg_color="#0085FF", command=self.add_teaching_rate).pack(side="right")
 
         # Main container
         self.rate_container = CTkFrame(self.teaching_rate_tab, fg_color="#FFFFFF", corner_radius=10)
@@ -1122,38 +1103,36 @@ class AdminView:
         reset_button = CTkButton(filter_frame, text="Reset", fg_color="#6C757D", width=40, command=self.reset_salary_calc)
         reset_button.grid(row=0, column=9, padx=5, pady=5, sticky="w")
 
-        # Sử dụng grid cho content_frame
         content_frame = CTkFrame(main_frame, fg_color="transparent")
         content_frame.grid(row=2, column=0, columnspan=2, sticky="nsew")
-        main_frame.grid_rowconfigure(2, weight=1)  # Tăng trọng số cho content_frame
+        main_frame.grid_rowconfigure(2, weight=1)
         main_frame.grid_columnconfigure(0, weight=1)
 
-        # Tăng trọng số cho teacher_info_frame
         teacher_info_frame = CTkFrame(content_frame, fg_color="#cce7ff", corner_radius=10)
         teacher_info_frame.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
-        content_frame.grid_columnconfigure(0, weight=1, uniform="group1")  # Đảm bảo không gian cho teacher_info_frame
+        content_frame.grid_columnconfigure(0, weight=1, uniform="group1")
         content_frame.grid_rowconfigure(0, weight=1)
         CTkLabel(teacher_info_frame, text="Thông tin giảng viên", font=("Helvetica", 14, "bold"), text_color="#0D47A1").grid(row=0, column=0, columnspan=2, padx=5, pady=5, sticky="w")
 
-        self.teacher_name_title = CTkLabel(teacher_info_frame, text="Họ và tên:", font=("Helvetica", 12, "bold"))
-        self.teacher_name_title.grid(row=1, column=0, padx=5, pady=2, sticky="w")
-        self.teacher_name_value = CTkLabel(teacher_info_frame, text="", font=("Helvetica", 12), wraplength=200)
-        self.teacher_name_value.grid(row=1, column=1, padx=5, pady=2, sticky="w")
+        self.salary_calc_teacher_name_title = CTkLabel(teacher_info_frame, text="Họ và tên:", font=("Helvetica", 12, "bold"))
+        self.salary_calc_teacher_name_title.grid(row=1, column=0, padx=5, pady=2, sticky="w")
+        self.salary_calc_teacher_name_value = CTkLabel(teacher_info_frame, text="", font=("Helvetica", 12), wraplength=200)
+        self.salary_calc_teacher_name_value.grid(row=1, column=1, padx=5, pady=2, sticky="w")
 
-        self.teacher_id_title = CTkLabel(teacher_info_frame, text="Mã giảng viên:", font=("Helvetica", 12, "bold"))
-        self.teacher_id_title.grid(row=2, column=0, padx=5, pady=2, sticky="w")
-        self.teacher_id_value = CTkLabel(teacher_info_frame, text="", font=("Helvetica", 12), wraplength=200)
-        self.teacher_id_value.grid(row=2, column=1, padx=5, pady=2, sticky="w")
+        self.salary_calc_teacher_id_title = CTkLabel(teacher_info_frame, text="Mã giảng viên:", font=("Helvetica", 12, "bold"))
+        self.salary_calc_teacher_id_title.grid(row=2, column=0, padx=5, pady=2, sticky="w")
+        self.salary_calc_teacher_id_value = CTkLabel(teacher_info_frame, text="", font=("Helvetica", 12), wraplength=200)
+        self.salary_calc_teacher_id_value.grid(row=2, column=1, padx=5, pady=2, sticky="w")
 
-        self.degree_title = CTkLabel(teacher_info_frame, text="Học vị:", font=("Helvetica", 12, "bold"))
-        self.degree_title.grid(row=3, column=0, padx=5, pady=2, sticky="w")
-        self.degree_value = CTkLabel(teacher_info_frame, text="", font=("Helvetica", 12), wraplength=200)
-        self.degree_value.grid(row=3, column=1, padx=5, pady=2, sticky="w")
+        self.salary_calc_degree_title = CTkLabel(teacher_info_frame, text="Học vị:", font=("Helvetica", 12, "bold"))
+        self.salary_calc_degree_title.grid(row=3, column=0, padx=5, pady=2, sticky="w")
+        self.salary_calc_degree_value = CTkLabel(teacher_info_frame, text="", font=("Helvetica", 12), wraplength=200)
+        self.salary_calc_degree_value.grid(row=3, column=1, padx=5, pady=2, sticky="w")
 
-        self.dept_title = CTkLabel(teacher_info_frame, text="Khoa/Bộ môn:", font=("Helvetica", 12, "bold"))
-        self.dept_title.grid(row=4, column=0, padx=5, pady=2, sticky="w")
-        self.dept_value = CTkLabel(teacher_info_frame, text="", font=("Helvetica", 12), wraplength=200)
-        self.dept_value.grid(row=4, column=1, padx=5, pady=2, sticky="w")
+        self.salary_calc_dept_title = CTkLabel(teacher_info_frame, text="Khoa/Bộ môn:", font=("Helvetica", 12, "bold"))
+        self.salary_calc_dept_title.grid(row=4, column=0, padx=5, pady=2, sticky="w")
+        self.salary_calc_dept_value = CTkLabel(teacher_info_frame, text="", font=("Helvetica", 12), wraplength=200)
+        self.salary_calc_dept_value.grid(row=4, column=1, padx=5, pady=2, sticky="w")
 
         calc_info_frame = CTkFrame(content_frame, fg_color="#cce7ff", corner_radius=10)
         calc_info_frame.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
@@ -1161,30 +1140,27 @@ class AdminView:
         content_frame.grid_rowconfigure(0, weight=1)
         CTkLabel(calc_info_frame, text="Thông tin tính toán", font=("Helvetica", 14, "bold"), text_color="#0D47A1").grid(row=0, column=0, columnspan=2, padx=5, pady=5, sticky="w")
 
-        self.teacher_coeff_title = CTkLabel(calc_info_frame, text="Hệ số giáo viên:", font=("Helvetica", 12, "bold"))
-        self.teacher_coeff_title.grid(row=1, column=0, padx=5, pady=2, sticky="w")
-        self.teacher_coeff_value = CTkLabel(calc_info_frame, text="", font=("Helvetica", 12), wraplength=200)
-        self.teacher_coeff_value.grid(row=1, column=1, padx=5, pady=2, sticky="w")
+        self.salary_calc_teacher_coeff_title = CTkLabel(calc_info_frame, text="Hệ số giáo viên:", font=("Helvetica", 12, "bold"))
+        self.salary_calc_teacher_coeff_title.grid(row=1, column=0, padx=5, pady=2, sticky="w")
+        self.salary_calc_teacher_coeff_value = CTkLabel(calc_info_frame, text="", font=("Helvetica", 12), wraplength=200)
+        self.salary_calc_teacher_coeff_value.grid(row=1, column=1, padx=5, pady=2, sticky="w")
 
-        self.rate_title = CTkLabel(calc_info_frame, text="Tiền dạy một tiết:", font=("Helvetica", 12, "bold"))
-        self.rate_title.grid(row=2, column=0, padx=5, pady=2, sticky="w")
-        self.rate_value = CTkLabel(calc_info_frame, text="", font=("Helvetica", 12), wraplength=200)
-        self.rate_value.grid(row=2, column=1, padx=5, pady=2, sticky="w")
+        self.salary_calc_rate_title = CTkLabel(calc_info_frame, text="Tiền dạy một tiết:", font=("Helvetica", 12, "bold"))
+        self.salary_calc_rate_title.grid(row=2, column=0, padx=5, pady=2, sticky="w")
+        self.salary_calc_rate_value = CTkLabel(calc_info_frame, text="", font=("Helvetica", 12), wraplength=200)
+        self.salary_calc_rate_value.grid(row=2, column=1, padx=5, pady=2, sticky="w")
 
-        self.period_title = CTkLabel(calc_info_frame, text="Kỳ/Năm học:", font=("Helvetica", 12, "bold"))
-        self.period_title.grid(row=3, column=0, padx=5, pady=2, sticky="w")
-        self.period_value = CTkLabel(calc_info_frame, text="", font=("Helvetica", 12), wraplength=200)
-        self.period_value.grid(row=3, column=1, padx=5, pady=2, sticky="w")
+        self.salary_calc_period_title = CTkLabel(calc_info_frame, text="Kỳ/Năm học:", font=("Helvetica", 12, "bold"))
+        self.salary_calc_period_title.grid(row=3, column=0, padx=5, pady=2, sticky="w")
+        self.salary_calc_period_value = CTkLabel(calc_info_frame, text="", font=("Helvetica", 12), wraplength=200)
+        self.salary_calc_period_value.grid(row=3, column=1, padx=5, pady=2, sticky="w")
 
-        self.salary_table_frame = CTkScrollableFrame(main_frame, fg_color="#FFFFFF", corner_radius=10)
+        self.salary_table_frame = CTkScrollableFrame(main_frame, fg_color="#FFFFFF", corner_radius=10, height=200)  # Đặt chiều cao cố định, ví dụ 200px
         self.salary_table_frame.grid(row=3, column=0, columnspan=2, padx=5, pady=5, sticky="nsew")
-        main_frame.grid_rowconfigure(3, weight=1)  # Giảm trọng số của salary_table_frame
-        main_frame.grid_columnconfigure(0, weight=1)
+        main_frame.grid_rowconfigure(3, weight=0)  # Đặt weight=0 để không mở rộng theo chiều dọc
+        main_frame.grid_columnconfigure(0, weight=1)  # Giữ mở rộng theo chiều ngang
 
         self.save_button = None
-
-
-
     def setup_salary_report_tab(self):
         # Tiêu đề
         header_frame = CTkFrame(self.salary_report_tab, fg_color="transparent")
@@ -1199,38 +1175,38 @@ class AdminView:
         dept_frame = CTkFrame(filter_frame, fg_color="transparent")
         dept_frame.pack(side="left", padx=10)
         CTkLabel(dept_frame, text="Khoa:", font=("Helvetica", 12), text_color="#333").pack(side="left")
-        self.report_dept_filter = CTkComboBox(
+        self.salary_report_dept_filter = CTkComboBox(
             dept_frame,
             values=["Chọn khoa"] + self.get_dept_names(),
             width=200,
             command=self.update_report_teacher_options
         )
-        self.report_dept_filter.pack(side="left", padx=5)
-        self.report_dept_filter.set("Chọn khoa")
+        self.salary_report_dept_filter.pack(side="left", padx=5)
+        self.salary_report_dept_filter.set("Chọn khoa")
 
         # Combobox Giảng viên
         teacher_frame = CTkFrame(filter_frame, fg_color="transparent")
         teacher_frame.pack(side="left", padx=10)
         CTkLabel(teacher_frame, text="Giảng viên:", font=("Helvetica", 12), text_color="#333").pack(side="left")
-        self.report_teacher_filter = CTkComboBox(
+        self.salary_report_teacher_filter = CTkComboBox(
             teacher_frame,
             values=["Chọn giảng viên"],
             width=250
         )
-        self.report_teacher_filter.pack(side="left", padx=5)
-        self.report_teacher_filter.set("Chọn giảng viên")
+        self.salary_report_teacher_filter.pack(side="left", padx=5)
+        self.salary_report_teacher_filter.set("Chọn giảng viên")
 
         # Combobox Năm
         year_frame = CTkFrame(filter_frame, fg_color="transparent")
         year_frame.pack(side="left", padx=10)
         CTkLabel(year_frame, text="Năm:", font=("Helvetica", 12), text_color="#333").pack(side="left")
-        self.report_year_filter = CTkComboBox(
+        self.salary_report_year_filter = CTkComboBox(
             year_frame,
             values=["Chọn năm"] + [f"{y}-{y+1}" for y in range(2020, 2030)],
             width=150
         )
-        self.report_year_filter.pack(side="left", padx=5)
-        self.report_year_filter.set("Chọn năm")
+        self.salary_report_year_filter.pack(side="left", padx=5)
+        self.salary_report_year_filter.set("Chọn năm")
 
         # Nút Xem báo cáo
         CTkButton(
@@ -1266,34 +1242,34 @@ class AdminView:
         # Họ và tên
         name_row = CTkFrame(self.teacher_info_frame, fg_color="transparent")
         name_row.pack(fill="x", padx=(15, 5), pady=2)
-        self.teacher_name_title = CTkLabel(name_row, text="Họ và tên:", font=("Helvetica", 12, "bold"), text_color="#333", width=100, anchor="w")
-        self.teacher_name_title.pack(side="left")
-        self.teacher_name_value = CTkLabel(name_row, text="-", font=("Helvetica", 12), text_color="#333")
-        self.teacher_name_value.pack(side="left")
+        self.salary_report_teacher_name_title = CTkLabel(name_row, text="Họ và tên:", font=("Helvetica", 12, "bold"), text_color="#333", width=100, anchor="w")
+        self.salary_report_teacher_name_title.pack(side="left")
+        self.salary_report_teacher_name_value = CTkLabel(name_row, text="-", font=("Helvetica", 12), text_color="#333")
+        self.salary_report_teacher_name_value.pack(side="left")
 
         # Mã giảng viên
         id_row = CTkFrame(self.teacher_info_frame, fg_color="transparent")
         id_row.pack(fill="x", padx=(15, 5), pady=2)
-        self.teacher_id_title = CTkLabel(id_row, text="Mã giảng viên:", font=("Helvetica", 12, "bold"), text_color="#333", width=100, anchor="w")
-        self.teacher_id_title.pack(side="left")
-        self.teacher_id_value = CTkLabel(id_row, text="-", font=("Helvetica", 12), text_color="#333")
-        self.teacher_id_value.pack(side="left")
+        self.salary_report_teacher_id_title = CTkLabel(id_row, text="Mã giảng viên:", font=("Helvetica", 12, "bold"), text_color="#333", width=100, anchor="w")
+        self.salary_report_teacher_id_title.pack(side="left")
+        self.salary_report_teacher_id_value = CTkLabel(id_row, text="-", font=("Helvetica", 12), text_color="#333")
+        self.salary_report_teacher_id_value.pack(side="left")
 
         # Học vị
         degree_row = CTkFrame(self.teacher_info_frame, fg_color="transparent")
         degree_row.pack(fill="x", padx=(15, 5), pady=2)
-        self.teacher_degree_title = CTkLabel(degree_row, text="Học vị:", font=("Helvetica", 12, "bold"), text_color="#333", width=100, anchor="w")
-        self.teacher_degree_title.pack(side="left")
-        self.teacher_degree_value = CTkLabel(degree_row, text="-", font=("Helvetica", 12), text_color="#333")
-        self.teacher_degree_value.pack(side="left")
+        self.salary_report_teacher_degree_title = CTkLabel(degree_row, text="Học vị:", font=("Helvetica", 12, "bold"), text_color="#333", width=100, anchor="w")
+        self.salary_report_teacher_degree_title.pack(side="left")
+        self.salary_report_teacher_degree_value = CTkLabel(degree_row, text="-", font=("Helvetica", 12), text_color="#333")
+        self.salary_report_teacher_degree_value.pack(side="left")
 
         # Khoa/Bộ môn
         dept_row = CTkFrame(self.teacher_info_frame, fg_color="transparent")
         dept_row.pack(fill="x", padx=(15, 5), pady=2)
-        self.teacher_dept_title = CTkLabel(dept_row, text="Khoa/Bộ môn:", font=("Helvetica", 12, "bold"), text_color="#333", width=100, anchor="w")
-        self.teacher_dept_title.pack(side="left")
-        self.teacher_dept_value = CTkLabel(dept_row, text="-", font=("Helvetica", 12), text_color="#333")
-        self.teacher_dept_value.pack(side="left")
+        self.salary_report_teacher_dept_title = CTkLabel(dept_row, text="Khoa/Bộ môn:", font=("Helvetica", 12, "bold"), text_color="#333", width=100, anchor="w")
+        self.salary_report_teacher_dept_title.pack(side="left")
+        self.salary_report_teacher_dept_value = CTkLabel(dept_row, text="-", font=("Helvetica", 12), text_color="#333")
+        self.salary_report_teacher_dept_value.pack(side="left")
 
         # Tiêu đề thống kê nhanh với màu xanh đậm và lề trái hơn
         CTkLabel(self.stats_frame, text="Thống kê nhanh", font=("Helvetica", 14, "bold"), text_color="#1E3A8A").pack(anchor="w", padx=20, pady=5)
@@ -1302,22 +1278,22 @@ class AdminView:
         class_row = CTkFrame(self.stats_frame, fg_color="transparent")
         class_row.pack(fill="x", padx=10, pady=2)
         CTkLabel(class_row, text="Tổng số lớp:", font=("Helvetica", 12, "bold"), text_color="#333", width=120, anchor="w").pack(side="left")
-        self.total_classes_label = CTkLabel(class_row, text="0", font=("Helvetica", 12), text_color="#333")
-        self.total_classes_label.pack(side="left")
+        self.salary_report_total_classes_label = CTkLabel(class_row, text="0", font=("Helvetica", 12), text_color="#333")
+        self.salary_report_total_classes_label.pack(side="left")
 
         # Tổng số tiết
         period_row = CTkFrame(self.stats_frame, fg_color="transparent")
         period_row.pack(fill="x", padx=10, pady=2)
         CTkLabel(period_row, text="Tổng số tiết:", font=("Helvetica", 12, "bold"), text_color="#333", width=120, anchor="w").pack(side="left")
-        self.total_periods_label = CTkLabel(period_row, text="0", font=("Helvetica", 12), text_color="#333")
-        self.total_periods_label.pack(side="left")
+        self.salary_report_total_periods_label = CTkLabel(period_row, text="0", font=("Helvetica", 12), text_color="#333")
+        self.salary_report_total_periods_label.pack(side="left")
 
         # Tổng tiền tạm tính
         salary_row = CTkFrame(self.stats_frame, fg_color="transparent")
         salary_row.pack(fill="x", padx=10, pady=2)
         CTkLabel(salary_row, text="Tổng tiền tạm tính:", font=("Helvetica", 12, "bold"), text_color="#333", width=120, anchor="w").pack(side="left")
-        self.total_salary_temp_label = CTkLabel(salary_row, text="0 đ", font=("Helvetica", 12), text_color="#333")
-        self.total_salary_temp_label.pack(side="left")
+        self.salary_report_total_salary_temp_label = CTkLabel(salary_row, text="0 đ", font=("Helvetica", 12), text_color="#333")
+        self.salary_report_total_salary_temp_label.pack(side="left")
 
         # Tiêu đề tùy chọn xuất với màu xanh đậm và lề trái hơn
         CTkLabel(self.export_frame, text="Tùy chọn xuất", font=("Helvetica", 14, "bold"), text_color="#1E3A8A").pack(anchor="w", padx=20, pady=5)
@@ -1339,46 +1315,43 @@ class AdminView:
         # Frame tổng tiền dạy trong năm
         self.total_salary_frame = CTkFrame(self.salary_report_tab, fg_color="#FFFFFF", corner_radius=10)
         self.total_salary_frame.pack(fill="x", padx=10, pady=10)
-        self.total_salary_label = CTkLabel(
+        self.salary_report_total_salary_label = CTkLabel(
             self.total_salary_frame,
             text="Tổng tiền dạy trong năm: 0 ₫",
             font=("Helvetica", 14, "bold"),
             text_color="#333"
         )
-        self.total_salary_label.pack(pady=5)
+        self.salary_report_total_salary_label.pack(pady=5)
 
     def switch_tab(self, tab_name):
-        if hasattr(self, 'current_tab') and self.current_tab:
-            self.current_tab.pack_forget()
-        if tab_name == "Bằng cấp":
-            self.current_tab = self.degree_tab
-        elif tab_name == "Khoa":
-            self.current_tab = self.dept_tab
-        elif tab_name == "Giáo viên":
-            self.current_tab = self.teacher_tab
-        elif tab_name == "Học phần":
-            self.current_tab = self.module_tab
-        elif tab_name == "Kỳ học":
-            self.current_tab = self.semester_tab
-        elif tab_name == "Lớp học":
-            self.current_tab = self.class_tab
-        elif tab_name == "Thống kê giáo viên":
-            self.current_tab = self.stats_tab
-        elif tab_name == "Thống kê lớp":
-            self.current_tab = self.class_stats_tab
-        elif tab_name == "Hệ số giáo viên":
-            self.current_tab = self.teacher_coefficient_tab
-        elif tab_name == "Định mức tiền theo tiết":
-            self.current_tab = self.teaching_rate_tab
-        elif tab_name == "Hệ số lớp":
-            self.current_tab = self.class_coefficient_tab
-        elif tab_name == "Tính tiền dạy":
-            self.current_tab = self.salary_calc_tab
-        elif tab_name == "Tiền dạy theo năm":
-            self.current_tab = self.salary_report_tab
-        else:
-            return
-        self.current_tab.pack(fill="both", expand=True)
+        try:
+            tab_mapping = {
+                "Bằng cấp": self.degree_tab,
+                "Khoa": self.dept_tab,
+                "Giáo viên": self.teacher_tab,
+                "Thống kê giáo viên": self.stats_tab,
+                "Học phần": self.module_tab,
+                "Lớp học": self.class_tab,
+                "Kỳ học": self.semester_tab,
+                "Thống kê lớp": self.class_stats_tab,
+                "Hệ số giáo viên": self.teacher_coefficient_tab,
+                "Định mức tiền theo tiết": self.teaching_rate_tab,
+                "Hệ số lớp": self.class_coefficient_tab,
+                "Tính tiền dạy": self.salary_calc_tab,
+                "Tiền dạy theo năm": self.salary_report_tab,
+                "Tổng tiền dạy": self.salary_report_tab
+            }
+            new_tab = tab_mapping.get(tab_name)
+            if new_tab:
+                if self.current_tab:
+                    self.current_tab.pack_forget()
+                new_tab.pack(fill="both", expand=True)
+                self.current_tab = new_tab
+                print(f"Switched to tab: {tab_name}")
+            else:
+                messagebox.showerror("Lỗi", f"Tab không tồn tại: {tab_name}")
+        except Exception as e:
+            messagebox.showerror("Lỗi", f"Không thể chuyển tab: {e}")
 
     def get_departments(self):
         try:
@@ -3512,10 +3485,16 @@ class AdminView:
             print(f"Debug: Danh sách module_name từ CSDL: {[row[1] for row in cursor.fetchall()]}")  # Debug để kiểm tra
 
             query = """
-                SELECT c.semester_id, m.module_name, c.class_id, c.class_name, c.num_students, t.full_name
+                SELECT c.semester_id, m.module_name, c.class_id, c.class_name, c.num_students, 
+                    COALESCE(ce.enrolled_count, 0) as enrolled_students, t.full_name
                 FROM classes c
                 JOIN semesters s ON c.semester_id = s.semester_id
                 JOIN course_modules m ON c.module_id = m.module_id
+                LEFT JOIN (
+                    SELECT class_id, COUNT(*) as enrolled_count 
+                    FROM class_enrollments 
+                    GROUP BY class_id
+                ) ce ON c.class_id = ce.class_id 
                 LEFT JOIN assignments a ON c.class_id = a.class_id
                 LEFT JOIN teachers t ON a.teacher_id = t.teacher_id
                 WHERE 1=1
@@ -3556,7 +3535,7 @@ class AdminView:
 
             # Create a row for each class
             for row in rows:
-                semester_id, module_name, class_id, class_name, num_students, teacher_name = row
+                semester_id, module_name, class_id, class_name, num_students, enrolled_students, teacher_name = row
 
                 # Row frame for each class
                 row_frame = CTkFrame(self.class_list_frame, fg_color="#F5F5F5", corner_radius=0)
@@ -3568,6 +3547,7 @@ class AdminView:
                 CTkLabel(row_frame, text=class_id, font=("Helvetica", 12), text_color="black", width=70, anchor="center").pack(side="left", padx=5)
                 CTkLabel(row_frame, text=class_name, font=("Helvetica", 12), text_color="black", width=220, anchor="center").pack(side="left", padx=5)
                 CTkLabel(row_frame, text=str(num_students), font=("Helvetica", 12), text_color="black", width=100, anchor="center").pack(side="left", padx=5)
+                CTkLabel(row_frame, text=str(enrolled_students) if enrolled_students is not None else "0", font=("Helvetica", 12), text_color="black", width=120, anchor="center").pack(side="left", padx=5)  # Hiển thị cột mới
                 CTkLabel(row_frame, text=teacher_name if teacher_name else "Chưa phân công", font=("Helvetica", 12), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
 
                 # Actions frame
@@ -4721,47 +4701,122 @@ class AdminView:
 
     
     def export_excel(self):
-        data = self.get_class_stats_data()
-        if not data:
-            messagebox.showwarning("Cảnh báo", "Không có dữ liệu để xuất báo cáo!")
+        year = self.stats_year_combobox.get().strip()
+        if not year:
+            messagebox.showwarning("Cảnh báo", "Vui lòng chọn năm học!")
             return
 
         try:
-            # Tạo danh sách cột dựa trên semesters thực tế
-            semester_cols = {sem: f"Số lớp {sem}" for sem in data["semesters"]}
-            rows = []
-            for row in data["stats_data"]:
-                row_dict = {"Học phần": row["Module"]}
-                for sem, count in row["SemesterCounts"].items():
-                    row_dict[semester_cols[sem]] = count
-                row_dict.update({
-                    "Tổng số lớp": row["TotalClasses"],
-                    "Tổng sinh viên": row["TotalStudents"],
-                    "Trung bình SV/lớp": row["AvgStudents"]
-                })
-                rows.append(row_dict)
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+
+            # Lấy danh sách học kỳ trong năm
+            cursor.execute("SELECT semester_name FROM semesters WHERE year = %s ORDER BY semester_name", (year,))
+            semesters = [row[0] for row in cursor.fetchall()]
+
+            # Kiểm tra xem có dữ liệu không
+            cursor.execute("""
+                SELECT COUNT(*)
+                FROM classes c
+                JOIN semesters s ON c.semester_id = s.semester_id
+                JOIN course_modules cm ON c.module_id = cm.module_id
+                WHERE s.year = %s
+            """, (year,))
+            has_data = cursor.fetchone()[0] > 0
+
+            if not has_data:
+                messagebox.showwarning("Cảnh báo", f"Không có dữ liệu để xuất trong năm học {year}!")
+                return
+
+            # Lấy dữ liệu thống kê
+            cursor.execute("""
+                SELECT 
+                    cm.module_name,
+                    s.semester_name,
+                    COUNT(c.class_id) as class_count,
+                    SUM(c.num_students) as total_students
+                FROM course_modules cm
+                LEFT JOIN classes c ON cm.module_id = c.module_id
+                LEFT JOIN semesters s ON c.semester_id = s.semester_id
+                WHERE s.year = %s
+                GROUP BY cm.module_name, s.semester_name
+                ORDER BY cm.module_name, s.semester_name
+            """, (year,))
+            rows = cursor.fetchall()
+
+            # Tạo DataFrame cho pivot table
+            df = pd.DataFrame(rows, columns=['Học phần', 'Kỳ học', 'Số lớp', 'Số sinh viên'])
+            pivot_df = pd.pivot_table(
+                df,
+                values='Số lớp',
+                index=['Học phần'],
+                columns=['Kỳ học'],
+                fill_value=0,
+                aggfunc='sum'
+            )
+
+            # Tính tổng số lớp và sinh viên
+            total_classes = df.groupby('Học phần')['Số lớp'].sum()
+            total_students = df.groupby('Học phần')['Số sinh viên'].sum()
+            avg_students = total_students / total_classes
+
+            # Gộp các DataFrame
+            result_df = pd.DataFrame({
+                'Tổng số lớp': total_classes,
+                'Tổng sinh viên': total_students,
+                'TB SV/lớp': avg_students.round(1)
+            })
+
+            # Kết hợp pivot table với các cột tổng
+            final_df = pd.concat([pivot_df, result_df], axis=1)
 
             # Thêm hàng tổng cộng
-            total_row = {"Học phần": "Tổng cộng"}
-            for sem in data["semesters"]:
-                total_row[semester_cols[sem]] = data["sem_counts"].get(sem, 0)
-            total_row.update({
-                "Tổng số lớp": data["total_classes"],
-                "Tổng sinh viên": data["total_students"],
-                "Trung bình SV/lớp": data["avg_students"]
-            })
-            rows.append(total_row)
+            sums = final_df.sum()
+            sums['TB SV/lớp'] = (final_df['Tổng sinh viên'].sum() / final_df['Tổng số lớp'].sum()).round(1)
+            final_df.loc['TỔNG CỘNG'] = sums
 
-            # Tạo DataFrame
-            df = pd.DataFrame(rows)
-
-            # Xuất file Excel
-            year = self.stats_year_combobox.get().strip()
+            # Xuất Excel
             output_file = f"Class_Stats_Report_{year}.xlsx"
-            df.to_excel(output_file, index=False)
+            with pd.ExcelWriter(output_file, engine='xlsxwriter') as writer:
+                final_df.to_excel(writer, sheet_name='Statistics')
+                
+                # Định dạng
+                workbook = writer.book
+                worksheet = writer.sheets['Statistics']
+                
+                # Format cho header
+                header_format = workbook.add_format({
+                    'bold': True,
+                    'align': 'center',
+                    'valign': 'vcenter',
+                    'bg_color': '#D3D3D3'
+                })
+                
+                # Format cho số liệu
+                number_format = workbook.add_format({
+                    'align': 'center',
+                    'valign': 'vcenter'
+                })
+
+                # Áp dụng format
+                for col_num, value in enumerate(final_df.columns.values):
+                    worksheet.write(0, col_num + 1, value, header_format)
+                    worksheet.set_column(col_num + 1, col_num + 1, 15)
+
+                # Format cho cột học phần
+                worksheet.set_column(0, 0, 30)
+
             messagebox.showinfo("Thành công", f"Báo cáo đã được xuất: {output_file}")
+
+        except mysql.connector.Error as e:
+            messagebox.showerror("Lỗi", f"Không thể tải dữ liệu: {e}")
         except Exception as e:
-            messagebox.showerror("Lỗi", f"Không thể lưu file Excel: {e}")
+            messagebox.showerror("Lỗi", f"Không thể xuất file Excel: {e}")
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
 
 
     def show_class_stats_table(self):
@@ -4783,9 +4838,9 @@ class AdminView:
             widget.destroy()
 
         data = self.get_class_stats_data()
-        if not data:
+        if not data or data["total_classes"] == 0:
             ctk.CTkLabel(self.class_stats_frame, text="Không có dữ liệu lớp học trong năm học này.", 
-                         font=("Helvetica", 14), text_color="gray").pack(pady=10)
+                        font=("Helvetica", 14), text_color="gray").pack(pady=10)
             self.clear_summary_labels()
             return
 
@@ -5000,175 +5055,124 @@ class AdminView:
             conn = mysql.connector.connect(**DB_CONFIG)
             cursor = conn.cursor()
 
-            # Lấy danh sách học kỳ
+            # Lấy danh sách kỳ học trong năm 
             cursor.execute("""
-                SELECT semester_name, semester_id, year
+                SELECT semester_name, semester_id 
                 FROM semesters 
-                WHERE year = %s
+                WHERE year = %s 
                 ORDER BY semester_name
             """, (year,))
             semester_data = cursor.fetchall()
             semesters = [row[0] for row in semester_data]
-            semester_ids = {row[0]: row[1] for row in semester_data}
-            
-            if not semesters:
-                print(f"Debug: Không tìm thấy kỳ học nào cho năm {year}")
-                return None
+            semester_ids = [row[1] for row in semester_data]
 
-            # Kiểm tra dữ liệu trong classes - Sửa phần này
-            semester_id_list = list(semester_ids.values())
-            if semester_id_list:
-                # Tạo câu query động dựa trên số lượng semester_id thực tế
-                placeholders = ', '.join(['%s'] * len(semester_id_list))
-                query = f"""
-                    SELECT c.class_id, c.semester_id, c.module_id, c.num_students, cm.dept_id
-                    FROM classes c
-                    LEFT JOIN course_modules cm ON c.module_id = cm.module_id
-                    WHERE c.semester_id IN ({placeholders})
-                """
-                cursor.execute(query, semester_id_list)
-                class_data = cursor.fetchall()
-            print(f"Debug: Số lớp trong classes: {len(class_data)}")
-            print(f"Debug: Class data with dept_id: {[(row[0], row[1], row[2], row[3], row[4]) for row in class_data]}")
-
-            # Kiểm tra dữ liệu trong course_modules
+            # Query tổng quát với số sinh viên thực tế từ class_enrollments
             cursor.execute("""
-                SELECT module_id, dept_id, module_name
-                FROM course_modules
-            """)
-            module_data = cursor.fetchall()
-            print(f"Debug: Số module trong course_modules: {len(module_data)}")
-            print(f"Debug: Module data: {module_data}")
-
-            # Tổng số lớp, sinh viên, học phần (không lọc dept_id ban đầu)
-            cursor.execute("""
-                SELECT COUNT(DISTINCT c.class_id) as total_classes, 
+                SELECT 
+                    COUNT(DISTINCT c.class_id) as total_classes,
                     COUNT(DISTINCT cm.module_id) as total_modules,
-                    COALESCE(SUM(c.num_students), 0) as total_students
+                    COALESCE(SUM(ce.enrolled_count), 0) as total_students,
+                    CASE 
+                        WHEN COUNT(DISTINCT c.class_id) > 0 
+                        THEN ROUND(COALESCE(SUM(ce.enrolled_count), 0) / COUNT(DISTINCT c.class_id), 2)
+                        ELSE 0 
+                    END as avg_students
                 FROM classes c
                 JOIN semesters s ON c.semester_id = s.semester_id
-                JOIN course_modules cm ON c.module_id = cm.module_id
-                WHERE s.year = %s
-            """, (year,))
+                JOIN course_modules cm ON c.module_id = cm.module_id 
+                LEFT JOIN (
+                    SELECT class_id, COUNT(*) as enrolled_count 
+                    FROM class_enrollments 
+                    GROUP BY class_id
+                ) ce ON c.class_id = ce.class_id
+                WHERE s.year = %s AND cm.dept_id = %s
+            """, (year, self.user['dept_id']))
+            
             total_result = cursor.fetchone()
             total_classes = total_result[0] if total_result[0] else 0
-            total_modules = total_result[1] if total_result[1] else 0
+            total_modules = total_result[1] if total_result[1] else 0 
             total_students = total_result[2] if total_result[2] else 0
+            avg_students = total_result[3] if total_result[3] else 0
 
-            if total_classes == 0:
-                print(f"Debug: Không có lớp học nào cho năm {year}")
-                return None
-
-            # Số lớp theo kỳ (không lọc dept_id ban đầu)
+            # Số lớp theo kỳ
             cursor.execute("""
                 SELECT s.semester_name, COUNT(DISTINCT c.class_id)
                 FROM classes c
-                JOIN semesters s ON c.semester_id = s.semester_id
-                JOIN course_modules cm ON c.module_id = cm.module_id
-                WHERE s.year = %s
-                GROUP BY s.semester_id, s.semester_name
-                ORDER BY s.semester_name
-            """, (year,))
-            sem_data = cursor.fetchall()
-            sem_counts = {row[0]: row[1] for row in sem_data}
-            print(f"Debug: Kiểm tra lớp theo kỳ: {sem_data}")
-
-            # Dữ liệu bảng pivot (không lọc dept_id ban đầu)
-            cursor.execute("""
-                SELECT cm.module_name, s.semester_name, COUNT(c.class_id) as class_count,
-                    COALESCE(SUM(c.num_students), 0) as total_students
-                FROM classes c
-                LEFT JOIN semesters s ON c.semester_id = s.semester_id AND s.year = %s
-                JOIN course_modules cm ON c.module_id = cm.module_id
-                WHERE s.year = %s
-                GROUP BY cm.module_id, cm.module_name, s.semester_id, s.semester_name
-                ORDER BY cm.module_name, s.semester_name
-            """, (year, year))
-            pivot_data = cursor.fetchall()
-            print(f"Debug: Số dòng pivot_data: {len(pivot_data)}")
-            print(f"Debug: Pivot data: {[(row[0], row[1], row[2]) for row in pivot_data]}")
-
-            # Lọc pivot_data theo dept_id của người dùng
-            pivot_data_filtered = []
-            for module_name, sem_name, class_count, students in pivot_data:
-                cursor.execute("""
-                    SELECT dept_id
-                    FROM course_modules
-                    WHERE module_name = %s
-                """, (module_name,))
-                dept = cursor.fetchone()
-                if dept and dept[0] == self.user['dept_id']:
-                    pivot_data_filtered.append((module_name, sem_name, class_count, students))
-            print(f"Debug: Số dòng pivot_data sau khi lọc dept_id {self.user['dept_id']}: {len(pivot_data_filtered)}")
-            print(f"Debug: Pivot data filtered: {[(row[0], row[1], row[2]) for row in pivot_data_filtered]}")
-
-            # Xây dựng stats_data
-            stats_data = {}
-            for module_name, sem_name, class_count, students in pivot_data_filtered:
-                if module_name not in stats_data:
-                    stats_data[module_name] = {
-                        "Module": module_name,
-                        "TotalClasses": 0,
-                        "TotalStudents": 0,
-                        "SemesterCounts": {sem: 0 for sem in semesters}
-                    }
-                stats_data[module_name]["SemesterCounts"][sem_name] = class_count
-                stats_data[module_name]["TotalClasses"] += class_count
-                stats_data[module_name]["TotalStudents"] += students
-            stats_data = [row for row in stats_data.values() if row["TotalClasses"] > 0]
-            for row in stats_data:
-                row["AvgStudents"] = round(row["TotalStudents"] / row["TotalClasses"], 2) if row["TotalClasses"] > 0 else 0
-
-            # Môn đông SV nhất (lọc theo dept_id)
-            cursor.execute("""
-                SELECT cm.module_name, SUM(c.num_students) as total_students
-                FROM classes c
-                JOIN semesters s ON c.semester_id = s.semester_id
+                JOIN semesters s ON c.semester_id = s.semester_id 
                 JOIN course_modules cm ON c.module_id = cm.module_id
                 WHERE s.year = %s AND cm.dept_id = %s
-                GROUP BY cm.module_id, cm.module_name
-                ORDER BY total_students DESC
-                LIMIT 1
+                GROUP BY s.semester_id, s.semester_name
+                ORDER BY s.semester_name
             """, (year, self.user['dept_id']))
-            top_module_result = cursor.fetchone()
-            top_module = top_module_result[0] if top_module_result else "N/A"
+            sem_data = cursor.fetchall()
+            sem_counts = {row[0]: row[1] for row in sem_data}
 
-            # Top 5 học phần có nhiều SV nhất (lọc theo dept_id)
+            # Dữ liệu bảng pivot với số sinh viên thực tế
             cursor.execute("""
-                SELECT cm.module_name, SUM(c.num_students) as total_students
+                SELECT 
+                    cm.module_name,
+                    s.semester_name,
+                    COUNT(c.class_id) as class_count,
+                    COALESCE(SUM(ce.enrolled_count), 0) as total_students,
+                    CASE 
+                        WHEN COUNT(c.class_id) > 0
+                        THEN ROUND(COALESCE(SUM(ce.enrolled_count), 0) / COUNT(c.class_id), 2)
+                        ELSE 0
+                    END as avg_students_per_class
+                FROM classes c
+                JOIN semesters s ON c.semester_id = s.semester_id AND s.year = %s
+                JOIN course_modules cm ON c.module_id = cm.module_id
+                LEFT JOIN (
+                    SELECT class_id, COUNT(*) as enrolled_count 
+                    FROM class_enrollments 
+                    GROUP BY class_id
+                ) ce ON c.class_id = ce.class_id
+                WHERE cm.dept_id = %s
+                GROUP BY cm.module_id, cm.module_name, s.semester_id, s.semester_name
+                ORDER BY cm.module_name, s.semester_name
+            """, (year, self.user['dept_id']))
+            pivot_data = cursor.fetchall()
+
+            # Top 5 học phần có nhiều sinh viên thực tế nhất
+            cursor.execute("""
+                SELECT 
+                    cm.module_name,
+                    COALESCE(SUM(ce.enrolled_count), 0) as total_students
                 FROM classes c
                 JOIN semesters s ON c.semester_id = s.semester_id
                 JOIN course_modules cm ON c.module_id = cm.module_id
+                LEFT JOIN (
+                    SELECT class_id, COUNT(*) as enrolled_count 
+                    FROM class_enrollments 
+                    GROUP BY class_id
+                ) ce ON c.class_id = ce.class_id
                 WHERE s.year = %s AND cm.dept_id = %s
                 GROUP BY cm.module_id, cm.module_name
                 ORDER BY total_students DESC
                 LIMIT 5
             """, (year, self.user['dept_id']))
-            top_modules = [{"Module": row[0], "TotalStudents": row[1]} for row in cursor.fetchall()]
-
-            print(f"Debug: Số kỳ học lấy được: {len(semesters)}")
-            print(f"Debug: Số học phần: {len(stats_data)}")
-            print(f"Debug: sem_counts: {sem_counts}")
+            top_modules = cursor.fetchall()
 
             return {
                 "total_classes": total_classes,
                 "total_modules": total_modules,
                 "total_students": total_students,
-                "avg_students": round(total_students / total_classes, 2) if total_classes > 0 else 0,
-                "top_module": top_module,
+                "avg_students": avg_students,
                 "semesters": semesters,
                 "sem_counts": sem_counts,
-                "stats_data": stats_data,
+                "stats_data": pivot_data,
                 "top_modules": top_modules,
-                "pivot_data": pivot_data  # Thêm pivot_data vào kết quả
+                "pivot_data": pivot_data
             }
 
         except mysql.connector.Error as e:
             messagebox.showerror("Lỗi", f"Không thể tải dữ liệu thống kê: {e}")
             return None
         finally:
-            cursor.close()
-            conn.close()
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
 
 
     def show_class_stats_all(self):
@@ -5187,12 +5191,13 @@ class AdminView:
         self.show_table(data)
     
     def update_class_stats(self, event=None):
-        self.show_class_stats_all()
+        # Mặc định hiển thị biểu đồ khi vào tab hoặc thay đổi năm
+        self.show_class_stats_chart()
 
     def update_stat_labels(self, data):
         """Cập nhật các nhãn thống kê"""
         self.total_classes_label.configure(text=str(data["total_classes"]))
-        self.total_modules_label.configure(text=f"{data['total_modules']} học phần")
+        self.total_modules_label.configure(text=f"{data['total_modules']}")
         self.total_students_label.configure(text=str(data["total_students"]))
         self.avg_students_label.configure(text=f"TB {data['avg_students']} SV/lớp")
         self.sem1_classes_label.configure(text=str(data["sem1_count"]))
@@ -5205,97 +5210,206 @@ class AdminView:
         chart_frame = ctk.CTkFrame(self.class_stats_frame, fg_color="white")
         chart_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Biểu đồ 1: Bar chart số lớp theo semester_name (sử dụng pivot_data)
-        fig1, ax1 = plt.subplots(figsize=(5, 3))
+        # Tính toán số lớp theo học phần
+        module_counts = {}
+        for row in data["pivot_data"]:
+            module_name = row[0]  # module_name
+            class_count = row[2]  # class_count
+            if module_name not in module_counts:
+                module_counts[module_name] = 0
+            module_counts[module_name] += class_count
+
+        # Biểu đồ số lớp theo kỳ học
+        fig1, ax1 = plt.subplots(figsize=(10, 3))
         pivot_counts = {}
-        for module_name, sem_name, class_count, _ in data["pivot_data"]:  # Sử dụng pivot_data gốc
+        for row in data["pivot_data"]:
+            sem_name = row[1]  # semester_name
+            class_count = row[2]  # class_count
             if sem_name not in pivot_counts:
                 pivot_counts[sem_name] = 0
             pivot_counts[sem_name] += class_count
+
         x = np.arange(len(data["semesters"]))
         ax1.bar(x, [pivot_counts.get(sem, 0) for sem in data["semesters"]], color='#36A2EB')
-        ax1.set_xlabel('Kỳ học')
-        ax1.set_ylabel('Số lớp')
+        ax1.set_xlabel('Kỳ học', fontsize=10)
+        ax1.set_ylabel('Số lớp', fontsize=10)
         ax1.set_xticks(x)
-        ax1.set_xticklabels(data["semesters"], rotation=0, ha='right', fontsize=8)
-        ax1.set_title(f'Số lớp theo kỳ học ({self.stats_year_combobox.get()})')
+        ax1.set_xticklabels(data["semesters"], rotation=0, ha='center', fontsize=10)
+        ax1.set_title(f'Số lớp theo kỳ học ({self.stats_year_combobox.get()})', fontsize=12, pad=15)
         plt.tight_layout()
 
         canvas1 = FigureCanvasTkAgg(fig1, master=chart_frame)
         canvas1.draw()
-        canvas1.get_tk_widget().pack(fill="both", expand=True, pady=5)
+        canvas1.get_tk_widget().pack(fill="x", expand=True, pady=5)
 
-        # Biểu đồ 2: Top 5 học phần có nhiều SV nhất
-        fig2, ax2 = plt.subplots(figsize=(5, 3))
-        top_modules = data["top_modules"]
-        module_names = [row["Module"] for row in top_modules]
-        total_students = [row["TotalStudents"] for row in top_modules]
+        # Biểu đồ top 5 học phần
+        fig2, ax2 = plt.subplots(figsize=(10, 3))
+        module_names = [row[0] for row in data["top_modules"]]
+        total_students = [row[1] for row in data["top_modules"]]
+        
         ax2.bar(module_names, total_students, color='#FF6384')
-        ax2.set_xlabel('Học phần')
-        ax2.set_ylabel('Tổng sinh viên')
+        ax2.set_xlabel('Học phần', fontsize=10)
+        ax2.set_ylabel('Tổng sinh viên', fontsize=10)
         ax2.set_xticks(range(len(module_names)))
-        ax2.set_xticklabels(module_names, rotation=0, ha='right', fontsize=8)
-        ax2.set_title(f'Top 5 học phần nhiều SV nhất ({self.stats_year_combobox.get()})')
+        ax2.set_xticklabels(module_names, rotation=0, ha='right', fontsize=10)
+        ax2.set_title(f'Top 5 học phần nhiều SV nhất ({self.stats_year_combobox.get()})', fontsize=12)
         plt.tight_layout()
 
         canvas2 = FigureCanvasTkAgg(fig2, master=chart_frame)
         canvas2.draw()
-        canvas2.get_tk_widget().pack(fill="both", expand=True, pady=5)
+        canvas2.get_tk_widget().pack(fill="x", expand=True, pady=5)
             
     def update_summary_labels(self, data):
         """Cập nhật các nhãn thống kê"""
-        self.total_classes_label.configure(text=str(data["total_classes"]) if data["total_classes"] is not None else "15")
-        self.total_modules_label.configure(text=f"{data['total_modules']} học phần" if data["total_modules"] is not None else "4 học phần")
-        self.total_students_label.configure(text=str(data["total_students"]) if data["total_students"] is not None else "640")
-        self.avg_per_class_label.configure(text=str(data["avg_students"]) if data["avg_students"] is not None else "42.67")
-        self.top_module_label.configure(text=data["top_module"] if data["top_module"] else "N/A")
+        # Cập nhật tổng số lớp
+        self.total_classes_label.configure(text=str(data["total_classes"]) if data["total_classes"] is not None else "0")
+        
+        # Cập nhật tổng số học phần
+        self.total_modules_label.configure(text=f"{data['total_modules']}" if data["total_modules"] is not None else "0")
+        
+        # Cập nhật tổng số sinh viên
+        self.total_students_label.configure(text=str(data["total_students"]) if data["total_students"] is not None else "0")
+        
+        # Cập nhật trung bình sinh viên/lớp  
+        self.avg_per_class_label.configure(text=str(data["avg_students"]) if data["avg_students"] is not None else "0")
 
     def clear_summary_labels(self):
         """Xóa hoặc đặt lại các nhãn thống kê về giá trị mặc định"""
         self.total_classes_label.configure(text="0")
-        self.total_modules_label.configure(text="0 học phần")
+        self.total_modules_label.configure(text="0")
         self.total_students_label.configure(text="0")
         self.avg_per_class_label.configure(text="0")
-        self.top_module_label.configure(text="N/A")
 
     def show_table(self, data):
+        # Kiểm tra dữ liệu trước khi tạo bảng
+        if not data or not data["pivot_data"]:
+            ctk.CTkLabel(self.class_stats_frame, text="Không có dữ liệu", 
+                        font=("Helvetica", 14), text_color="gray").pack(pady=20)
+            return
+
         table_frame = ctk.CTkFrame(self.class_stats_frame, fg_color="#FFFFFF", corner_radius=10)
         table_frame.pack(padx=10, pady=10, fill="both", expand=True)
 
-        # Tạo tiêu đề động
-        headers = ["Học phần"] + [f"Số lớp {sem}" for sem in data["semesters"]] + ["Tổng số lớp", "Tổng sinh viên", "Trung bình SV/lớp"]
-        widths = [200] + [100] * len(data["semesters"]) + [100, 100, 100]
-        heading_frame = ctk.CTkFrame(table_frame, fg_color="#D3D3D3", corner_radius=0)
-        heading_frame.pack(fill="x", padx=5, pady=(5, 0))
-        for header, width in zip(headers, widths):
-            ctk.CTkLabel(heading_frame, text=header, font=("Helvetica", 14, "bold"), text_color="black", 
-                        width=width, anchor="center").pack(side="left", padx=5)
+        # Tính toán số cột và chiều rộng
+        num_semesters = len(data["semesters"])
+        if num_semesters == 0:  # Thêm kiểm tra này
+            num_semesters = 1  # Đặt giá trị mặc định để tránh chia cho 0
 
-        # Hiển thị dữ liệu từ pivot_data (tất cả dữ liệu trước khi lọc)
+        # Tính chiều rộng mỗi cột
+        total_width = 1100  # Tổng chiều rộng có sẵn
+        col_widths = {
+            "module": int(total_width * 0.25),  # 25% cho cột học phần
+            "semester": int((total_width * 0.45) / num_semesters),  # 45% chia đều cho các kỳ
+            "summary": int((total_width * 0.30) / 3)  # 30% chia đều cho 3 cột tổng
+        }
+
+        # Frame tiêu đề
+        heading_frame = ctk.CTkFrame(table_frame, fg_color="#D3D3D3", corner_radius=0, height=40)
+        heading_frame.pack(fill="x", padx=5, pady=(5,0))
+        heading_frame.pack_propagate(False)
+
+        # Tạo tiêu đề
+        ctk.CTkLabel(heading_frame, text="Học phần", 
+                    font=("Helvetica", 12, "bold"), width=col_widths["module"],
+                    anchor="center").pack(side="left")
+                    
+        for sem in data["semesters"]:
+            ctk.CTkLabel(heading_frame, text=f"Số lớp {sem}",
+                        font=("Helvetica", 12, "bold"), width=col_widths["semester"],
+                        anchor="center").pack(side="left")
+                        
+        summary_headers = ["Tổng số lớp", "Tổng sinh viên", "TB SV/lớp"]
+        for header in summary_headers:
+            ctk.CTkLabel(heading_frame, text=header,
+                        font=("Helvetica", 12, "bold"), width=col_widths["summary"],
+                        anchor="center").pack(side="left")
+
+        # Frame cho dữ liệu
+        data_frame = ctk.CTkScrollableFrame(table_frame, fg_color="transparent") 
+        data_frame.pack(fill="both", expand=True, padx=5, pady=5)
+
+        # Tạo pivot_dict từ pivot_data
         pivot_dict = {}
-        for module_name, sem_name, class_count, _ in data["pivot_data"]:  # Sử dụng pivot_data gốc
+        grand_total_classes = 0
+        grand_total_students = 0
+        semester_totals = {sem: 0 for sem in data["semesters"]}  # Khởi tạo tổng theo kỳ
+
+        for row in data["pivot_data"]:
+            module_name = row[0]
+            sem_name = row[1]
+            class_count = row[2]
+            total_students = row[3]
+
             if module_name not in pivot_dict:
-                pivot_dict[module_name] = {sem: 0 for sem in data["semesters"]}
-            pivot_dict[module_name][sem_name] = class_count
+                pivot_dict[module_name] = {
+                    "semesters": {sem: 0 for sem in data["semesters"]},
+                    "total_students": 0,
+                    "total_classes": 0
+                }
+            pivot_dict[module_name]["semesters"][sem_name] = class_count
+            pivot_dict[module_name]["total_students"] += total_students
+            pivot_dict[module_name]["total_classes"] += class_count
+            
+            # Cập nhật tổng theo kỳ
+            semester_totals[sem_name] += class_count
+            grand_total_classes += class_count
+            grand_total_students += total_students
 
-        for module_name, counts in pivot_dict.items():
-            row_frame = ctk.CTkFrame(table_frame, fg_color="#F5F5F5", corner_radius=0)
-            row_frame.pack(fill="x", pady=2)
-            values = [module_name] + [counts.get(sem, 0) for sem in data["semesters"]] + \
-                    [sum(counts.values()), sum(counts.get(sem, 0) * 40 for sem in data["semesters"] if counts.get(sem, 0)),  # Giả định 40 SV/lớp
-                    round(sum(counts.get(sem, 0) * 40 for sem in data["semesters"] if counts.get(sem, 0)) / sum(counts.values()) if sum(counts.values()) > 0 else 0, 2)]
-            for value, width in zip(values, widths):
-                ctk.CTkLabel(row_frame, text=str(value), font=("Helvetica", 12), text_color="black", 
-                            width=width, anchor="center").pack(side="left", padx=5)
+        # Hiển thị dữ liệu từng dòng
+        for module_name, stats in pivot_dict.items():
+            row_frame = ctk.CTkFrame(data_frame, fg_color="#F5F5F5", corner_radius=0, height=35)
+            row_frame.pack(fill="x", pady=1)
+            row_frame.pack_propagate(False)
 
-        # Hàng tổng
-        total_frame = ctk.CTkFrame(table_frame, fg_color="#E0E0E0", corner_radius=0)
-        total_frame.pack(fill="x", pady=2)
-        total_values = ["Tổng cộng"] + [data["sem_counts"].get(sem, 0) for sem in data["semesters"]] + \
-                    [data["total_classes"], data["total_students"], data["avg_students"]]
-        for value, width in zip(total_values, widths):
-            ctk.CTkLabel(total_frame, text=str(value), font=("Helvetica", 12, "bold"), text_color="black", 
-                        width=width, anchor="center").pack(side="left", padx=5)
+            # Tên học phần
+            ctk.CTkLabel(row_frame, text=module_name,
+                        font=("Helvetica", 12), width=col_widths["module"],
+                        anchor="center").pack(side="left")
+                        
+            # Số lớp theo kỳ
+            for sem in data["semesters"]:
+                ctk.CTkLabel(row_frame, text=str(stats["semesters"].get(sem, 0)),
+                            font=("Helvetica", 12), width=col_widths["semester"],
+                            anchor="center").pack(side="left")
+
+            # Các cột tổng
+            summary_values = [
+                stats["total_classes"],
+                stats["total_students"],
+                f"{stats['total_students']/stats['total_classes']:.1f}" if stats["total_classes"] > 0 else "0"
+            ]
+            for value in summary_values:
+                ctk.CTkLabel(row_frame, text=str(value),
+                            font=("Helvetica", 12), width=col_widths["summary"],
+                            anchor="center").pack(side="left")
+
+        # Thêm dòng tổng cộng
+        total_frame = ctk.CTkFrame(data_frame, fg_color="#E0E0E0", corner_radius=0, height=35)
+        total_frame.pack(fill="x", pady=1)
+        total_frame.pack_propagate(False)
+
+        # Label "TỔNG CỘNG"
+        ctk.CTkLabel(total_frame, text="TỔNG CỘNG",
+                    font=("Helvetica", 12, "bold"), width=col_widths["module"],
+                    anchor="center").pack(side="left")
+
+        # Tổng theo từng kỳ
+        for sem in data["semesters"]:
+            ctk.CTkLabel(total_frame, text=str(semester_totals[sem]),
+                        font=("Helvetica", 12, "bold"), width=col_widths["semester"],
+                        anchor="center").pack(side="left")
+
+        # Tổng các cột cuối
+        avg_per_class = grand_total_students / grand_total_classes if grand_total_classes > 0 else 0
+        summary_totals = [
+            grand_total_classes,
+            grand_total_students,
+            f"{avg_per_class:.1f}"
+        ]
+        for value in summary_totals:
+            ctk.CTkLabel(total_frame, text=str(value),
+                        font=("Helvetica", 12, "bold"), width=col_widths["summary"],
+                        anchor="center").pack(side="left")
 
     
             
@@ -5386,33 +5500,18 @@ class AdminView:
             cursor.close()
             conn.close()
 
-    def edit_teacher_coefficient(self, coeff_id, degree_id):
+    def edit_teacher_coefficient(self, degree_id, degree_name, current_coeff, year):
         edit_window = CTkToplevel(self.window)
         edit_window.title("Sửa hệ số giáo viên")
-        edit_window.geometry("400x300")
+        edit_window.geometry("400x250")
         edit_window.resizable(False, False)
         edit_window.transient(self.window)
         edit_window.grab_set()
 
-        # Main frame with background
         form_frame = CTkFrame(edit_window, fg_color="#F0F0F0", corner_radius=10)
         form_frame.pack(padx=20, pady=20, fill="both", expand=True)
 
-        # Title
         CTkLabel(form_frame, text="Sửa hệ số giáo viên", font=("Helvetica", 16, "bold"), text_color="black").pack(pady=10)
-
-        # Get current data
-        try:
-            conn = mysql.connector.connect(**DB_CONFIG)
-            cursor = conn.cursor()
-            cursor.execute("SELECT d.degree_name, tc.year, tc.coefficient FROM teacher_coefficients tc JOIN degrees d ON tc.degree_id = d.degree_id WHERE tc.id = %s", (coeff_id,))
-            degree_name, year, coefficient = cursor.fetchone()
-        except mysql.connector.Error as e:
-            messagebox.showerror("Lỗi", f"Không thể tải dữ liệu: {e}", parent=edit_window)
-            return
-        finally:
-            cursor.close()
-            conn.close()
 
         # Degree field (disabled)
         degree_row = CTkFrame(form_frame, fg_color="transparent")
@@ -5420,7 +5519,7 @@ class AdminView:
         CTkLabel(degree_row, text="Bằng cấp:", font=("Helvetica", 12), width=100, anchor="e").pack(side="left", padx=(0, 5))
         degree_var = CTkEntry(degree_row, width=250)
         degree_var.pack(side="left", pady=5)
-        degree_var.insert(0, degree_name)
+        degree_var.insert(0, f"{degree_name} (ID: {degree_id})")
         degree_var.configure(state="disabled")
 
         # Year field (disabled)
@@ -5436,59 +5535,81 @@ class AdminView:
         coeff_row = CTkFrame(form_frame, fg_color="transparent")
         coeff_row.pack(fill="x", pady=2)
         CTkLabel(coeff_row, text="Hệ số:", font=("Helvetica", 12), width=100, anchor="e").pack(side="left", padx=(0, 5))
-        coefficient_var = CTkEntry(coeff_row, width=250)
-        coefficient_var.pack(side="left", pady=5)
-        coefficient_var.insert(0, str(coefficient))
+        coeff_var = CTkEntry(coeff_row, width=250)
+        coeff_var.pack(side="left", pady=5)
+        coeff_var.insert(0, str(current_coeff))
 
         def save_coefficient():
-            coefficient = coefficient_var.get().strip()
-
-            # Validation
+            coeff = coeff_var.get().strip()
             try:
-                coefficient = float(coefficient)
-                if coefficient <= 0 or coefficient > 10:
-                    messagebox.showerror("Lỗi", "Hệ số phải từ 0.1 đến 10!", parent=edit_window)
+                coeff = float(coeff)
+                if coeff < 1.0:
+                    messagebox.showerror("Lỗi", "Hệ số phải lớn hơn 1.0!", parent=edit_window)
                     return
             except ValueError:
-                messagebox.showerror("Lỗi", "Hệ số phải là số thập phân!", parent=edit_window)
+                messagebox.showerror("Lỗi", "Hệ số phải là số hợp lệ!", parent=edit_window)
                 return
 
-            try:
-                conn = mysql.connector.connect(**DB_CONFIG)
-                cursor = conn.cursor()
-                cursor.execute("UPDATE teacher_coefficients SET coefficient = %s WHERE id = %s", (coefficient, coeff_id))
-                conn.commit()
-                messagebox.showinfo("Thành công", "Sửa hệ số thành công!", parent=edit_window)
-                self.load_teacher_coefficients()
-                edit_window.destroy()
-            except mysql.connector.Error as e:
-                messagebox.showerror("Lỗi", f"Không thể sửa hệ số: {e}", parent=edit_window)
-            finally:
-                cursor.close()
-                conn.close()
+            if messagebox.askyesno("Xác nhận", f"Bạn có chắc chắn muốn cập nhật hệ số cho năm {year}?"):
+                try:
+                    conn = mysql.connector.connect(**DB_CONFIG)
+                    cursor = conn.cursor()
+                    # Kiểm tra bản ghi hiện tại
+                    cursor.execute("""
+                        SELECT coefficient FROM teacher_coefficients 
+                        WHERE degree_id = %s AND year = %s
+                    """, (degree_id, year))
+                    existing_coeff = cursor.fetchone()
 
-        # Button frame
+                    if existing_coeff:
+                        cursor.execute("""
+                            UPDATE teacher_coefficients 
+                            SET coefficient = %s 
+                            WHERE degree_id = %s AND year = %s
+                        """, (coeff, degree_id, year))
+                    else:
+                        cursor.execute("""
+                            INSERT INTO teacher_coefficients (year, degree_id, coefficient)
+                            VALUES (%s, %s, %s)
+                        """, (year, degree_id, coeff))
+                    conn.commit()
+
+                    # Kiểm tra toàn bộ dữ liệu sau khi cập nhật
+                    cursor.execute("""
+                        SELECT year, coefficient FROM teacher_coefficients 
+                        WHERE degree_id = %s ORDER BY year
+                    """, (degree_id,))
+                    all_coeffs_after = cursor.fetchall()
+                    print(f"Debug [10:46 AM, 14/06/2025] - Updated coefficient for degree_id: {degree_id}, year: {year}, new_coeff: {coeff}, existing: {existing_coeff}, all_coeffs_after: {all_coeffs_after}")
+                    messagebox.showinfo("Thành công", f"Cập nhật hệ số cho năm {year} thành công!")
+                    self.load_teacher_coefficients()
+                    edit_window.destroy()
+                except mysql.connector.Error as e:
+                    messagebox.showerror("Lỗi", f"Không thể lưu hệ số: {e}", parent=edit_window)
+                finally:
+                    cursor.close()
+                    conn.close()
+
         button_frame = CTkFrame(form_frame, fg_color="transparent")
         button_frame.pack(pady=10)
         CTkButton(button_frame, text="Lưu", fg_color="#0085FF", command=save_coefficient, width=100).pack(side="left", padx=5)
         CTkButton(button_frame, text="Hủy", fg_color="#6C757D", command=edit_window.destroy, width=100).pack(side="left", padx=5)
 
-    def delete_teacher_coefficient(self, coeff_id, degree_id):
-        # Check if degree is used in assignments
+    def delete_teacher_coefficient(self, degree_id, degree_name, year):
         try:
             conn = mysql.connector.connect(**DB_CONFIG)
             cursor = conn.cursor()
+            # Kiểm tra xem có đang sử dụng trong phân công không
             cursor.execute("""
-                SELECT 1
-                FROM assignments a
-                JOIN classes c ON a.class_id = c.class_id
-                JOIN teachers t ON a.teacher_id = t.teacher_id
-                WHERE t.degree_id = %s
+                SELECT 1 
+                FROM teachers t 
+                WHERE t.degree_id = %s 
                 LIMIT 1
             """, (degree_id,))
             if cursor.fetchone():
-                messagebox.showerror("Lỗi", "Không thể xóa! Bằng cấp này đang được sử dụng trong phân công giảng dạy.")
-                return
+                messagebox.showwarning("Cảnh báo", f"Bằng cấp {degree_name} đang được sử dụng trong phân công. Xóa có thể ảnh hưởng đến dữ liệu!")
+                if not messagebox.askyesno("Xác nhận", f"Bạn vẫn muốn xóa hệ số của {degree_name} trong năm {year}?"):
+                    return
         except mysql.connector.Error as e:
             messagebox.showerror("Lỗi", f"Không thể kiểm tra phân công: {e}")
             return
@@ -5496,11 +5617,11 @@ class AdminView:
             cursor.close()
             conn.close()
 
-        if messagebox.askyesno("Xác nhận", "Bạn có chắc muốn xóa hệ số này?"):
+        if messagebox.askyesno("Xác nhận", f"Bạn có chắc muốn xóa hệ số của {degree_name} trong năm {year}?"):
             try:
                 conn = mysql.connector.connect(**DB_CONFIG)
                 cursor = conn.cursor()
-                cursor.execute("DELETE FROM teacher_coefficients WHERE id = %s", (coeff_id,))
+                cursor.execute("DELETE FROM teacher_coefficients WHERE degree_id = %s AND year = %s", (degree_id, year))
                 conn.commit()
                 messagebox.showinfo("Thành công", "Xóa hệ số thành công!")
                 self.load_teacher_coefficients()
@@ -5518,14 +5639,14 @@ class AdminView:
         try:
             conn = mysql.connector.connect(**DB_CONFIG)
             cursor = conn.cursor()
-            query = """
-                SELECT d.degree_name, tc.coefficient, tc.id, tc.degree_id
-                FROM teacher_coefficients tc
-                JOIN degrees d ON tc.degree_id = d.degree_id
-                WHERE tc.year = %s
+
+            # Lấy tất cả bằng cấp và hệ số từ teacher_coefficients cho năm học
+            cursor.execute("""
+                SELECT d.degree_name, tc.coefficient, d.degree_id, tc.coefficient IS NOT NULL AS has_custom_coeff
+                FROM degrees d
+                LEFT JOIN teacher_coefficients tc ON d.degree_id = tc.degree_id AND tc.year = %s
                 ORDER BY d.degree_name
-            """
-            cursor.execute(query, (year,))
+            """, (year,))
             rows = cursor.fetchall()
 
             # Clear previous data
@@ -5533,69 +5654,153 @@ class AdminView:
                 widget.destroy()
 
             if not rows:
-                CTkLabel(self.coefficient_list_frame, text="Không có dữ liệu hệ số", font=("Helvetica", 12), text_color="gray").pack(pady=10)
+                CTkLabel(self.coefficient_list_frame, text="Không có dữ liệu bằng cấp", font=("Helvetica", 12), text_color="gray").pack(pady=10)
                 return
 
-            for idx, row in enumerate(rows, 1):
-                degree_name, coefficient, coeff_id, degree_id = row
+            # Heading
+            heading_frame = CTkFrame(self.coefficient_list_frame, fg_color="#D3D3D3", corner_radius=0)
+            heading_frame.pack(fill="x", padx=5, pady=(5, 0))
+            CTkLabel(heading_frame, text="STT", font=("Helvetica", 12, "bold"), width=50, anchor="center").pack(side="left", padx=5)
+            CTkLabel(heading_frame, text="Bằng cấp", font=("Helvetica", 12, "bold"), width=500, anchor="center").pack(side="left", padx=5)
+            CTkLabel(heading_frame, text="Hệ số", font=("Helvetica", 12, "bold"), width=100, anchor="center").pack(side="left", padx=5)
+            CTkLabel(heading_frame, text="Trạng thái", font=("Helvetica", 12, "bold"), width=200, anchor="center").pack(side="left", padx=5)
+            CTkLabel(heading_frame, text="Thao tác", font=("Helvetica", 12, "bold"), width=200, anchor="center").pack(side="left", padx=5)
+
+            # Populate table
+            for idx, (degree_name, coefficient, degree_id, has_custom_coeff) in enumerate(rows, 1):
+                coefficient = coefficient if coefficient is not None else 1.0
+                # Xác định trạng thái dựa trên hành động
+                if not has_custom_coeff:
+                    status = "Chưa thiết lập"  # Ban đầu hoặc sau khi xóa
+                else:
+                    # Kiểm tra xem hệ số có khớp với mặc định từ degrees không
+                    cursor.execute("SELECT coefficient FROM degrees WHERE degree_id = %s", (degree_id,))
+                    default_coeff = cursor.fetchone()[0]
+                    if coefficient == default_coeff:
+                        status = "Mặc định"  # Sau khi đặt lại thành mặc định
+                    else:
+                        status = "Đã thiết lập"  # Sau khi sửa và khác mặc định
+
                 row_frame = CTkFrame(self.coefficient_list_frame, fg_color="#F5F5F5" if idx % 2 else "#FFFFFF")
                 row_frame.pack(fill="x", pady=2)
-                CTkLabel(row_frame, text=str(idx), font=("Helvetica", 12), text_color="black", width=160, anchor="center").pack(side="left", padx=5)
-                CTkLabel(row_frame, text=degree_name, font=("Helvetica", 12), text_color="black", width=500, anchor="center").pack(side="left", padx=5)
-                CTkLabel(row_frame, text=f"{coefficient:.1f}", font=("Helvetica", 12), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+                CTkLabel(row_frame, text=str(idx), font=("Helvetica", 12), width=50, anchor="center").pack(side="left", padx=5)
+                CTkLabel(row_frame, text=degree_name, font=("Helvetica", 12), width=500, anchor="center").pack(side="left", padx=5)
+                CTkLabel(row_frame, text=f"{coefficient:.1f}", font=("Helvetica", 12), width=100, anchor="center").pack(side="left", padx=5)
+                CTkLabel(row_frame, text=status, font=("Helvetica", 12), width=200, anchor="center").pack(side="left", padx=5)
                 action_frame = CTkFrame(row_frame, fg_color="transparent")
                 action_frame.pack(side="left", padx=5)
-                CTkButton(action_frame, text="Sửa", fg_color="#FFC107", width=80, command=lambda id=coeff_id, deg_id=degree_id: self.edit_teacher_coefficient(id, deg_id)).pack(side="left", padx=2)
-                CTkButton(action_frame, text="Xóa", fg_color="#F44336", width=80, command=lambda id=coeff_id, deg_id=degree_id: self.delete_teacher_coefficient(id, deg_id)).pack(side="left", padx=2)
+                CTkButton(action_frame, text="Sửa", fg_color="#FFC107", width=80, command=lambda id=degree_id, name=degree_name, coeff=coefficient, y=year: self.edit_teacher_coefficient(id, name, coeff, y)).pack(side="left", padx=2)
+                CTkButton(action_frame, text="Xóa", fg_color="#F44336", width=80, command=lambda id=degree_id, name=degree_name, y=year: self.delete_teacher_coefficient(id, name, y)).pack(side="left", padx=2)
+
+                print(f"Debug [02:32 PM, 14/06/2025] - Loaded coefficients for year: {year}, degree: {degree_name}, coefficient: {coefficient}, status: {status}")
+
         except mysql.connector.Error as e:
             messagebox.showerror("Lỗi", f"Không thể tải dữ liệu hệ số: {e}")
         finally:
             cursor.close()
             conn.close()
-    def load_teaching_rates(self, event=None):
-        years = [f"{y}-{y+1}" for y in range(2020, 2030)]
-        rate_data = {}
+
+    def reset_to_default_coefficient_table(self):
+        year = self.coefficient_year_filter.get().strip()
+        if not year:
+            messagebox.showwarning("Cảnh báo", "Vui lòng chọn năm học")
+            return
+
+        # Hiển thị hộp thoại xác nhận
+        if not messagebox.askyesno("Xác nhận", f"Bạn có chắc chắn muốn đặt lại thành mặc định cho năm {year}?"):
+            return  # Thoát nếu người dùng chọn "Không"
 
         try:
             conn = mysql.connector.connect(**DB_CONFIG)
             cursor = conn.cursor()
-            cursor.execute("SELECT year, amount_per_period, setup_date FROM teaching_rate")
-            for row in cursor.fetchall():
-                rate_data[row[0]] = {'amount': row[1], 'date': row[2]}
+
+            # Lấy tất cả bằng cấp từ degrees
+            cursor.execute("SELECT degree_id, degree_name, coefficient FROM degrees ORDER BY degree_name")
+            degrees = cursor.fetchall()
+
+            # Chỉ đặt lại cho year được chọn
+            affected_rows = 0
+            for degree_id, degree_name, default_coeff in degrees:
+                cursor.execute("""
+                    INSERT INTO teacher_coefficients (year, degree_id, coefficient)
+                    VALUES (%s, %s, %s)
+                    ON DUPLICATE KEY UPDATE coefficient = VALUES(coefficient)
+                """, (year, degree_id, default_coeff))
+                affected_rows += 1
+            conn.commit()
+
+            # Kiểm tra lại dữ liệu sau khi đặt lại
+            cursor.execute("SELECT degree_id, year, coefficient FROM teacher_coefficients WHERE year = %s", (year,))
+            updated_rows = cursor.fetchall()
+            print(f"Debug [10:46 AM, 14/06/2025] - Reset to default for year: {year}, affected rows: {affected_rows}, updated rows: {updated_rows}")
+
+            # Cập nhật giao diện
+            self.load_teacher_coefficients()
+
         except mysql.connector.Error as e:
-            messagebox.showerror("Lỗi", f"Không thể tải dữ liệu định mức: {e}")
+            messagebox.showerror("Lỗi", f"Không thể đặt lại thành mặc định: {e}")
         finally:
             cursor.close()
             conn.close()
 
-        # Clear previous data
-        for widget in self.rate_list_frame.winfo_children():
-            widget.destroy()
+    def load_teaching_rates(self):
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+            
+            # Lấy danh sách năm học từ 2020-2021 đến 2029-2030
+            years = [f"{y}-{y+1}" for y in range(2020, 2030)]
+            existing_rates = {}  # Lưu trữ các năm đã được thiết lập
+            cursor.execute("SELECT year, amount_per_period, setup_date FROM teaching_rate")
+            for year, amount, setup_date in cursor.fetchall():
+                existing_rates[year] = (amount, setup_date)
 
-        # Populate table with all years
-        for idx, year in enumerate(years, 1):
-            row_frame = CTkFrame(self.rate_list_frame, fg_color="#F5F5F5" if idx % 2 else "#FFFFFF", height=20)  # Chiều cao cố định 20
-            row_frame.pack(fill="x", pady=2)
-            CTkLabel(row_frame, text=str(idx), font=("Helvetica", 12), text_color="black", width=100, anchor="center").pack(side="left", padx=5)
-            CTkLabel(row_frame, text=year, font=("Helvetica", 12), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
-            if year in rate_data and rate_data[year]['amount'] > 0:
-                CTkLabel(row_frame, text=f"{rate_data[year]['amount']:,.0f}", font=("Helvetica", 12), text_color="black", width=200, anchor="center").pack(side="left", padx=5)
-                CTkLabel(row_frame, text=rate_data[year]['date'].strftime("%Y-%m-%d") if rate_data[year]['date'] else "Chưa thiết lập", font=("Helvetica", 12), text_color="black", width=300, anchor="center").pack(side="left", padx=5)
-                action_frame = CTkFrame(row_frame, fg_color="transparent")
-                action_frame.pack(side="left", padx=5)
-                CTkButton(action_frame, text="Sửa", fg_color="#FFC107", width=70, command=lambda y=year: self.edit_teaching_rate(y)).pack(side="left", padx=2)
-                CTkButton(action_frame, text="Xóa", fg_color="#F44336", width=70, command=lambda y=year: self.delete_teaching_rate(y)).pack(side="left", padx=2)
-            else:
-                CTkLabel(row_frame, text="Chưa thiết lập", font=("Helvetica", 12), text_color="gray", width=200, anchor="center").pack(side="left", padx=5)
-                CTkLabel(row_frame, text="Chưa thiết lập", font=("Helvetica", 12), text_color="gray", width=300, anchor="center").pack(side="left", padx=5)
-                action_frame = CTkFrame(row_frame, fg_color="transparent")
-                action_frame.pack(side="left", padx=5)
-                CTkButton(action_frame, text="Thêm", fg_color="#0085FF", width=70, command=lambda y=year: self.add_teaching_rate(y)).pack(side="left", padx=40)
+            # Clear previous data
+            for widget in self.rate_list_frame.winfo_children():
+                widget.destroy()
+
+            # Populate table for all years
+            for idx, year in enumerate(years, 1):
+                row_frame = CTkFrame(self.rate_list_frame, fg_color="#F5F5F5" if idx % 2 else "#FFFFFF")
+                row_frame.pack(fill="x", pady=2)
+                CTkLabel(row_frame, text=str(idx), font=("Helvetica", 12), width=100, anchor="center").pack(side="left", padx=5)
+                CTkLabel(row_frame, text=year, font=("Helvetica", 12), width=150, anchor="center").pack(side="left", padx=5)
+
+                if year in existing_rates:
+                    amount, setup_date = existing_rates[year]
+                    CTkLabel(row_frame, text=f"{amount:,.0f} ₫", font=("Helvetica", 12), width=200, anchor="center").pack(side="left", padx=5)
+                    CTkLabel(row_frame, text=setup_date.strftime("%d/%m/%Y") if setup_date else "Chưa thiết lập", font=("Helvetica", 12), width=300, anchor="center").pack(side="left", padx=5)
+                    action_frame = CTkFrame(row_frame, fg_color="transparent")
+                    action_frame.pack(side="left", padx=5)
+                    CTkButton(action_frame, text="Sửa", fg_color="#FFC107", width=70, command=lambda y=year: self.edit_teaching_rate(y)).pack(side="left", padx=2)
+                    CTkButton(action_frame, text="Xóa", fg_color="#F44336", width=70, command=lambda y=year: self.delete_teaching_rate(y)).pack(side="left", padx=2)
+                else:
+                    CTkLabel(row_frame, text="Chưa thiết lập", font=("Helvetica", 12), width=200, anchor="center").pack(side="left", padx=5)
+                    CTkLabel(row_frame, text="Chưa thiết lập", font=("Helvetica", 12), width=300, anchor="center").pack(side="left", padx=5)
+                    action_frame = CTkFrame(row_frame, fg_color="transparent")
+                    action_frame.pack(side="left", padx=5)
+                    CTkButton(action_frame, text="Thêm", fg_color="#0085FF", width=70, command=lambda y=year: self.add_teaching_rate(y)).pack(side="left", padx=40)
+
+        except mysql.connector.Error as e:
+            messagebox.showerror("Lỗi", f"Không thể tải danh sách định mức: {e}")
+        finally:
+            if 'cursor' in locals():
+                cursor.close()
+            if 'conn' in locals():
+                conn.close()
 
     def add_teaching_rate(self, year):
         add_window = CTkToplevel(self.window)
         add_window.title("Thêm định mức tiền theo tiết")
         add_window.geometry("400x250")
+        # Đặt cửa sổ ra giữa window app
+        app_x = self.window.winfo_rootx()
+        app_y = self.window.winfo_rooty()
+        app_width = self.window.winfo_width()
+        app_height = self.window.winfo_height()
+        x = app_x + (app_width // 2) - (400 // 2)
+        y = app_y + (app_height // 2) - (250 // 2)
+        add_window.geometry(f"+{x}+{y}")
         add_window.resizable(False, False)
         add_window.transient(self.window)
         add_window.grab_set()
@@ -5656,6 +5861,14 @@ class AdminView:
         edit_window = CTkToplevel(self.window)
         edit_window.title("Sửa định mức tiền theo tiết")
         edit_window.geometry("400x250")
+        # Đặt cửa sổ ra giữa window app
+        app_x = self.window.winfo_rootx()
+        app_y = self.window.winfo_rooty()
+        app_width = self.window.winfo_width()
+        app_height = self.window.winfo_height()
+        x = app_x + (app_width // 2) - (400 // 2)
+        y = app_y + (app_height // 2) - (250 // 2)
+        edit_window.geometry(f"+{x}+{y}")
         edit_window.resizable(False, False)
         edit_window.transient(self.window)
         edit_window.grab_set()
@@ -5801,6 +6014,14 @@ class AdminView:
         setup_window = CTkToplevel(self.window)
         setup_window.title("Thiết lập khoảng chuẩn")
         setup_window.geometry("400x250")
+        # Đặt cửa sổ ra giữa window app
+        app_x = self.window.winfo_rootx()
+        app_y = self.window.winfo_rooty()
+        app_width = self.window.winfo_width()
+        app_height = self.window.winfo_height()
+        x = app_x + (app_width // 2) - (400 // 2)
+        y = app_y + (app_height // 2) - (250 // 2)
+        setup_window.geometry(f"+{x}+{y}")
         setup_window.resizable(False, False)
         setup_window.transient(self.window)
         setup_window.grab_set()
@@ -5899,7 +6120,7 @@ class AdminView:
         try:
             conn = mysql.connector.connect(**DB_CONFIG)
             cursor = conn.cursor()
-            if dept == "Tất cả khoa":
+            if dept == "Chọn khoa" or dept == "Tất cả khoa":
                 cursor.execute("SELECT teacher_id, full_name FROM teachers ORDER BY full_name")
             else:
                 cursor.execute("SELECT teacher_id, full_name FROM teachers WHERE dept_id = (SELECT dept_id FROM departments WHERE dept_name = %s) ORDER BY full_name", (dept,))
@@ -5911,10 +6132,8 @@ class AdminView:
             self.teacher_filter.configure(values=["Chọn giảng viên"])
             self.teacher_filter.set("Chọn giảng viên")
         finally:
-            if 'cursor' in locals():
-                cursor.close()
-            if 'conn' in locals():
-                conn.close()
+            cursor.close()
+            conn.close()
 
     def calculate_salary_display(self):
         year = self.year_filter.get().strip()
@@ -5929,104 +6148,96 @@ class AdminView:
             messagebox.showwarning("Cảnh báo", "Vui lòng chọn năm học và kỳ học!")
             return
 
-        teacher_parts = teacher_str.split(" - ")
-        if len(teacher_parts) < 2 or not teacher_parts[1]:
-            messagebox.showerror("Lỗi", "Định dạng giảng viên không hợp lệ!")
-            return
-        teacher_id = teacher_parts[1]
-
         try:
             conn = mysql.connector.connect(**DB_CONFIG)
             cursor = conn.cursor()
 
+            # Trích xuất teacher_id từ teacher_str
+            teacher_parts = teacher_str.split(" - ")
+            if len(teacher_parts) < 2:
+                messagebox.showerror("Lỗi", "Định dạng giảng viên không hợp lệ!")
+                return
+            teacher_id = teacher_parts[1].strip()
+            print(f"Debug: teacher_id = {teacher_id}, year = {year}, semester = {semester}")
+
             # Lấy thông tin giảng viên
-            cursor.execute("SELECT full_name, degree_id, dept_id FROM teachers WHERE teacher_id = %s", (teacher_id,))
+            cursor.execute("""
+                SELECT t.full_name, t.teacher_id, d.degree_name, dept.dept_name 
+                FROM teachers t 
+                JOIN degrees d ON t.degree_id = d.degree_id 
+                JOIN departments dept ON t.dept_id = dept.dept_id 
+                WHERE t.teacher_id = %s
+            """, (teacher_id,))
             teacher = cursor.fetchone()
             if not teacher:
                 messagebox.showerror("Lỗi", f"Không tìm thấy giảng viên với mã {teacher_id}")
                 return
-            full_name, degree_id, dept_id = teacher
+            full_name, teacher_id_db, degree_name, dept_name = teacher
+            print(f"Debug: teacher_info = {teacher}")
 
-            # Lấy tên khoa
-            cursor.execute("SELECT dept_name FROM departments WHERE dept_id = %s", (dept_id,))
-            dept_name = cursor.fetchone()[0]
-
-            # Lấy học vị
-            cursor.execute("SELECT degree_name FROM degrees WHERE degree_id = %s", (degree_id,))
-            degree_name = cursor.fetchone()[0]
-
-            # Lấy hệ số
-            cursor.execute("SELECT coefficient FROM teacher_coefficients WHERE degree_id = %s AND year = %s", (degree_id, year))
+            # Lấy hệ số giáo viên
+            cursor.execute("""
+                SELECT coefficient 
+                FROM teacher_coefficients tc 
+                JOIN teachers t ON tc.degree_id = t.degree_id 
+                WHERE t.teacher_id = %s AND tc.year = %s
+            """, (teacher_id, year))
             teacher_coeff = cursor.fetchone()
             teacher_coefficient = float(teacher_coeff[0]) if teacher_coeff else 1.0
+            print(f"Debug: teacher_coefficient = {teacher_coefficient}")
 
             # Lấy đơn giá
             cursor.execute("SELECT amount_per_period FROM teaching_rate WHERE year = %s", (year,))
             rate = cursor.fetchone()
             amount_per_period = float(rate[0]) if rate else 0.0
+            print(f"Debug: amount_per_period = {amount_per_period}")
 
             # Lấy semester_id
             cursor.execute("SELECT semester_id FROM semesters WHERE year = %s AND semester_name = %s", (year, semester))
-            semester_id = cursor.fetchone()[0]
+            semester_result = cursor.fetchone()
+            if not semester_result:
+                messagebox.showerror("Lỗi", f"Không tìm thấy kỳ học {semester} trong năm {year}")
+                return
+            semester_id = semester_result[0]
+            print(f"Debug: semester_id = {semester_id}")
 
-            # === DEBUG VỊ TRÍ GIAO DIỆN ===
-            print("\n--- DEBUG GIAO DIỆN ---")
-            print(f"[DEBUG] Giảng viên: {full_name}, ID: {teacher_id}, Degree: {degree_id}, Dept: {dept_id}")
-            print(f"[1] teacher_name_value tồn tại? {'Có' if hasattr(self, 'teacher_name_value') else 'Không'}")
-            try:
-                print(f"[2] Nội dung label trước khi cập nhật: {self.teacher_name_value.cget('text')}")
-                print(f"[3] Label có đang được hiển thị? {self.teacher_name_value.winfo_ismapped()}")
-                print(f"[4] Frame cha của label: {self.teacher_name_value.master}")
-                print(f"[5] Kích thước frame cha: {self.teacher_name_value.master.winfo_width()}x{self.teacher_name_value.master.winfo_height()}")
-                print(f"[6] Vị trí frame cha: {self.teacher_name_value.master.winfo_x()}, {self.teacher_name_value.master.winfo_y()}")
-            except Exception as e:
-                print(f"[DEBUG ERROR] Không thể truy cập label: {e}")
-            print("--- HẾT DEBUG ---\n")
+            # Cập nhật thông tin giáo viên
+            if hasattr(self, 'salary_calc_teacher_name_value') and self.salary_calc_teacher_name_value is not None:
+                self.salary_calc_teacher_name_value.configure(text=full_name or "Không xác định")
+            if hasattr(self, 'salary_calc_teacher_id_value') and self.salary_calc_teacher_id_value is not None:
+                self.salary_calc_teacher_id_value.configure(text=teacher_id_db or "Không xác định")
+            if hasattr(self, 'salary_calc_degree_value') and self.salary_calc_degree_value is not None:
+                self.salary_calc_degree_value.configure(text=degree_name or "Không xác định")
+            if hasattr(self, 'salary_calc_dept_value') and self.salary_calc_dept_value is not None:
+                self.salary_calc_dept_value.configure(text=dept_name or "Không xác định")
 
-            # Gán lên giao diện
-            self.teacher_name_value.configure(text=full_name)
-            self.teacher_id_value.configure(text=teacher_id)
-            self.degree_value.configure(text=degree_name)
-            self.dept_value.configure(text=dept_name)
-            self.teacher_coeff_value.configure(text=f"{teacher_coefficient:.1f}")
-            self.rate_value.configure(text=f"{amount_per_period:,.0f} ₫")
-            self.period_value.configure(text=f"{semester} - {year}")
+            # Cập nhật thông tin tính toán
+            if hasattr(self, 'salary_calc_teacher_coeff_value') and self.salary_calc_teacher_coeff_value is not None:
+                self.salary_calc_teacher_coeff_value.configure(text=f"{teacher_coefficient:.1f}")
+            if hasattr(self, 'salary_calc_rate_value') and self.salary_calc_rate_value is not None:
+                self.salary_calc_rate_value.configure(text=f"{amount_per_period:,.0f} ₫")
+            if hasattr(self, 'salary_calc_period_value') and self.salary_calc_period_value is not None:
+                self.salary_calc_period_value.configure(text=f"{semester} - {year}")
 
-            # Force UI update
-            self.window.update()
-            print(f"[DEBUG] Sau cập nhật - Label Name: {self.teacher_name_value.cget('text')}, ID: {self.teacher_id_value.cget('text')}")
-            print(f"[DEBUG] Kích thước cửa sổ: {self.window.winfo_width()}x{self.window.winfo_height()}")
-            print(f"[DEBUG] Kích thước frame cha sau cập nhật: {self.teacher_name_value.master.winfo_width()}x{self.teacher_name_value.master.winfo_height()}")
-
-            # Kiểm tra có lớp không
+            # Kiểm tra và tải bảng lương
             cursor.execute("""
-                SELECT COUNT(*)
+                SELECT c.class_id, cm.periods, COALESCE(ce.enrolled_students, 0) AS enrolled_students, cm.coefficient AS hp_coeff
                 FROM assignments a
                 JOIN classes c ON a.class_id = c.class_id
+                JOIN course_modules cm ON c.module_id = cm.module_id
+                LEFT JOIN class_enrollments ce ON c.class_id = ce.class_id
                 WHERE a.teacher_id = %s AND c.semester_id = %s
             """, (teacher_id, semester_id))
-            class_count = cursor.fetchone()[0]
+            classes = cursor.fetchall()
+            print(f"Debug: classes found = {classes}")
 
-            if class_count == 0:
+            if not classes:
+                # Xóa dữ liệu cũ và hiển thị thông báo
                 for widget in self.salary_table_frame.winfo_children():
                     widget.destroy()
-                CTkLabel(self.salary_table_frame, text="Không có dữ liệu lớp học trong kỳ này",
-                        font=("Helvetica", 14), text_color="gray").pack(pady=20)
-                return
-
-            # Hiển thị bảng lương
-            self.load_salary_table(teacher_id, semester_id)
-
-            # Tạo nút Lưu nếu chưa có
-            if not self.save_button or not self.save_button.winfo_exists():
-                self.save_button = CTkButton(
-                    self.salary_table_frame,
-                    text="Lưu bảng lương",
-                    fg_color="#28A745",
-                    width=120,
-                    command=self.save_salary_data
-                )
-                self.save_button.pack(pady=10)
+                CTkLabel(self.salary_table_frame, text="Không có lớp học nào được phân công cho giảng viên này trong kỳ học đã chọn", font=("Helvetica", 12), text_color="gray").pack(pady=20)
+            else:
+                self.load_salary_table(teacher_id, semester_id)
 
         except mysql.connector.Error as e:
             messagebox.showerror("Lỗi", f"Không thể tải thông tin: {e}")
@@ -6042,10 +6253,11 @@ class AdminView:
             conn = mysql.connector.connect(**DB_CONFIG)
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT c.class_id, cm.periods, c.num_students, cm.coefficient AS hp_coeff
+                SELECT c.class_id, cm.periods, ce.enrolled_students, cm.coefficient AS hp_coeff
                 FROM assignments a
                 JOIN classes c ON a.class_id = c.class_id
                 JOIN course_modules cm ON c.module_id = cm.module_id
+                LEFT JOIN class_enrollments ce ON c.class_id = ce.class_id
                 WHERE a.teacher_id = %s AND c.semester_id = %s
             """, (teacher_id, semester_id))
             classes = cursor.fetchall()
@@ -6060,24 +6272,36 @@ class AdminView:
             # Heading
             heading_frame = CTkFrame(self.salary_table_frame, fg_color="#D3D3D3", corner_radius=0)
             heading_frame.pack(fill="x", padx=5, pady=(5, 0))
-            CTkLabel(heading_frame, text="Mã lớp", font=("Helvetica", 12, "bold"), width=100, anchor="center").pack(side="left", padx=5)
+            CTkLabel(heading_frame, text="Mã lớp", font=("Helvetica", 12, "bold"), width=200, anchor="center").pack(side="left", padx=5)
             CTkLabel(heading_frame, text="Số tiết", font=("Helvetica", 12, "bold"), width=80, anchor="center").pack(side="left", padx=5)
-            CTkLabel(heading_frame, text="Số SV", font=("Helvetica", 12, "bold"), width=80, anchor="center").pack(side="left", padx=5)
-            CTkLabel(heading_frame, text="Hệ số HP", font=("Helvetica", 12, "bold"), width=100, anchor="center").pack(side="left", padx=5)
-            CTkLabel(heading_frame, text="Hệ số lớp", font=("Helvetica", 12, "bold"), width=100, anchor="center").pack(side="left", padx=5)
-            CTkLabel(heading_frame, text="Số tiết quy đổi", font=("Helvetica", 12, "bold"), width=120, anchor="center").pack(side="left", padx=5)
-            CTkLabel(heading_frame, text="Thành tiền", font=("Helvetica", 12, "bold"), width=120, anchor="center").pack(side="left", padx=5)
+            CTkLabel(heading_frame, text="Số SV thực tế", font=("Helvetica", 12, "bold"), width=80, anchor="center").pack(side="left", padx=5)
+            CTkLabel(heading_frame, text="Hệ số HP", font=("Helvetica", 12, "bold"), width=130, anchor="center").pack(side="left", padx=5)
+            CTkLabel(heading_frame, text="Hệ số lớp", font=("Helvetica", 12, "bold"), width=130, anchor="center").pack(side="left", padx=5)
+            CTkLabel(heading_frame, text="Số tiết quy đổi", font=("Helvetica", 12, "bold"), width=150, anchor="center").pack(side="left", padx=5)
+            CTkLabel(heading_frame, text="Thành tiền", font=("Helvetica", 12, "bold"), width=240, anchor="center").pack(side="left", padx=5)
 
             year = self.year_filter.get().strip()
+            # Lấy đơn giá
             cursor.execute("SELECT amount_per_period FROM teaching_rate WHERE year = %s", (year,))
             rate = cursor.fetchone()
             amount_per_period = float(rate[0]) if rate else 0.0
-            # Lấy teacher_coefficient từ self.teacher_coeff_value
-            teacher_coefficient = float(self.teacher_coeff_value.cget("text")) if self.teacher_coeff_value.cget("text") else 1.0
 
-            for idx, (class_id, periods, num_students, hp_coeff) in enumerate(classes, 1):
+            # Lấy hệ số giáo viên từ cơ sở dữ liệu
+            cursor.execute("""
+                SELECT coefficient 
+                FROM teacher_coefficients tc 
+                JOIN teachers t ON tc.degree_id = t.degree_id 
+                WHERE t.teacher_id = %s AND tc.year = %s
+            """, (teacher_id, year))
+            teacher_coeff = cursor.fetchone()
+            teacher_coefficient = float(teacher_coeff[0]) if teacher_coeff else 1.0
+
+            for idx, (class_id, periods, enrolled_students, hp_coeff) in enumerate(classes, 1):
+                # Use enrolled_students, default to 0 if None
+                enrolled_students = enrolled_students if enrolled_students is not None else 0
+
                 # Get class coefficient
-                student_range = self.get_student_range(num_students)
+                student_range = self.get_student_range(enrolled_students)
                 cursor.execute("SELECT coefficient FROM class_coefficients WHERE year = %s AND student_range = %s", (year, student_range))
                 class_coeff = cursor.fetchone()
                 class_coefficient = float(class_coeff[0]) if class_coeff else 0.0
@@ -6090,20 +6314,20 @@ class AdminView:
 
                 row_frame = CTkFrame(self.salary_table_frame, fg_color="#F5F5F5" if idx % 2 else "#FFFFFF")
                 row_frame.pack(fill="x", pady=2)
-                CTkLabel(row_frame, text=class_id, font=("Helvetica", 12), width=100, anchor="center").pack(side="left", padx=5)
+                CTkLabel(row_frame, text=class_id, font=("Helvetica", 12), width=200, anchor="center").pack(side="left", padx=5)
                 CTkLabel(row_frame, text=str(periods), font=("Helvetica", 12), width=80, anchor="center").pack(side="left", padx=5)
-                CTkLabel(row_frame, text=str(num_students), font=("Helvetica", 12), width=80, anchor="center").pack(side="left", padx=5)
-                CTkLabel(row_frame, text=f"{hp_coeff:.1f}", font=("Helvetica", 12), width=100, anchor="center").pack(side="left", padx=5)
-                CTkLabel(row_frame, text=f"{class_coefficient:.1f}", font=("Helvetica", 12), width=100, anchor="center").pack(side="left", padx=5)
-                CTkLabel(row_frame, text=f"{converted_periods:.1f}", font=("Helvetica", 12), width=120, anchor="center").pack(side="left", padx=5)
-                CTkLabel(row_frame, text=f"{salary:,.0f} ₫", font=("Helvetica", 12), width=120, anchor="center").pack(side="left", padx=5)
+                CTkLabel(row_frame, text=str(enrolled_students), font=("Helvetica", 12), width=80, anchor="center").pack(side="left", padx=5)
+                CTkLabel(row_frame, text=f"{hp_coeff:.1f}", font=("Helvetica", 12), width=130, anchor="center").pack(side="left", padx=5)
+                CTkLabel(row_frame, text=f"{class_coefficient:.1f}", font=("Helvetica", 12), width=130, anchor="center").pack(side="left", padx=5)
+                CTkLabel(row_frame, text=f"{converted_periods:.1f}", font=("Helvetica", 12), width=150, anchor="center").pack(side="left", padx=5)
+                CTkLabel(row_frame, text=f"{salary:,.0f} ₫", font=("Helvetica", 12), width=240, anchor="center").pack(side="left", padx=5)
 
             # Total row
             total_frame = CTkFrame(self.salary_table_frame, fg_color="#E0E0E0")
             total_frame.pack(fill="x", pady=2)
-            CTkLabel(total_frame, text="Tổng cộng:", font=("Helvetica", 12, "bold"), width=500, anchor="center").pack(side="left", padx=5)
-            CTkLabel(total_frame, text=f"{total_periods:.1f}", font=("Helvetica", 12, "bold"), width=120, anchor="center").pack(side="left", padx=5)
-            CTkLabel(total_frame, text=f"{total_salary:,.0f} ₫", font=("Helvetica", 12, "bold"), width=120, anchor="center").pack(side="left", padx=5)
+            CTkLabel(total_frame, text="Tổng cộng:", font=("Helvetica", 12, "bold"), width=270, anchor="center").pack(side="left", padx=200)
+            CTkLabel(total_frame, text=f"{total_periods:.1f}", font=("Helvetica", 12, "bold"), width=150, anchor="center").pack(side="left", padx=5)
+            CTkLabel(total_frame, text=f"{total_salary:,.0f} ₫", font=("Helvetica", 12, "bold"), width=240, anchor="center").pack(side="left", padx=5)
 
         except mysql.connector.Error as e:
             messagebox.showerror("Lỗi", f"Không thể tải bảng lương: {e}")
@@ -6113,29 +6337,29 @@ class AdminView:
             if 'conn' in locals():
                 conn.close()
 
-    def get_student_range(self, num_students):
+    def get_student_range(self, enrolled_students):
         ranges = [
             "<20 sinh viên", "20-29 sinh viên", "30-39 sinh viên", "40-49 sinh viên",
             "50-59 sinh viên", "60-69 sinh viên", "70-79 sinh viên", "80-89 sinh viên",
             "90-99 sinh viên", ">=100 sinh viên"
         ]
-        if num_students < 20:
+        if enrolled_students < 20:
             return ranges[0]
-        elif num_students < 30:
+        elif enrolled_students < 30:
             return ranges[1]
-        elif num_students < 40:
+        elif enrolled_students < 40:
             return ranges[2]
-        elif num_students < 50:
+        elif enrolled_students < 50:
             return ranges[3]
-        elif num_students < 60:
+        elif enrolled_students < 60:
             return ranges[4]
-        elif num_students < 70:
+        elif enrolled_students < 70:
             return ranges[5]
-        elif num_students < 80:
+        elif enrolled_students < 80:
             return ranges[6]
-        elif num_students < 90:
+        elif enrolled_students < 90:
             return ranges[7]
-        elif num_students < 100:
+        elif enrolled_students < 100:
             return ranges[8]
         else:
             return ranges[9]
@@ -6156,24 +6380,36 @@ class AdminView:
                 conn.close()
 
     def reset_salary_calc(self):
-        # Reset các combobox và thông tin
+        # Reset các combobox
         self.year_filter.set("Chọn năm học")
         self.semester_filter.set("Chọn kỳ học")
         self.dept_filter.set("Chọn khoa")
         self.teacher_filter.set("Chọn giảng viên")
         
         # Reset thông tin giảng viên
-        self.teacher_name_value.configure(text="")
-        self.teacher_id_value.configure(text="")
-        self.degree_value.configure(text="")
-        self.dept_value.configure(text="")
-        self.teacher_coeff_value.configure(text="")
-        self.rate_value.configure(text="")
-        self.period_value.configure(text="")
+        if self.salary_calc_teacher_name_value is not None:
+            self.salary_calc_teacher_name_value.configure(text="")
+        if self.salary_calc_teacher_id_value is not None:
+            self.salary_calc_teacher_id_value.configure(text="")
+        if self.salary_calc_degree_value is not None:
+            self.salary_calc_degree_value.configure(text="")
+        if self.salary_calc_dept_value is not None:
+            self.salary_calc_dept_value.configure(text="")
+        if self.salary_calc_teacher_coeff_value is not None:
+            self.salary_calc_teacher_coeff_value.configure(text="")
+        if self.salary_calc_rate_value is not None:
+            self.salary_calc_rate_value.configure(text="")
+        if self.salary_calc_period_value is not None:
+            self.salary_calc_period_value.configure(text="")
 
         # Xóa bảng lương
         for widget in self.salary_table_frame.winfo_children():
             widget.destroy()
+
+        # Xóa nút Lưu nếu tồn tại
+        if self.save_button is not None and self.save_button.winfo_exists():
+            self.save_button.destroy()
+            self.save_button = None
 
     # Xóa nút Lưu nếu tồn tại
         if self.save_button and self.save_button.winfo_exists():
@@ -6185,7 +6421,7 @@ class AdminView:
         messagebox.showinfo("Thông báo", "Chức năng đang được phát triển")
 
     def update_report_teacher_options(self, event=None):
-        dept = self.report_dept_filter.get().strip()
+        dept = self.salary_report_dept_filter.get().strip()
         try:
             conn = mysql.connector.connect(**DB_CONFIG)
             cursor = conn.cursor()
@@ -6206,8 +6442,8 @@ class AdminView:
                 """, (dept,))
             teachers = cursor.fetchall()
             teacher_list = [f"{row[1]} - {row[2]}" if row[1] and row[2] else "Chọn giảng viên" for row in teachers]
-            self.report_teacher_filter.configure(values=teacher_list if teacher_list else ["Chọn giảng viên"])
-            self.report_teacher_filter.set("Chọn giảng viên")
+            self.salary_report_teacher_filter.configure(values=teacher_list if teacher_list else ["Chọn giảng viên"])
+            self.salary_report_teacher_filter.set("Chọn giảng viên")
         except mysql.connector.Error as e:
             messagebox.showerror("Lỗi", f"Không thể tải danh sách giảng viên: {e}")
         finally:
@@ -6215,8 +6451,8 @@ class AdminView:
             conn.close()
 
     def display_salary_report(self):
-        year = self.report_year_filter.get().strip()
-        teacher_str = self.report_teacher_filter.get().strip()
+        year = self.salary_report_year_filter.get().strip()
+        teacher_str = self.salary_report_teacher_filter.get().strip()
         
         if year == "Chọn năm" or teacher_str == "Chọn giảng viên":
             messagebox.showwarning("Cảnh báo", "Vui lòng chọn năm và giảng viên!")
@@ -6260,10 +6496,10 @@ class AdminView:
             full_name, teacher_id, degree_name, dept_name = teacher
 
             # Cập nhật thông tin giảng viên
-            self.teacher_name_value.configure(text=full_name or '-')
-            self.teacher_id_value.configure(text=teacher_id or '-')
-            self.teacher_degree_value.configure(text=degree_name or '-')
-            self.teacher_dept_value.configure(text=dept_name or '-')
+            self.salary_report_teacher_name_value.configure(text=full_name or '-')
+            self.salary_report_teacher_id_value.configure(text=teacher_id or '-')
+            self.salary_report_teacher_degree_value.configure(text=degree_name or '-')
+            self.salary_report_teacher_dept_value.configure(text=dept_name or '-')
 
             # Xóa bảng cũ
             for widget in self.salary_tables_frame.winfo_children():
@@ -6279,10 +6515,10 @@ class AdminView:
                     font=("Helvetica", 14),
                     text_color="gray"
                 ).pack(pady=20)
-                self.total_salary_label.configure(text="Tổng tiền dạy trong năm: 0 ₫")
-                self.total_classes_label.configure(text="0")
-                self.total_periods_label.configure(text="0")
-                self.total_salary_temp_label.configure(text="0 đ")
+                self.salary_report_total_salary_label.configure(text="Tổng tiền dạy trong năm: 0 ₫")
+                self.salary_report_total_classes_label.configure(text="0")
+                self.salary_report_total_periods_label.configure(text="0")
+                self.salary_report_total_salary_temp_label.configure(text="0 đ")
                 return
 
             total_year_salary = 0.0
@@ -6383,10 +6619,10 @@ class AdminView:
                 total_year_salary += total_salary
 
             # Cập nhật tổng tiền năm và thống kê nhanh
-            self.total_salary_label.configure(text=f"Tổng tiền dạy trong năm: {total_year_salary:,.0f} ₫")
-            self.total_classes_label.configure(text=str(total_classes))
-            self.total_periods_label.configure(text=f"{total_periods:.1f}")
-            self.total_salary_temp_label.configure(text=f"{total_year_salary:,.0f} đ")
+            self.salary_report_total_salary_label.configure(text=f"Tổng tiền dạy trong năm: {total_year_salary:,.0f} ₫")
+            self.salary_report_total_classes_label.configure(text=str(total_classes))
+            self.salary_report_total_periods_label.configure(text=f"{total_periods:.1f}")
+            self.salary_report_total_salary_temp_label.configure(text=f"{total_year_salary:,.0f} đ")
 
         except mysql.connector.Error as e:
             messagebox.showerror("Lỗi", f"Không thể tải báo cáo: {e}")
@@ -6521,3 +6757,82 @@ class AdminView:
         finally:
             cursor.close()
             conn.close()
+
+    def create_or_load_coefficient_table(self):
+        year = self.coefficient_year_filter.get().strip()
+        if not year:
+            messagebox.showwarning("Cảnh báo", "Vui lòng chọn năm học")
+            return
+
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+
+            # Kiểm tra số lượng bản ghi hiện có cho năm học
+            cursor.execute("SELECT COUNT(*) FROM teacher_coefficients WHERE year = %s", (year,))
+            count = cursor.fetchone()[0]
+
+            if count > 0:
+                if not messagebox.askyesno("Xác nhận", f"Bảng đã chứa {count} bản ghi cho năm {year}. Bạn có muốn ghi đè không?"):
+                    return
+
+            # Lấy tất cả bằng cấp từ degrees
+            cursor.execute("SELECT degree_id, degree_name, coefficient FROM degrees ORDER BY degree_name")
+            degrees = cursor.fetchall()
+
+            # Thêm hoặc cập nhật hệ số mặc định
+            for degree_id, degree_name, default_coeff in degrees:
+                cursor.execute("""
+                    INSERT INTO teacher_coefficients (year, degree_id, coefficient)
+                    VALUES (%s, %s, %s)
+                    ON DUPLICATE KEY UPDATE coefficient = VALUES(coefficient)
+                """, (year, degree_id, default_coeff))
+            conn.commit()
+
+            # Cập nhật giao diện
+            self.load_teacher_coefficients()
+
+        except mysql.connector.Error as e:
+            messagebox.showerror("Lỗi", f"Không thể tạo hoặc tải bảng: {e}")
+        finally:
+            cursor.close()
+            conn.close()
+
+    def recreate_default_coefficient_table(self):
+        year = self.coefficient_year_filter.get().strip()
+        if not year:
+            messagebox.showwarning("Cảnh báo", "Vui lòng chọn năm học")
+            return
+
+        # Hiển thị hộp thoại xác nhận
+        if not messagebox.askyesno("Xác nhận", "Bạn có chắc chắn muốn tạo lại bảng mặc định không?"):
+            return  # Thoát nếu người dùng chọn "Không"
+
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+
+            # Lấy tất cả bằng cấp từ degrees
+            cursor.execute("SELECT degree_id, degree_name, coefficient FROM degrees ORDER BY degree_name")
+            degrees = cursor.fetchall()
+
+            # Ghi đè dữ liệu cho năm học
+            for degree_id, degree_name, default_coeff in degrees:
+                cursor.execute("""
+                    INSERT INTO teacher_coefficients (year, degree_id, coefficient)
+                    VALUES (%s, %s, %s)
+                    ON DUPLICATE KEY UPDATE coefficient = VALUES(coefficient)
+                """, (year, degree_id, default_coeff))
+            conn.commit()
+
+            # Cập nhật giao diện
+            self.load_teacher_coefficients()
+
+        except mysql.connector.Error as e:
+            messagebox.showerror("Lỗi", f"Không thể tạo lại bảng: {e}")
+        finally:
+            cursor.close()
+            conn.close()
+
+
+    
