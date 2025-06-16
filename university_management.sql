@@ -74,6 +74,32 @@ INSERT INTO `class_coefficients` VALUES (11,'2025-2026','<20 sinh viên',-0.3,0)
 UNLOCK TABLES;
 
 --
+-- Table structure for table `class_enrollments`
+--
+
+DROP TABLE IF EXISTS `class_enrollments`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `class_enrollments` (
+  `class_id` varchar(9) NOT NULL,
+  `enrolled_students` int NOT NULL DEFAULT '0',
+  `last_updated` date DEFAULT NULL,
+  PRIMARY KEY (`class_id`),
+  CONSTRAINT `class_enrollments_ibfk_1` FOREIGN KEY (`class_id`) REFERENCES `classes` (`class_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `class_enrollments`
+--
+
+LOCK TABLES `class_enrollments` WRITE;
+/*!40000 ALTER TABLE `class_enrollments` DISABLE KEYS */;
+INSERT INTO `class_enrollments` VALUES ('CLS77062',30,'2025-06-14');
+/*!40000 ALTER TABLE `class_enrollments` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `classes`
 --
 
@@ -345,4 +371,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-06-13 19:39:46
+-- Dump completed on 2025-06-15 18:05:15
