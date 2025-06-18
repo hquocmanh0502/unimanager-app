@@ -1,3 +1,4 @@
+
 import customtkinter as ctk
 import tkinter as tk
 from PIL import Image
@@ -60,7 +61,8 @@ class ModernNavbar(ctk.CTkFrame):
                 "submenu": [
                     {"label": "Học phần", "command": lambda: print("Default: Học phần clicked")},
                     {"label": "Kỳ học", "command": lambda: print("Default: Kỳ học clicked")},
-                    {"label": "Lớp học", "command": lambda: print("Default: Lớp học clicked")}
+                    {"label": "Lớp học", "command": lambda: print("Default: Lớp học clicked")},
+                    {"label": "Phân công", "command": lambda: print("Default: Phân công clicked")}
                 ]
             },
             {
@@ -84,10 +86,7 @@ class ModernNavbar(ctk.CTkFrame):
             {
                 "label": "Báo cáo",
                 "icon": "📈",
-                "submenu": [
-                    {"label": "Tiền dạy theo năm", "command": lambda: print("Default: Tiền dạy theo năm clicked")},
-                    {"label": "Tổng tiền dạy", "command": lambda: print("Default: Tổng tiền dạy clicked")}
-                ]
+                "command": lambda: print("Default: Báo cáo clicked")  # Thêm command mặc định cho menu chính
             }
         ]
         
@@ -172,7 +171,14 @@ class ModernNavbar(ctk.CTkFrame):
             for widget in [btn_frame, text_label, icon_label, arrow]:
                 widget.bind("<Button-1>", toggle_submenu)
                 widget.configure(cursor="hand2")
-        
+        elif item.get("command"):  # Thêm xử lý cho menu chính có command
+            def trigger_command(event=None):
+                if item["command"]:
+                    item["command"]()
+            for widget in [btn_frame, text_label, icon_label]:
+                widget.bind("<Button-1>", trigger_command)
+                widget.configure(cursor="hand2")
+
         def on_enter(e):
             btn_frame.configure(fg_color=self.settings["theme"]["hover"])
         def on_leave(e):

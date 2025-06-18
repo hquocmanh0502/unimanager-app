@@ -61,7 +61,7 @@ class AdminView:
         self.navbar_menu_items = [
             {
                 "label": "Quản lý giáo viên",
-                "icon": "👨‍🏫",
+                "icon": "👨",
                 "fg_color": "#3E54AC",
                 "hover_color": "#4B67D6",
                 "text_color": "white",
@@ -82,7 +82,8 @@ class AdminView:
                 "submenu": [
                     {"label": "Học phần", "command": lambda: self.switch_tab("Học phần")},
                     {"label": "Kỳ học", "command": lambda: self.switch_tab("Kỳ học")},
-                    {"label": "Lớp học", "command": lambda: self.switch_tab("Lớp học")}
+                    {"label": "Lớp học", "command": lambda: self.switch_tab("Lớp học")},
+                    {"label": "Phân công", "command": lambda: self.switch_tab("Phân công")}
                 ]
             },
             {
@@ -117,11 +118,7 @@ class AdminView:
                 "fg_color": "#3E54AC",
                 "hover_color": "#4B67D6",
                 "text_color": "white",
-                "command": None,
-                "submenu": [
-                    {"label": "Tiền dạy theo năm", "command": lambda: self.switch_tab("Tiền dạy theo năm")},
-                    {"label": "Tổng tiền dạy", "command": lambda: self.switch_tab("Tổng tiền dạy")}
-                ]
+                "command": lambda: self.switch_tab("Báo cáo")  # Chỉ giữ command mà không có submenu
             }
         ]
 
@@ -154,7 +151,8 @@ class AdminView:
         self.teaching_rate_tab = CTkFrame(self.tab_frame, fg_color="#FFFFFF", corner_radius=10)
         self.class_coefficient_tab = CTkFrame(self.tab_frame, fg_color="#FFFFFF", corner_radius=10)
         self.salary_calc_tab = CTkFrame(self.tab_frame, fg_color="#FFFFFF", corner_radius=10)
-        self.salary_report_tab = CTkFrame(self.tab_frame, fg_color="#FFFFFF", corner_radius=10)
+        self.report_tab = CTkFrame(self.tab_frame, fg_color="#FFFFFF", corner_radius=10)
+        self.assignment_tab = CTkFrame(self.tab_frame, fg_color="#FFFFFF", corner_radius=10)  # Thêm tab Phân công
 
         # Gọi các hàm setup cho các tab
         self.setup_degree_tab()
@@ -169,7 +167,8 @@ class AdminView:
         self.setup_teaching_rate_tab()
         self.setup_class_coefficient_tab()
         self.setup_salary_calc_tab()
-        self.setup_salary_report_tab()
+        self.setup_report_tab()
+        self.setup_assignment_tab()
 
         # Hiển thị tab mặc định
         self.current_tab = self.teacher_tab
@@ -757,61 +756,6 @@ class AdminView:
         self.load_semesters()
 
 
-    
-    def setup_assignment_tab(self):
-        CTkLabel(self.assignment_tab, text="Phân công giảng viên", font=("Helvetica", 18, "bold"), text_color="black").pack(pady=10)
-        main_frame = CTkFrame(self.assignment_tab, fg_color="transparent")
-        main_frame.pack(padx=10, pady=10, fill="both", expand=True)
-
-        # Form nhập liệu (bên trái)
-        form_frame = CTkFrame(main_frame, fg_color="#F0F0F0", corner_radius=10)
-        form_frame.pack(side="left", padx=5, pady=10, fill="y")
-        CTkLabel(form_frame, text="Quản lý Phân công", font=("Helvetica", 16, "bold")).pack(pady=5)
-
-        # Kỳ học
-        CTkLabel(form_frame, text="Chọn kỳ học:", font=("Helvetica", 12)).pack(pady=(5, 0))
-        self.assignment_semester_combobox = CTkComboBox(form_frame, width=150, values=self.get_semesters(), command=self.load_classes_by_semester)
-        self.assignment_semester_combobox.pack(pady=5)
-        self.assignment_semester_combobox.set(self.get_semesters()[0] if self.get_semesters() else "")
-
-        # Bộ lọc học phần
-        CTkLabel(form_frame, text="Lọc học phần:", font=("Helvetica", 12)).pack(pady=(5, 0))
-        self.assignment_module_combobox = CTkComboBox(form_frame, width=150, values=["Tất cả"] + [module.split(":")[1].strip() for module in self.get_modules()], command=self.load_classes_by_semester)
-        self.assignment_module_combobox.pack(pady=5)
-        self.assignment_module_combobox.set("Tất cả")
-
-        # Các nút thao tác
-        button_frame = CTkFrame(form_frame, fg_color="transparent")
-        button_frame.pack(pady=5)
-        self.assign_button = CTkButton(button_frame, text="Phân công", fg_color="#0085FF", command=self.assign_teacher, width=70, font=("Helvetica", 12), state="disabled")
-        self.assign_button.pack(side="left", padx=5)
-        self.edit_button = CTkButton(button_frame, text="Sửa", fg_color="#FFC107", command=self.edit_assignment, width=70, font=("Helvetica", 12), state="disabled")
-        self.edit_button.pack(side="left", padx=5)
-        self.delete_button = CTkButton(button_frame, text="Xóa", fg_color="#F44336", command=self.delete_assignment, width=70, font=("Helvetica", 12), state="disabled")
-        self.delete_button.pack(side="left", padx=5)
-        self.reset_button = CTkButton(button_frame, text="Reset", fg_color="#6C757D", command=self.reset_assignment_fields, width=70, font=("Helvetica", 12), state="disabled")
-        self.reset_button.pack(side="left", padx=5)
-
-        # Bảng lớp học phần (bên phải)
-        table_frame = CTkFrame(main_frame, fg_color="#FFFFFF", corner_radius=10)
-        table_frame.pack(side="right", padx=10, pady=10, fill="both", expand=True)
-        self.assignment_tree = ttk.Treeview(table_frame, columns=("Semester", "Module", "ID", "Name", "Students", "Teacher"), show="headings")
-        self.assignment_tree.heading("Semester", text="Kỳ học")
-        self.assignment_tree.heading("Module", text="Học phần")
-        self.assignment_tree.heading("ID", text="Mã lớp")
-        self.assignment_tree.heading("Name", text="Tên lớp")
-        self.assignment_tree.heading("Students", text="Số sinh viên")
-        self.assignment_tree.heading("Teacher", text="Giáo viên")
-        self.assignment_tree.column("Semester", width=150, anchor="center")
-        self.assignment_tree.column("Module", width=170, anchor="center")
-        self.assignment_tree.column("ID", width=80, anchor="center")
-        self.assignment_tree.column("Name", width=170, anchor="center")
-        self.assignment_tree.column("Students", width=80, anchor="center")
-        self.assignment_tree.column("Teacher", width=200, anchor="center")
-        self.assignment_tree.pack(padx=10, pady=10, fill="both", expand=True)
-        self.assignment_tree.bind("<<TreeviewSelect>>", self.on_assignment_select)
-        self.load_classes_by_semester(None)  # Tải danh sách lớp học phần khi khởi tạo
-
     def setup_class_stats_tab(self):
         # Tiêu đề
         ctk.CTkLabel(self.class_stats_tab, text="Thống kê lớp học phần", font=("Helvetica", 18, "bold"), text_color="black").pack(pady=10)
@@ -1108,250 +1052,119 @@ class AdminView:
         main_frame.grid_rowconfigure(2, weight=1)
         main_frame.grid_columnconfigure(0, weight=1)
 
-        teacher_info_frame = CTkFrame(content_frame, fg_color="#cce7ff", corner_radius=10)
+        # Frame thông tin giáo viên - Tăng height lên 200 
+        teacher_info_frame = CTkFrame(content_frame, fg_color="#cce7ff", corner_radius=10, height=250)
         teacher_info_frame.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
+        teacher_info_frame.grid_propagate(False)
         content_frame.grid_columnconfigure(0, weight=1, uniform="group1")
-        content_frame.grid_rowconfigure(0, weight=1)
-        CTkLabel(teacher_info_frame, text="Thông tin giảng viên", font=("Helvetica", 14, "bold"), text_color="#0D47A1").grid(row=0, column=0, columnspan=2, padx=5, pady=5, sticky="w")
+        content_frame.grid_rowconfigure(0, weight=0)
 
-        self.salary_calc_teacher_name_title = CTkLabel(teacher_info_frame, text="Họ và tên:", font=("Helvetica", 12, "bold"))
-        self.salary_calc_teacher_name_title.grid(row=1, column=0, padx=5, pady=2, sticky="w")
-        self.salary_calc_teacher_name_value = CTkLabel(teacher_info_frame, text="", font=("Helvetica", 12), wraplength=200)
-        self.salary_calc_teacher_name_value.grid(row=1, column=1, padx=5, pady=2, sticky="w")
+        CTkLabel(teacher_info_frame, text="THÔNG TIN GIẢNG VIÊN", 
+                font=("Helvetica", 16, "bold"), text_color="#0D47A1").grid(row=0, column=0, 
+                columnspan=2, padx=20, pady=(15,10), sticky="w")
 
-        self.salary_calc_teacher_id_title = CTkLabel(teacher_info_frame, text="Mã giảng viên:", font=("Helvetica", 12, "bold"))
-        self.salary_calc_teacher_id_title.grid(row=2, column=0, padx=5, pady=2, sticky="w")
-        self.salary_calc_teacher_id_value = CTkLabel(teacher_info_frame, text="", font=("Helvetica", 12), wraplength=200)
-        self.salary_calc_teacher_id_value.grid(row=2, column=1, padx=5, pady=2, sticky="w")
+        self.salary_calc_teacher_name_title = CTkLabel(teacher_info_frame, text="Họ và tên:", 
+                                                    font=("Helvetica", 14))
+        self.salary_calc_teacher_name_title.grid(row=1, column=0, padx=20, pady=5, sticky="w")
+        self.salary_calc_teacher_name_value = CTkLabel(teacher_info_frame, text="", 
+                                                    font=("Helvetica", 14), wraplength=200)
+        self.salary_calc_teacher_name_value.grid(row=1, column=1, padx=5, pady=5, sticky="w")
 
-        self.salary_calc_degree_title = CTkLabel(teacher_info_frame, text="Học vị:", font=("Helvetica", 12, "bold"))
-        self.salary_calc_degree_title.grid(row=3, column=0, padx=5, pady=2, sticky="w")
-        self.salary_calc_degree_value = CTkLabel(teacher_info_frame, text="", font=("Helvetica", 12), wraplength=200)
-        self.salary_calc_degree_value.grid(row=3, column=1, padx=5, pady=2, sticky="w")
+        self.salary_calc_teacher_id_title = CTkLabel(teacher_info_frame, text="Mã giảng viên:", 
+                                                    font=("Helvetica", 14))
+        self.salary_calc_teacher_id_title.grid(row=2, column=0, padx=20, pady=5, sticky="w")
+        self.salary_calc_teacher_id_value = CTkLabel(teacher_info_frame, text="", 
+                                                    font=("Helvetica", 14), wraplength=200)
+        self.salary_calc_teacher_id_value.grid(row=2, column=1, padx=5, pady=5, sticky="w")
 
-        self.salary_calc_dept_title = CTkLabel(teacher_info_frame, text="Khoa/Bộ môn:", font=("Helvetica", 12, "bold"))
-        self.salary_calc_dept_title.grid(row=4, column=0, padx=5, pady=2, sticky="w")
-        self.salary_calc_dept_value = CTkLabel(teacher_info_frame, text="", font=("Helvetica", 12), wraplength=200)
-        self.salary_calc_dept_value.grid(row=4, column=1, padx=5, pady=2, sticky="w")
+        self.salary_calc_degree_title = CTkLabel(teacher_info_frame, text="Học vị:", 
+                                                font=("Helvetica", 14))
+        self.salary_calc_degree_title.grid(row=3, column=0, padx=20, pady=5, sticky="w")
+        self.salary_calc_degree_value = CTkLabel(teacher_info_frame, text="", 
+                                                font=("Helvetica", 14), wraplength=200)
+        self.salary_calc_degree_value.grid(row=3, column=1, padx=5, pady=5, sticky="w")
 
-        calc_info_frame = CTkFrame(content_frame, fg_color="#cce7ff", corner_radius=10)
+        self.salary_calc_dept_title = CTkLabel(teacher_info_frame, text="Khoa/Bộ môn:", 
+                                            font=("Helvetica", 14))
+        self.salary_calc_dept_title.grid(row=4, column=0, padx=20, pady=5, sticky="w")
+        self.salary_calc_dept_value = CTkLabel(teacher_info_frame, text="", 
+                                            font=("Helvetica", 14), wraplength=200)
+        self.salary_calc_dept_value.grid(row=4, column=1, padx=5, pady=5, sticky="w")
+
+        # Frame thông tin thanh toán - Tăng height lên 200
+        calc_info_frame = CTkFrame(content_frame, fg_color="#cce7ff", corner_radius=10, height=250)
         calc_info_frame.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
+        calc_info_frame.grid_propagate(False)
         content_frame.grid_columnconfigure(1, weight=1, uniform="group1")
-        content_frame.grid_rowconfigure(0, weight=1)
-        CTkLabel(calc_info_frame, text="Thông tin tính toán", font=("Helvetica", 14, "bold"), text_color="#0D47A1").grid(row=0, column=0, columnspan=2, padx=5, pady=5, sticky="w")
+        content_frame.grid_rowconfigure(0, weight=0)
 
-        self.salary_calc_teacher_coeff_title = CTkLabel(calc_info_frame, text="Hệ số giáo viên:", font=("Helvetica", 12, "bold"))
-        self.salary_calc_teacher_coeff_title.grid(row=1, column=0, padx=5, pady=2, sticky="w")
-        self.salary_calc_teacher_coeff_value = CTkLabel(calc_info_frame, text="", font=("Helvetica", 12), wraplength=200)
-        self.salary_calc_teacher_coeff_value.grid(row=1, column=1, padx=5, pady=2, sticky="w")
+        CTkLabel(calc_info_frame, text="THÔNG TIN THANH TOÁN", 
+                font=("Helvetica", 16, "bold"), text_color="#0D47A1").grid(row=0, column=0, 
+                columnspan=2, padx=20, pady=(15,10), sticky="w")
 
-        self.salary_calc_rate_title = CTkLabel(calc_info_frame, text="Tiền dạy một tiết:", font=("Helvetica", 12, "bold"))
-        self.salary_calc_rate_title.grid(row=2, column=0, padx=5, pady=2, sticky="w")
-        self.salary_calc_rate_value = CTkLabel(calc_info_frame, text="", font=("Helvetica", 12), wraplength=200)
-        self.salary_calc_rate_value.grid(row=2, column=1, padx=5, pady=2, sticky="w")
+        self.salary_calc_teacher_coeff_title = CTkLabel(calc_info_frame, text="Hệ số giáo viên:", 
+                                                    font=("Helvetica", 14))
+        self.salary_calc_teacher_coeff_title.grid(row=1, column=0, padx=20, pady=5, sticky="w")
+        self.salary_calc_teacher_coeff_value = CTkLabel(calc_info_frame, text="", 
+                                                    font=("Helvetica", 14), wraplength=200)
+        self.salary_calc_teacher_coeff_value.grid(row=1, column=1, padx=5, pady=5, sticky="w")
 
-        self.salary_calc_period_title = CTkLabel(calc_info_frame, text="Kỳ/Năm học:", font=("Helvetica", 12, "bold"))
-        self.salary_calc_period_title.grid(row=3, column=0, padx=5, pady=2, sticky="w")
-        self.salary_calc_period_value = CTkLabel(calc_info_frame, text="", font=("Helvetica", 12), wraplength=200)
-        self.salary_calc_period_value.grid(row=3, column=1, padx=5, pady=2, sticky="w")
+        self.salary_calc_rate_title = CTkLabel(calc_info_frame, text="Tiền dạy một tiết:", 
+                                            font=("Helvetica", 14))
+        self.salary_calc_rate_title.grid(row=2, column=0, padx=20, pady=5, sticky="w")
+        self.salary_calc_rate_value = CTkLabel(calc_info_frame, text="", 
+                                            font=("Helvetica", 14), wraplength=200)
+        self.salary_calc_rate_value.grid(row=2, column=1, padx=5, pady=5, sticky="w")
 
-        self.salary_table_frame = CTkScrollableFrame(main_frame, fg_color="#FFFFFF", corner_radius=10, height=200)  # Đặt chiều cao cố định, ví dụ 200px
+        self.salary_calc_period_title = CTkLabel(calc_info_frame, text="Kỳ/Năm học:", 
+                                                font=("Helvetica", 14))
+        self.salary_calc_period_title.grid(row=3, column=0, padx=20, pady=5, sticky="w")
+        self.salary_calc_period_value = CTkLabel(calc_info_frame, text="", 
+                                                font=("Helvetica", 14), wraplength=200)
+        self.salary_calc_period_value.grid(row=3, column=1, padx=5, pady=5, sticky="w")
+
+        # Frame cho bảng tính lương 
+        self.salary_table_frame = CTkScrollableFrame(main_frame, fg_color="#FFFFFF", corner_radius=10, height=400)
         self.salary_table_frame.grid(row=3, column=0, columnspan=2, padx=5, pady=5, sticky="nsew")
-        main_frame.grid_rowconfigure(3, weight=0)  # Đặt weight=0 để không mở rộng theo chiều dọc
-        main_frame.grid_columnconfigure(0, weight=1)  # Giữ mở rộng theo chiều ngang
+        main_frame.grid_rowconfigure(3, weight=2)
 
         self.save_button = None
-    def setup_salary_report_tab(self):
-        # Tiêu đề
-        header_frame = CTkFrame(self.salary_report_tab, fg_color="transparent")
-        header_frame.pack(fill="x", padx=10, pady=10)
-        CTkLabel(header_frame, text="Báo cáo tiền dạy giáo viên", font=("Helvetica", 18, "bold"), text_color="#333").pack(side="left")
-
-        # Frame lọc
-        filter_frame = CTkFrame(self.salary_report_tab, fg_color="#F0F0F0", corner_radius=10)
-        filter_frame.pack(fill="x", padx=10, pady=10)
-
-        # Combobox Khoa
-        dept_frame = CTkFrame(filter_frame, fg_color="transparent")
-        dept_frame.pack(side="left", padx=10)
-        CTkLabel(dept_frame, text="Khoa:", font=("Helvetica", 12), text_color="#333").pack(side="left")
-        self.salary_report_dept_filter = CTkComboBox(
-            dept_frame,
-            values=["Chọn khoa"] + self.get_dept_names(),
-            width=200,
-            command=self.update_report_teacher_options
-        )
-        self.salary_report_dept_filter.pack(side="left", padx=5)
-        self.salary_report_dept_filter.set("Chọn khoa")
-
-        # Combobox Giảng viên
-        teacher_frame = CTkFrame(filter_frame, fg_color="transparent")
-        teacher_frame.pack(side="left", padx=10)
-        CTkLabel(teacher_frame, text="Giảng viên:", font=("Helvetica", 12), text_color="#333").pack(side="left")
-        self.salary_report_teacher_filter = CTkComboBox(
-            teacher_frame,
-            values=["Chọn giảng viên"],
-            width=250
-        )
-        self.salary_report_teacher_filter.pack(side="left", padx=5)
-        self.salary_report_teacher_filter.set("Chọn giảng viên")
-
-        # Combobox Năm
-        year_frame = CTkFrame(filter_frame, fg_color="transparent")
-        year_frame.pack(side="left", padx=10)
-        CTkLabel(year_frame, text="Năm:", font=("Helvetica", 12), text_color="#333").pack(side="left")
-        self.salary_report_year_filter = CTkComboBox(
-            year_frame,
-            values=["Chọn năm"] + [f"{y}-{y+1}" for y in range(2020, 2030)],
-            width=150
-        )
-        self.salary_report_year_filter.pack(side="left", padx=5)
-        self.salary_report_year_filter.set("Chọn năm")
-
-        # Nút Xem báo cáo
-        CTkButton(
-            filter_frame,
-            text="Xem báo cáo",
-            fg_color="#007bff",
-            hover_color="#0056b3",
-            command=self.display_salary_report
-        ).pack(side="right", padx=10)
-
-        # Frame chứa teacher_info_frame, stats_frame, và export_frame
-        info_stats_export_frame = CTkFrame(self.salary_report_tab, fg_color="transparent")
-        info_stats_export_frame.pack(fill="x", padx=10, pady=10)
-
-        # Frame thông tin giảng viên
-        self.teacher_info_frame = CTkFrame(info_stats_export_frame, fg_color="#E6F0FA", corner_radius=10, width=400)
-        self.teacher_info_frame.pack(side="left", padx=(0, 10))
-        self.teacher_info_frame.pack_propagate(False)
-
-        # Frame thống kê nhanh
-        self.stats_frame = CTkFrame(info_stats_export_frame, fg_color="#F0F8FF", corner_radius=10, width=300)
-        self.stats_frame.pack(side="left", padx=(0, 10))
-        self.stats_frame.pack_propagate(False)
-
-        # Frame tùy chọn xuất
-        self.export_frame = CTkFrame(info_stats_export_frame, fg_color="#E0FFFF", corner_radius=10, width=200)
-        self.export_frame.pack(side="left")
-        self.export_frame.pack_propagate(False)
-
-        # Tiêu đề thông tin giảng viên với màu xanh đậm và lề trái hơn
-        CTkLabel(self.teacher_info_frame, text="Thông tin giảng viên", font=("Helvetica", 14, "bold"), text_color="#1E3A8A").pack(anchor="w", padx=20, pady=5)
-
-        # Họ và tên
-        name_row = CTkFrame(self.teacher_info_frame, fg_color="transparent")
-        name_row.pack(fill="x", padx=(15, 5), pady=2)
-        self.salary_report_teacher_name_title = CTkLabel(name_row, text="Họ và tên:", font=("Helvetica", 12, "bold"), text_color="#333", width=100, anchor="w")
-        self.salary_report_teacher_name_title.pack(side="left")
-        self.salary_report_teacher_name_value = CTkLabel(name_row, text="-", font=("Helvetica", 12), text_color="#333")
-        self.salary_report_teacher_name_value.pack(side="left")
-
-        # Mã giảng viên
-        id_row = CTkFrame(self.teacher_info_frame, fg_color="transparent")
-        id_row.pack(fill="x", padx=(15, 5), pady=2)
-        self.salary_report_teacher_id_title = CTkLabel(id_row, text="Mã giảng viên:", font=("Helvetica", 12, "bold"), text_color="#333", width=100, anchor="w")
-        self.salary_report_teacher_id_title.pack(side="left")
-        self.salary_report_teacher_id_value = CTkLabel(id_row, text="-", font=("Helvetica", 12), text_color="#333")
-        self.salary_report_teacher_id_value.pack(side="left")
-
-        # Học vị
-        degree_row = CTkFrame(self.teacher_info_frame, fg_color="transparent")
-        degree_row.pack(fill="x", padx=(15, 5), pady=2)
-        self.salary_report_teacher_degree_title = CTkLabel(degree_row, text="Học vị:", font=("Helvetica", 12, "bold"), text_color="#333", width=100, anchor="w")
-        self.salary_report_teacher_degree_title.pack(side="left")
-        self.salary_report_teacher_degree_value = CTkLabel(degree_row, text="-", font=("Helvetica", 12), text_color="#333")
-        self.salary_report_teacher_degree_value.pack(side="left")
-
-        # Khoa/Bộ môn
-        dept_row = CTkFrame(self.teacher_info_frame, fg_color="transparent")
-        dept_row.pack(fill="x", padx=(15, 5), pady=2)
-        self.salary_report_teacher_dept_title = CTkLabel(dept_row, text="Khoa/Bộ môn:", font=("Helvetica", 12, "bold"), text_color="#333", width=100, anchor="w")
-        self.salary_report_teacher_dept_title.pack(side="left")
-        self.salary_report_teacher_dept_value = CTkLabel(dept_row, text="-", font=("Helvetica", 12), text_color="#333")
-        self.salary_report_teacher_dept_value.pack(side="left")
-
-        # Tiêu đề thống kê nhanh với màu xanh đậm và lề trái hơn
-        CTkLabel(self.stats_frame, text="Thống kê nhanh", font=("Helvetica", 14, "bold"), text_color="#1E3A8A").pack(anchor="w", padx=20, pady=5)
-
-        # Tổng số lớp
-        class_row = CTkFrame(self.stats_frame, fg_color="transparent")
-        class_row.pack(fill="x", padx=10, pady=2)
-        CTkLabel(class_row, text="Tổng số lớp:", font=("Helvetica", 12, "bold"), text_color="#333", width=120, anchor="w").pack(side="left")
-        self.salary_report_total_classes_label = CTkLabel(class_row, text="0", font=("Helvetica", 12), text_color="#333")
-        self.salary_report_total_classes_label.pack(side="left")
-
-        # Tổng số tiết
-        period_row = CTkFrame(self.stats_frame, fg_color="transparent")
-        period_row.pack(fill="x", padx=10, pady=2)
-        CTkLabel(period_row, text="Tổng số tiết:", font=("Helvetica", 12, "bold"), text_color="#333", width=120, anchor="w").pack(side="left")
-        self.salary_report_total_periods_label = CTkLabel(period_row, text="0", font=("Helvetica", 12), text_color="#333")
-        self.salary_report_total_periods_label.pack(side="left")
-
-        # Tổng tiền tạm tính
-        salary_row = CTkFrame(self.stats_frame, fg_color="transparent")
-        salary_row.pack(fill="x", padx=10, pady=2)
-        CTkLabel(salary_row, text="Tổng tiền tạm tính:", font=("Helvetica", 12, "bold"), text_color="#333", width=120, anchor="w").pack(side="left")
-        self.salary_report_total_salary_temp_label = CTkLabel(salary_row, text="0 đ", font=("Helvetica", 12), text_color="#333")
-        self.salary_report_total_salary_temp_label.pack(side="left")
-
-        # Tiêu đề tùy chọn xuất với màu xanh đậm và lề trái hơn
-        CTkLabel(self.export_frame, text="Tùy chọn xuất", font=("Helvetica", 14, "bold"), text_color="#1E3A8A").pack(anchor="w", padx=20, pady=5)
-
-        # Nút xuất PDF
-        CTkButton(self.export_frame, text="Xuất PDF", fg_color="#007bff", hover_color="#0056b3", width=150).pack(pady=5)
-
-        # Nút xuất Excel
-        CTkButton(self.export_frame, text="Xuất Excel", fg_color="#007bff", hover_color="#0056b3", width=150, command=self.export_salary_report).pack(pady=5)
-
-        # Checkbox chỉ xuất kỳ hiện tại
-        self.current_semester_var = tk.BooleanVar()
-        CTkCheckBox(self.export_frame, text="Chỉ kỳ hiện tại", variable=self.current_semester_var).pack(pady=5)
-
-        # Frame chứa các bảng lương theo kỳ
-        self.salary_tables_frame = CTkScrollableFrame(self.salary_report_tab, fg_color="#FFFFFF", corner_radius=10)
-        self.salary_tables_frame.pack(fill="both", expand=True, padx=10, pady=10)
-
-        # Frame tổng tiền dạy trong năm
-        self.total_salary_frame = CTkFrame(self.salary_report_tab, fg_color="#FFFFFF", corner_radius=10)
-        self.total_salary_frame.pack(fill="x", padx=10, pady=10)
-        self.salary_report_total_salary_label = CTkLabel(
-            self.total_salary_frame,
-            text="Tổng tiền dạy trong năm: 0 ₫",
-            font=("Helvetica", 14, "bold"),
-            text_color="#333"
-        )
-        self.salary_report_total_salary_label.pack(pady=5)
 
     def switch_tab(self, tab_name):
-        try:
-            tab_mapping = {
-                "Bằng cấp": self.degree_tab,
-                "Khoa": self.dept_tab,
-                "Giáo viên": self.teacher_tab,
-                "Thống kê giáo viên": self.stats_tab,
-                "Học phần": self.module_tab,
-                "Lớp học": self.class_tab,
-                "Kỳ học": self.semester_tab,
-                "Thống kê lớp": self.class_stats_tab,
-                "Hệ số giáo viên": self.teacher_coefficient_tab,
-                "Định mức tiền theo tiết": self.teaching_rate_tab,
-                "Hệ số lớp": self.class_coefficient_tab,
-                "Tính tiền dạy": self.salary_calc_tab,
-                "Tiền dạy theo năm": self.salary_report_tab,
-                "Tổng tiền dạy": self.salary_report_tab
-            }
-            new_tab = tab_mapping.get(tab_name)
-            if new_tab:
-                if self.current_tab:
-                    self.current_tab.pack_forget()
-                new_tab.pack(fill="both", expand=True)
-                self.current_tab = new_tab
-                print(f"Switched to tab: {tab_name}")
-            else:
-                messagebox.showerror("Lỗi", f"Tab không tồn tại: {tab_name}")
-        except Exception as e:
-            messagebox.showerror("Lỗi", f"Không thể chuyển tab: {e}")
+        print(f"Debug: Chuyển sang tab {tab_name}")
+        # Ẩn tab hiện tại
+        if self.current_tab:
+            self.current_tab.pack_forget()
+        
+        tab_mapping = {
+            "Bằng cấp": self.degree_tab,
+            "Khoa": self.dept_tab,
+            "Giáo viên": self.teacher_tab,
+            "Học phần": self.module_tab,
+            "Kỳ học": self.semester_tab,
+            "Lớp học": self.class_tab,
+            "Thống kê giáo viên": self.stats_tab,
+            "Thống kê lớp": self.class_stats_tab,
+            "Định mức tiền theo tiết": self.teaching_rate_tab,
+            "Hệ số giáo viên": self.teacher_coefficient_tab,
+            "Hệ số lớp": self.class_coefficient_tab,
+            "Tính tiền dạy": self.salary_calc_tab,
+            "Báo cáo": self.report_tab,
+            "Phân công": self.assignment_tab
+        }
+        
+        self.current_tab = tab_mapping.get(tab_name)
+        if self.current_tab:
+            if tab_name == "Tính tiền dạy":
+                # Kiểm tra xem widget có tồn tại không
+                if not hasattr(self, 'salary_calc_teacher_coeff_value') or self.salary_calc_teacher_coeff_value is None:
+                    print("Debug: Tái tạo tab Tính tiền dạy")
+                    for widget in self.current_tab.winfo_children():
+                        widget.destroy()
+                    self.setup_salary_calc_tab()
+            self.current_tab.pack(fill="both", expand=True)
+        else:
+            messagebox.showerror("Lỗi", f"Tab {tab_name} không tồn tại!")
 
     def get_departments(self):
         try:
@@ -3239,7 +3052,7 @@ class AdminView:
                 for i in range(num_classes):
                     group_num = i + 1
                     group_str = f"N{str(group_num).zfill(2)}"
-                    class_name = f"{dept_abbr}{module_id} - LT - {credits} - {full_year} ({group_str})"
+                    class_name = f"{dept_abbr}{module_id}-LT-{credits}-{full_year}({group_str})"
 
                     if len(class_name) > 50:
                         messagebox.showerror("Lỗi", f"Tên lớp '{class_name}' quá dài!", parent=add_window)
@@ -3479,29 +3292,32 @@ class AdminView:
             # Kiểm tra dữ liệu trong các bảng liên quan
             cursor.execute("SELECT semester_id FROM semesters")
             available_semesters = [row[0] for row in cursor.fetchall()]
+            print(f"Debug: Available semesters: {available_semesters}")
 
             cursor.execute("SELECT module_id, module_name FROM course_modules")
-            available_modules = {row[1].strip(): row[0] for row in cursor.fetchall()}  # Loại bỏ khoảng trắng trong module_name
-            print(f"Debug: Danh sách module_name từ CSDL: {[row[1] for row in cursor.fetchall()]}")  # Debug để kiểm tra
+            module_data = cursor.fetchall()
+            available_modules = {row[1].strip(): row[0] for row in module_data}
+            print(f"Debug: Available modules: {[row[1] for row in module_data]}")
+
+            # Debug: Kiểm tra dữ liệu trong bảng class_enrollments
+            cursor.execute("SELECT class_id, enrolled_students FROM class_enrollments")
+            enrollments = cursor.fetchall()
+            print(f"Debug: Data in class_enrollments: {enrollments}")
 
             query = """
                 SELECT c.semester_id, m.module_name, c.class_id, c.class_name, c.num_students, 
-                    COALESCE(ce.enrolled_count, 0) as enrolled_students, t.full_name
+                    COALESCE(ce.enrolled_students, 0) as enrolled_students, t.full_name
                 FROM classes c
                 JOIN semesters s ON c.semester_id = s.semester_id
                 JOIN course_modules m ON c.module_id = m.module_id
-                LEFT JOIN (
-                    SELECT class_id, COUNT(*) as enrolled_count 
-                    FROM class_enrollments 
-                    GROUP BY class_id
-                ) ce ON c.class_id = ce.class_id 
+                LEFT JOIN class_enrollments ce ON c.class_id = ce.class_id 
                 LEFT JOIN assignments a ON c.class_id = a.class_id
                 LEFT JOIN teachers t ON a.teacher_id = t.teacher_id
                 WHERE 1=1
             """
             params = []
 
-            print(f"Debug: Giá trị lọc - Kỳ: {semester_filter}, Học phần: {module_filter}, Trạng thái: {status_filter}")
+            print(f"Debug: Filter values - Semester: {semester_filter}, Module: {module_filter}, Status: {status_filter}")
 
             if semester_filter != "Tất cả":
                 if semester_filter in available_semesters:
@@ -3509,14 +3325,16 @@ class AdminView:
                     params.append(semester_filter)
                 else:
                     CTkLabel(self.class_list_frame, text=f"Không có dữ liệu lớp học cho kỳ học {semester_filter}", font=("Helvetica", 14), text_color="gray").pack(pady=10)
+                    print(f"Debug: No data for semester {semester_filter}")
                     return
 
             if module_filter != "Tất cả":
                 if module_filter.strip() in available_modules:
                     query += " AND m.module_name = %s"
-                    params.append(module_filter.strip())  # Loại bỏ khoảng trắng khi lọc
+                    params.append(module_filter.strip())
                 else:
                     CTkLabel(self.class_list_frame, text=f"Không có dữ liệu lớp học cho học phần {module_filter}", font=("Helvetica", 14), text_color="gray").pack(pady=10)
+                    print(f"Debug: No data for module {module_filter}")
                     return
 
             if status_filter == "Đã phân công":
@@ -3524,21 +3342,25 @@ class AdminView:
             elif status_filter == "Chưa phân công":
                 query += " AND a.teacher_id IS NULL"
 
+            print(f"Debug: Executing query: {query} with params: {params}")
             cursor.execute(query, params)
             rows = cursor.fetchall()
 
-            print(f"Debug: Số dòng dữ liệu lấy được sau lọc - Kỳ: {semester_filter}, Học phần: {module_filter}, Trạng thái: {status_filter}: {len(rows)}")
+            print(f"Debug: Number of rows fetched: {len(rows)}")
+            print(f"Debug: Fetched rows: {rows}")
 
             if not rows:
                 CTkLabel(self.class_list_frame, text="Không có dữ liệu lớp học", font=("Helvetica", 14), text_color="gray").pack(pady=10)
+                print("Debug: No data found")
                 return
 
             # Create a row for each class
-            for row in rows:
+            for idx, row in enumerate(rows):
                 semester_id, module_name, class_id, class_name, num_students, enrolled_students, teacher_name = row
+                print(f"Debug: Row {idx+1} - Class ID: {class_id}, Enrolled Students: {enrolled_students}")
 
                 # Row frame for each class
-                row_frame = CTkFrame(self.class_list_frame, fg_color="#F5F5F5", corner_radius=0)
+                row_frame = CTkFrame(self.class_list_frame, fg_color="#F5F5F5" if idx % 2 else "#FFFFFF", corner_radius=0)
                 row_frame.pack(fill="x", pady=2)
 
                 # Data labels
@@ -3547,27 +3369,22 @@ class AdminView:
                 CTkLabel(row_frame, text=class_id, font=("Helvetica", 12), text_color="black", width=70, anchor="center").pack(side="left", padx=5)
                 CTkLabel(row_frame, text=class_name, font=("Helvetica", 12), text_color="black", width=220, anchor="center").pack(side="left", padx=5)
                 CTkLabel(row_frame, text=str(num_students), font=("Helvetica", 12), text_color="black", width=100, anchor="center").pack(side="left", padx=5)
-                CTkLabel(row_frame, text=str(enrolled_students) if enrolled_students is not None else "0", font=("Helvetica", 12), text_color="black", width=120, anchor="center").pack(side="left", padx=5)  # Hiển thị cột mới
+                CTkLabel(row_frame, text=str(enrolled_students) if enrolled_students is not None else "0", font=("Helvetica", 12), text_color="black", width=120, anchor="center").pack(side="left", padx=5)
                 CTkLabel(row_frame, text=teacher_name if teacher_name else "Chưa phân công", font=("Helvetica", 12), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
 
                 # Actions frame
                 actions_frame = CTkFrame(row_frame, fg_color="transparent", width=200)
                 actions_frame.pack(side="left", padx=5)
 
-                # Assign button
-                CTkButton(actions_frame, text="Phân công", width=50, fg_color="#00C4B4", hover_color="#009688", 
-                        command=lambda c_id=class_id: self.assign_teacher(c_id)).pack(side="left", padx=2)
-
-                # Edit Class button
-                CTkButton(actions_frame, text="Sửa", width=50, fg_color="#FFC107", hover_color="#E0A800", 
+                CTkButton(actions_frame, text="Sửa", width=80, fg_color="#FFC107", hover_color="#E0A800", 
                         command=lambda c_id=class_id: self.edit_class(c_id)).pack(side="left", padx=2)
 
-                # Delete Class button
-                CTkButton(actions_frame, text="Xóa", width=50, fg_color="#F44336", hover_color="#D32F2F", 
+                CTkButton(actions_frame, text="Xóa", width=80, fg_color="#F44336", hover_color="#D32F2F", 
                         command=lambda c_id=class_id: self.delete_class(c_id)).pack(side="left", padx=2)
 
         except mysql.connector.Error as e:
             messagebox.showerror("Lỗi", f"Không thể tải dữ liệu lớp học: {e}")
+            print(f"Debug: Database error: {e}")
         finally:
             if cursor:
                 cursor.close()
@@ -3575,6 +3392,7 @@ class AdminView:
                 conn.close()
 
         # Làm mới giao diện
+        print("Debug: Refreshing class_list_frame")
         self.class_list_frame.update_idletasks()
 
     def load_salaries(self):
@@ -5055,114 +4873,72 @@ class AdminView:
             conn = mysql.connector.connect(**DB_CONFIG)
             cursor = conn.cursor()
 
-            # Lấy danh sách kỳ học trong năm 
+            # Lấy danh sách các học kỳ trong năm học
             cursor.execute("""
-                SELECT semester_name, semester_id 
+                SELECT semester_id, semester_name 
                 FROM semesters 
-                WHERE year = %s 
-                ORDER BY semester_name
+                WHERE year = %s
+                ORDER BY semester_id
             """, (year,))
-            semester_data = cursor.fetchall()
-            semesters = [row[0] for row in semester_data]
-            semester_ids = [row[1] for row in semester_data]
+            semesters = [row[0] for row in cursor.fetchall()]
 
-            # Query tổng quát với số sinh viên thực tế từ class_enrollments
+            # Truy vấn chính
+            cursor.execute("""
+                SELECT 
+                    cm.module_name,
+                    s.semester_id,
+                    COUNT(c.class_id) as class_count,
+                    COALESCE(SUM(ce.enrolled_students), 0) as total_enrolled,
+                    COALESCE(AVG(ce.enrolled_students), 0) as avg_enrolled
+                FROM classes c
+                JOIN semesters s ON c.semester_id = s.semester_id
+                JOIN course_modules cm ON c.module_id = cm.module_id
+                LEFT JOIN class_enrollments ce ON c.class_id = ce.class_id
+                WHERE s.year = %s
+                GROUP BY cm.module_name, s.semester_id
+                ORDER BY cm.module_name, s.semester_id
+            """, (year,))
+            pivot_data = cursor.fetchall()
+
+            # Tổng số lớp và sinh viên
             cursor.execute("""
                 SELECT 
                     COUNT(DISTINCT c.class_id) as total_classes,
                     COUNT(DISTINCT cm.module_id) as total_modules,
-                    COALESCE(SUM(ce.enrolled_count), 0) as total_students,
-                    CASE 
-                        WHEN COUNT(DISTINCT c.class_id) > 0 
-                        THEN ROUND(COALESCE(SUM(ce.enrolled_count), 0) / COUNT(DISTINCT c.class_id), 2)
-                        ELSE 0 
-                    END as avg_students
-                FROM classes c
-                JOIN semesters s ON c.semester_id = s.semester_id
-                JOIN course_modules cm ON c.module_id = cm.module_id 
-                LEFT JOIN (
-                    SELECT class_id, COUNT(*) as enrolled_count 
-                    FROM class_enrollments 
-                    GROUP BY class_id
-                ) ce ON c.class_id = ce.class_id
-                WHERE s.year = %s AND cm.dept_id = %s
-            """, (year, self.user['dept_id']))
-            
-            total_result = cursor.fetchone()
-            total_classes = total_result[0] if total_result[0] else 0
-            total_modules = total_result[1] if total_result[1] else 0 
-            total_students = total_result[2] if total_result[2] else 0
-            avg_students = total_result[3] if total_result[3] else 0
-
-            # Số lớp theo kỳ
-            cursor.execute("""
-                SELECT s.semester_name, COUNT(DISTINCT c.class_id)
-                FROM classes c
-                JOIN semesters s ON c.semester_id = s.semester_id 
-                JOIN course_modules cm ON c.module_id = cm.module_id
-                WHERE s.year = %s AND cm.dept_id = %s
-                GROUP BY s.semester_id, s.semester_name
-                ORDER BY s.semester_name
-            """, (year, self.user['dept_id']))
-            sem_data = cursor.fetchall()
-            sem_counts = {row[0]: row[1] for row in sem_data}
-
-            # Dữ liệu bảng pivot với số sinh viên thực tế
-            cursor.execute("""
-                SELECT 
-                    cm.module_name,
-                    s.semester_name,
-                    COUNT(c.class_id) as class_count,
-                    COALESCE(SUM(ce.enrolled_count), 0) as total_students,
-                    CASE 
-                        WHEN COUNT(c.class_id) > 0
-                        THEN ROUND(COALESCE(SUM(ce.enrolled_count), 0) / COUNT(c.class_id), 2)
-                        ELSE 0
-                    END as avg_students_per_class
-                FROM classes c
-                JOIN semesters s ON c.semester_id = s.semester_id AND s.year = %s
-                JOIN course_modules cm ON c.module_id = cm.module_id
-                LEFT JOIN (
-                    SELECT class_id, COUNT(*) as enrolled_count 
-                    FROM class_enrollments 
-                    GROUP BY class_id
-                ) ce ON c.class_id = ce.class_id
-                WHERE cm.dept_id = %s
-                GROUP BY cm.module_id, cm.module_name, s.semester_id, s.semester_name
-                ORDER BY cm.module_name, s.semester_name
-            """, (year, self.user['dept_id']))
-            pivot_data = cursor.fetchall()
-
-            # Top 5 học phần có nhiều sinh viên thực tế nhất
-            cursor.execute("""
-                SELECT 
-                    cm.module_name,
-                    COALESCE(SUM(ce.enrolled_count), 0) as total_students
+                    COALESCE(SUM(ce.enrolled_students), 0) as total_enrolled,
+                    COALESCE(AVG(ce.enrolled_students), 0) as avg_enrolled
                 FROM classes c
                 JOIN semesters s ON c.semester_id = s.semester_id
                 JOIN course_modules cm ON c.module_id = cm.module_id
-                LEFT JOIN (
-                    SELECT class_id, COUNT(*) as enrolled_count 
-                    FROM class_enrollments 
-                    GROUP BY class_id
-                ) ce ON c.class_id = ce.class_id
-                WHERE s.year = %s AND cm.dept_id = %s
-                GROUP BY cm.module_id, cm.module_name
-                ORDER BY total_students DESC
+                LEFT JOIN class_enrollments ce ON c.class_id = ce.class_id
+                WHERE s.year = %s
+            """, (year,))
+            summary = cursor.fetchone()
+
+            # Top 5 học phần có nhiều sinh viên nhất
+            cursor.execute("""
+                SELECT 
+                    cm.module_name,
+                    COALESCE(SUM(ce.enrolled_students), 0) as total_enrolled
+                FROM classes c
+                JOIN semesters s ON c.semester_id = s.semester_id
+                JOIN course_modules cm ON c.module_id = cm.module_id
+                LEFT JOIN class_enrollments ce ON c.class_id = ce.class_id
+                WHERE s.year = %s
+                GROUP BY cm.module_name
+                ORDER BY total_enrolled DESC
                 LIMIT 5
-            """, (year, self.user['dept_id']))
+            """, (year,))
             top_modules = cursor.fetchall()
 
             return {
-                "total_classes": total_classes,
-                "total_modules": total_modules,
-                "total_students": total_students,
-                "avg_students": avg_students,
                 "semesters": semesters,
-                "sem_counts": sem_counts,
-                "stats_data": pivot_data,
-                "top_modules": top_modules,
-                "pivot_data": pivot_data
+                "pivot_data": pivot_data,
+                "total_classes": summary[0] if summary else 0,
+                "total_modules": summary[1] if summary else 0,
+                "total_students": int(summary[2]) if summary else 0,
+                "avg_students": round(float(summary[3]), 1) if summary else 0,
+                "top_modules": top_modules
             }
 
         except mysql.connector.Error as e:
@@ -6158,7 +5934,6 @@ class AdminView:
                 messagebox.showerror("Lỗi", "Định dạng giảng viên không hợp lệ!")
                 return
             teacher_id = teacher_parts[1].strip()
-            print(f"Debug: teacher_id = {teacher_id}, year = {year}, semester = {semester}")
 
             # Lấy thông tin giảng viên
             cursor.execute("""
@@ -6173,7 +5948,6 @@ class AdminView:
                 messagebox.showerror("Lỗi", f"Không tìm thấy giảng viên với mã {teacher_id}")
                 return
             full_name, teacher_id_db, degree_name, dept_name = teacher
-            print(f"Debug: teacher_info = {teacher}")
 
             # Lấy hệ số giáo viên
             cursor.execute("""
@@ -6184,58 +5958,51 @@ class AdminView:
             """, (teacher_id, year))
             teacher_coeff = cursor.fetchone()
             teacher_coefficient = float(teacher_coeff[0]) if teacher_coeff else 1.0
-            print(f"Debug: teacher_coefficient = {teacher_coefficient}")
 
             # Lấy đơn giá
             cursor.execute("SELECT amount_per_period FROM teaching_rate WHERE year = %s", (year,))
             rate = cursor.fetchone()
             amount_per_period = float(rate[0]) if rate else 0.0
-            print(f"Debug: amount_per_period = {amount_per_period}")
 
             # Lấy semester_id
             cursor.execute("SELECT semester_id FROM semesters WHERE year = %s AND semester_name = %s", (year, semester))
-            semester_result = cursor.fetchone()
-            if not semester_result:
-                messagebox.showerror("Lỗi", f"Không tìm thấy kỳ học {semester} trong năm {year}")
+            semester_id = cursor.fetchone()
+            if not semester_id:
+                messagebox.showerror("Lỗi", "Không tìm thấy kỳ học!")
                 return
-            semester_id = semester_result[0]
-            print(f"Debug: semester_id = {semester_id}")
+            semester_id = semester_id[0]
 
-            # Cập nhật thông tin giáo viên
-            if hasattr(self, 'salary_calc_teacher_name_value') and self.salary_calc_teacher_name_value is not None:
+            # Cập nhật giao diện, kiểm tra None và widget tồn tại
+            if hasattr(self, 'salary_calc_teacher_name_value') and self.salary_calc_teacher_name_value is not None and self.salary_calc_teacher_name_value.winfo_exists():
                 self.salary_calc_teacher_name_value.configure(text=full_name or "Không xác định")
-            if hasattr(self, 'salary_calc_teacher_id_value') and self.salary_calc_teacher_id_value is not None:
+            if hasattr(self, 'salary_calc_teacher_id_value') and self.salary_calc_teacher_id_value is not None and self.salary_calc_teacher_id_value.winfo_exists():
                 self.salary_calc_teacher_id_value.configure(text=teacher_id_db or "Không xác định")
-            if hasattr(self, 'salary_calc_degree_value') and self.salary_calc_degree_value is not None:
+            if hasattr(self, 'salary_calc_degree_value') and self.salary_calc_degree_value is not None and self.salary_calc_degree_value.winfo_exists():
                 self.salary_calc_degree_value.configure(text=degree_name or "Không xác định")
-            if hasattr(self, 'salary_calc_dept_value') and self.salary_calc_dept_value is not None:
+            if hasattr(self, 'salary_calc_dept_value') and self.salary_calc_dept_value is not None and self.salary_calc_dept_value.winfo_exists():
                 self.salary_calc_dept_value.configure(text=dept_name or "Không xác định")
-
-            # Cập nhật thông tin tính toán
-            if hasattr(self, 'salary_calc_teacher_coeff_value') and self.salary_calc_teacher_coeff_value is not None:
+            if hasattr(self, 'salary_calc_teacher_coeff_value') and self.salary_calc_teacher_coeff_value is not None and self.salary_calc_teacher_coeff_value.winfo_exists():
                 self.salary_calc_teacher_coeff_value.configure(text=f"{teacher_coefficient:.1f}")
-            if hasattr(self, 'salary_calc_rate_value') and self.salary_calc_rate_value is not None:
+            if hasattr(self, 'salary_calc_rate_value') and self.salary_calc_rate_value is not None and self.salary_calc_rate_value.winfo_exists():
                 self.salary_calc_rate_value.configure(text=f"{amount_per_period:,.0f} ₫")
-            if hasattr(self, 'salary_calc_period_value') and self.salary_calc_period_value is not None:
+            if hasattr(self, 'salary_calc_period_value') and self.salary_calc_period_value is not None and self.salary_calc_period_value.winfo_exists():
                 self.salary_calc_period_value.configure(text=f"{semester} - {year}")
 
             # Kiểm tra và tải bảng lương
             cursor.execute("""
-                SELECT c.class_id, cm.periods, COALESCE(ce.enrolled_students, 0) AS enrolled_students, cm.coefficient AS hp_coeff
+                SELECT c.class_id, cm.periods, c.num_students, cm.coefficient AS hp_coeff
                 FROM assignments a
                 JOIN classes c ON a.class_id = c.class_id
                 JOIN course_modules cm ON c.module_id = cm.module_id
-                LEFT JOIN class_enrollments ce ON c.class_id = ce.class_id
                 WHERE a.teacher_id = %s AND c.semester_id = %s
             """, (teacher_id, semester_id))
             classes = cursor.fetchall()
-            print(f"Debug: classes found = {classes}")
 
             if not classes:
-                # Xóa dữ liệu cũ và hiển thị thông báo
+                # Xóa dữ liệu cũ và hiển thị thông báo "Không có dữ liệu"
                 for widget in self.salary_table_frame.winfo_children():
                     widget.destroy()
-                CTkLabel(self.salary_table_frame, text="Không có lớp học nào được phân công cho giảng viên này trong kỳ học đã chọn", font=("Helvetica", 12), text_color="gray").pack(pady=20)
+                CTkLabel(self.salary_table_frame, text="Không có dữ liệu", font=("Helvetica", 12), text_color="gray").pack(pady=20)
             else:
                 self.load_salary_table(teacher_id, semester_id)
 
@@ -6247,13 +6014,15 @@ class AdminView:
             if 'conn' in locals():
                 conn.close()
 
-
     def load_salary_table(self, teacher_id, semester_id):
         try:
             conn = mysql.connector.connect(**DB_CONFIG)
             cursor = conn.cursor()
+            
+            # Thay đổi truy vấn để lấy enrolled_students từ bảng class_enrollments
             cursor.execute("""
-                SELECT c.class_id, cm.periods, ce.enrolled_students, cm.coefficient AS hp_coeff
+                SELECT c.class_id, cm.periods, COALESCE(ce.enrolled_students, 0) as enrolled_students, 
+                    cm.coefficient AS hp_coeff
                 FROM assignments a
                 JOIN classes c ON a.class_id = c.class_id
                 JOIN course_modules cm ON c.module_id = cm.module_id
@@ -6281,32 +6050,25 @@ class AdminView:
             CTkLabel(heading_frame, text="Thành tiền", font=("Helvetica", 12, "bold"), width=240, anchor="center").pack(side="left", padx=5)
 
             year = self.year_filter.get().strip()
-            # Lấy đơn giá
             cursor.execute("SELECT amount_per_period FROM teaching_rate WHERE year = %s", (year,))
             rate = cursor.fetchone()
             amount_per_period = float(rate[0]) if rate else 0.0
 
-            # Lấy hệ số giáo viên từ cơ sở dữ liệu
-            cursor.execute("""
-                SELECT coefficient 
-                FROM teacher_coefficients tc 
-                JOIN teachers t ON tc.degree_id = t.degree_id 
-                WHERE t.teacher_id = %s AND tc.year = %s
-            """, (teacher_id, year))
-            teacher_coeff = cursor.fetchone()
-            teacher_coefficient = float(teacher_coeff[0]) if teacher_coeff else 1.0
+            # Lấy hệ số giáo viên
+            teacher_coefficient = float(self.salary_calc_teacher_coeff_value.cget("text")) if hasattr(self, 'salary_calc_teacher_coeff_value') else 1.0
 
             for idx, (class_id, periods, enrolled_students, hp_coeff) in enumerate(classes, 1):
-                # Use enrolled_students, default to 0 if None
-                enrolled_students = enrolled_students if enrolled_students is not None else 0
-
-                # Get class coefficient
+                # Lấy hệ số lớp dựa trên số sinh viên thực tế (enrolled_students)
                 student_range = self.get_student_range(enrolled_students)
-                cursor.execute("SELECT coefficient FROM class_coefficients WHERE year = %s AND student_range = %s", (year, student_range))
+                cursor.execute("""
+                    SELECT coefficient 
+                    FROM class_coefficients 
+                    WHERE year = %s AND student_range = %s
+                """, (year, student_range))
                 class_coeff = cursor.fetchone()
                 class_coefficient = float(class_coeff[0]) if class_coeff else 0.0
 
-                # Calculate
+                # Tính toán với enrolled_students
                 converted_periods = periods * (hp_coeff + class_coefficient)
                 salary = converted_periods * teacher_coefficient * amount_per_period
                 total_periods += converted_periods
@@ -6332,37 +6094,155 @@ class AdminView:
         except mysql.connector.Error as e:
             messagebox.showerror("Lỗi", f"Không thể tải bảng lương: {e}")
         finally:
-            if 'cursor' in locals():
+            if cursor:
                 cursor.close()
-            if 'conn' in locals():
+            if conn:
                 conn.close()
 
-    def get_student_range(self, enrolled_students):
+    def get_student_range(self, num_students):
         ranges = [
             "<20 sinh viên", "20-29 sinh viên", "30-39 sinh viên", "40-49 sinh viên",
             "50-59 sinh viên", "60-69 sinh viên", "70-79 sinh viên", "80-89 sinh viên",
             "90-99 sinh viên", ">=100 sinh viên"
         ]
-        if enrolled_students < 20:
+        if num_students < 20:
             return ranges[0]
-        elif enrolled_students < 30:
+        elif num_students < 30:
             return ranges[1]
-        elif enrolled_students < 40:
+        elif num_students < 40:
             return ranges[2]
-        elif enrolled_students < 50:
+        elif num_students < 50:
             return ranges[3]
-        elif enrolled_students < 60:
+        elif num_students < 60:
             return ranges[4]
-        elif enrolled_students < 70:
+        elif num_students < 70:
             return ranges[5]
-        elif enrolled_students < 80:
+        elif num_students < 80:
             return ranges[6]
-        elif enrolled_students < 90:
+        elif num_students < 90:
             return ranges[7]
-        elif enrolled_students < 100:
+        elif num_students < 100:
             return ranges[8]
         else:
             return ranges[9]
+        def load_salary_table(self, teacher_id, semester_id):
+            try:
+                conn = mysql.connector.connect(**DB_CONFIG)
+                cursor = conn.cursor()
+                
+                # Thay đổi truy vấn để lấy enrolled_students từ bảng class_enrollments
+                cursor.execute("""
+                    SELECT c.class_id, cm.periods, COALESCE(ce.enrolled_students, 0) as enrolled_students, 
+                        cm.coefficient AS hp_coeff
+                    FROM assignments a
+                    JOIN classes c ON a.class_id = c.class_id
+                    JOIN course_modules cm ON c.module_id = cm.module_id
+                    LEFT JOIN class_enrollments ce ON c.class_id = ce.class_id
+                    WHERE a.teacher_id = %s AND c.semester_id = %s
+                """, (teacher_id, semester_id))
+                classes = cursor.fetchall()
+
+                # Clear previous data
+                for widget in self.salary_table_frame.winfo_children():
+                    widget.destroy()
+
+                total_periods = 0
+                total_salary = 0.0
+
+                # Tăng kích thước font và chiều cao cho heading
+                heading_frame = CTkFrame(self.salary_table_frame, fg_color="#D3D3D3", corner_radius=0, height=50)
+                heading_frame.pack(fill="x", padx=5, pady=(5, 0))
+                heading_frame.pack_propagate(False)  # Prevent frame from shrinking
+
+                # Tăng font size và width cho các cột heading
+                CTkLabel(heading_frame, text="Mã lớp", font=("Helvetica", 14, "bold"), width=250, anchor="center").pack(side="left", padx=5, pady=10)
+                CTkLabel(heading_frame, text="Số tiết", font=("Helvetica", 14, "bold"), width=100, anchor="center").pack(side="left", padx=5, pady=10)
+                CTkLabel(heading_frame, text="Số SV thực tế", font=("Helvetica", 14, "bold"), width=100, anchor="center").pack(side="left", padx=5, pady=10)
+                CTkLabel(heading_frame, text="Hệ số HP", font=("Helvetica", 14, "bold"), width=150, anchor="center").pack(side="left", padx=5, pady=10)
+                CTkLabel(heading_frame, text="Hệ số lớp", font=("Helvetica", 14, "bold"), width=150, anchor="center").pack(side="left", padx=5, pady=10)
+                CTkLabel(heading_frame, text="Số tiết quy đổi", font=("Helvetica", 14, "bold"), width=170, anchor="center").pack(side="left", padx=5, pady=10)
+                CTkLabel(heading_frame, text="Thành tiền", font=("Helvetica", 14, "bold"), width=280, anchor="center").pack(side="left", padx=5, pady=10)
+
+                year = self.year_filter.get().strip()
+                cursor.execute("SELECT amount_per_period FROM teaching_rate WHERE year = %s", (year,))
+                rate = cursor.fetchone()
+                amount_per_period = float(rate[0]) if rate else 0.0
+
+                teacher_coefficient = float(self.salary_calc_teacher_coeff_value.cget("text")) if hasattr(self, 'salary_calc_teacher_coeff_value') else 1.0
+
+                for idx, (class_id, periods, enrolled_students, hp_coeff) in enumerate(classes, 1):
+                    student_range = self.get_student_range(enrolled_students)
+                    cursor.execute("""
+                        SELECT coefficient 
+                        FROM class_coefficients 
+                        WHERE year = %s AND student_range = %s
+                    """, (year, student_range))
+                    class_coeff = cursor.fetchone()
+                    class_coefficient = float(class_coeff[0]) if class_coeff else 0.0
+
+                    converted_periods = periods * (hp_coeff + class_coefficient)
+                    salary = converted_periods * teacher_coefficient * amount_per_period
+                    total_periods += converted_periods
+                    total_salary += salary
+
+                    # Tăng chiều cao cho mỗi dòng dữ liệu
+                    row_frame = CTkFrame(self.salary_table_frame, fg_color="#F5F5F5" if idx % 2 else "#FFFFFF", height=45)
+                    row_frame.pack(fill="x", pady=2)
+                    row_frame.pack_propagate(False)  # Prevent frame from shrinking
+
+                    # Tăng font size và width cho các cột dữ liệu
+                    CTkLabel(row_frame, text=class_id, font=("Helvetica", 13), width=250, anchor="center").pack(side="left", padx=5, pady=5)
+                    CTkLabel(row_frame, text=str(periods), font=("Helvetica", 13), width=100, anchor="center").pack(side="left", padx=5, pady=5)
+                    CTkLabel(row_frame, text=str(enrolled_students), font=("Helvetica", 13), width=100, anchor="center").pack(side="left", padx=5, pady=5)
+                    CTkLabel(row_frame, text=f"{hp_coeff:.1f}", font=("Helvetica", 13), width=150, anchor="center").pack(side="left", padx=5, pady=5)
+                    CTkLabel(row_frame, text=f"{class_coefficient:.1f}", font=("Helvetica", 13), width=150, anchor="center").pack(side="left", padx=5, pady=5)
+                    CTkLabel(row_frame, text=f"{converted_periods:.1f}", font=("Helvetica", 13), width=170, anchor="center").pack(side="left", padx=5, pady=5)
+                    CTkLabel(row_frame, text=f"{salary:,.0f} ₫", font=("Helvetica", 13), width=280, anchor="center").pack(side="left", padx=5, pady=5)
+
+                # Tăng kích thước cho dòng tổng cộng
+                total_frame = CTkFrame(self.salary_table_frame, fg_color="#E0E0E0", height=50)
+                total_frame.pack(fill="x", pady=2)
+                total_frame.pack_propagate(False)
+
+                CTkLabel(total_frame, text="Tổng cộng:", font=("Helvetica", 14, "bold"), width=600, anchor="center").pack(side="left", padx=200, pady=10)
+                CTkLabel(total_frame, text=f"{total_periods:.1f}", font=("Helvetica", 14, "bold"), width=170, anchor="center").pack(side="left", padx=5, pady=10)
+                CTkLabel(total_frame, text=f"{total_salary:,.0f} ₫", font=("Helvetica", 14, "bold"), width=280, anchor="center").pack(side="left", padx=5, pady=10)
+
+            except mysql.connector.Error as e:
+                messagebox.showerror("Lỗi", f"Không thể tải bảng lương: {e}")
+            finally:
+                if cursor:
+                    cursor.close()
+                if conn:
+                    conn.close()
+            
+
+        def get_student_range(self, num_students):
+            ranges = [
+                "<20 sinh viên", "20-29 sinh viên", "30-39 sinh viên", "40-49 sinh viên",
+                "50-59 sinh viên", "60-69 sinh viên", "70-79 sinh viên", "80-89 sinh viên",
+                "90-99 sinh viên", ">=100 sinh viên"
+            ]
+            if num_students < 20:
+                return ranges[0]
+            elif num_students < 30:
+                return ranges[1]
+            elif num_students < 40:
+                return ranges[2]
+            elif num_students < 50:
+                return ranges[3]
+            elif num_students < 60:
+                return ranges[4]
+            elif num_students < 70:
+                return ranges[5]
+            elif num_students < 80:
+                return ranges[6]
+            elif num_students < 90:
+                return ranges[7]
+            elif num_students < 100:
+                return ranges[8]
+            else:
+                return ranges[9]
         
     def get_dept_names(self):
         try:
@@ -6387,19 +6267,19 @@ class AdminView:
         self.teacher_filter.set("Chọn giảng viên")
         
         # Reset thông tin giảng viên
-        if self.salary_calc_teacher_name_value is not None:
+        if hasattr(self, 'salary_calc_teacher_name_value') and self.salary_calc_teacher_name_value is not None and self.salary_calc_teacher_name_value.winfo_exists():
             self.salary_calc_teacher_name_value.configure(text="")
-        if self.salary_calc_teacher_id_value is not None:
+        if hasattr(self, 'salary_calc_teacher_id_value') and self.salary_calc_teacher_id_value is not None and self.salary_calc_teacher_id_value.winfo_exists():
             self.salary_calc_teacher_id_value.configure(text="")
-        if self.salary_calc_degree_value is not None:
+        if hasattr(self, 'salary_calc_degree_value') and self.salary_calc_degree_value is not None and self.salary_calc_degree_value.winfo_exists():
             self.salary_calc_degree_value.configure(text="")
-        if self.salary_calc_dept_value is not None:
+        if hasattr(self, 'salary_calc_dept_value') and self.salary_calc_dept_value is not None and self.salary_calc_dept_value.winfo_exists():
             self.salary_calc_dept_value.configure(text="")
-        if self.salary_calc_teacher_coeff_value is not None:
+        if hasattr(self, 'salary_calc_teacher_coeff_value') and self.salary_calc_teacher_coeff_value is not None and self.salary_calc_teacher_coeff_value.winfo_exists():
             self.salary_calc_teacher_coeff_value.configure(text="")
-        if self.salary_calc_rate_value is not None:
+        if hasattr(self, 'salary_calc_rate_value') and self.salary_calc_rate_value is not None and self.salary_calc_rate_value.winfo_exists():
             self.salary_calc_rate_value.configure(text="")
-        if self.salary_calc_period_value is not None:
+        if hasattr(self, 'salary_calc_period_value') and self.salary_calc_period_value is not None and self.salary_calc_period_value.winfo_exists():
             self.salary_calc_period_value.configure(text="")
 
         # Xóa bảng lương
@@ -6407,11 +6287,6 @@ class AdminView:
             widget.destroy()
 
         # Xóa nút Lưu nếu tồn tại
-        if self.save_button is not None and self.save_button.winfo_exists():
-            self.save_button.destroy()
-            self.save_button = None
-
-    # Xóa nút Lưu nếu tồn tại
         if self.save_button and self.save_button.winfo_exists():
             self.save_button.destroy()
             self.save_button = None
@@ -6835,4 +6710,582 @@ class AdminView:
             conn.close()
 
 
+    def setup_report_tab(self):
+        from report_tab import ReportTab
+        self.report_tab_content = ReportTab(self.report_tab)
+        self.report_tab_content.pack(fill="both", expand=True)
+
+
+    def setup_assignment_tab(self):
+        # Header frame with title and year combobox
+        header_frame = CTkFrame(self.assignment_tab, fg_color="transparent")
+        header_frame.pack(fill="x", padx=10, pady=10)
+        CTkLabel(header_frame, text="Phân Công Giảng Viên", font=("Helvetica", 18, "bold"), text_color="black").pack(side="left")
+        self.year_combobox = CTkComboBox(header_frame, values=self.get_academic_years(), width=150, command=self.reset_and_filter_classes)
+        self.year_combobox.pack(side="right")
+        self.year_combobox.set("2021-2022")
+
+        # Filter row 1 frame
+        filter_row1_frame = CTkFrame(self.assignment_tab, fg_color="transparent")
+        filter_row1_frame.pack(fill="x", padx=10, pady=5)
+
+        # Department filter
+        dept_filter_frame = CTkFrame(filter_row1_frame, fg_color="transparent")
+        dept_filter_frame.pack(side="left", padx=(0, 10))
+        CTkLabel(dept_filter_frame, text="Khoa:", font=("Helvetica", 12), text_color="black").pack(side="left", padx=(0, 5))
+        self.dept_combobox = CTkComboBox(dept_filter_frame, values=["Chọn khoa"] + self.get_dept_names(), width=200, command=self.update_filters)
+        self.dept_combobox.pack(side="left")
+        self.dept_combobox.set("Chọn khoa")
+
+        # Teacher filter
+        teacher_filter_frame = CTkFrame(filter_row1_frame, fg_color="transparent")
+        teacher_filter_frame.pack(side="left", padx=(0, 10))
+        CTkLabel(teacher_filter_frame, text="Giáo viên:", font=("Helvetica", 12), text_color="black").pack(side="left", padx=(0, 5))
+        self.teacher_combobox = CTkComboBox(teacher_filter_frame, values=["Chọn giảng viên"], width=250)
+        self.teacher_combobox.pack(side="left")
+        self.teacher_combobox.set("Chọn giảng viên")
+
+        # Filter row 2 frame
+        filter_row2_frame = CTkFrame(self.assignment_tab, fg_color="transparent")
+        filter_row2_frame.pack(fill="x", padx=10, pady=5)
+
+        # Semester filter
+        semester_filter_frame = CTkFrame(filter_row2_frame, fg_color="transparent")
+        semester_filter_frame.pack(side="left", padx=(0, 10))
+        CTkLabel(semester_filter_frame, text="Kỳ học:", font=("Helvetica", 12), text_color="black").pack(side="left", padx=(0, 5))
+        self.semester_combobox = CTkComboBox(semester_filter_frame, values=["Chọn kỳ học"], width=150, command=self.assignment_filter_classes)
+        self.semester_combobox.pack(side="left")
+        self.semester_combobox.set("Chọn kỳ học")
+
+        # Module filter
+        module_filter_frame = CTkFrame(filter_row2_frame, fg_color="transparent")
+        module_filter_frame.pack(side="left", padx=(0, 10))
+        CTkLabel(module_filter_frame, text="Học phần:", font=("Helvetica", 12), text_color="black").pack(side="left", padx=(0, 5))
+        self.module_combobox = CTkComboBox(module_filter_frame, values=["Tất cả"], width=150, command=self.assignment_filter_classes)
+        self.module_combobox.pack(side="left")
+        self.module_combobox.set("Tất cả")
+
+        # Assignment status filter
+        status_filter_frame = CTkFrame(filter_row2_frame, fg_color="transparent")
+        status_filter_frame.pack(side="left", padx=(0, 10))
+        CTkLabel(status_filter_frame, text="Trạng thái:", font=("Helvetica", 12), text_color="black").pack(side="left", padx=(0, 5))
+        self.status_combobox = CTkComboBox(status_filter_frame, values=["Tất cả", "Đã phân công", "Chưa phân công"], width=150, command=self.assignment_filter_classes)
+        self.status_combobox.pack(side="left")
+        self.status_combobox.set("Tất cả")
+
+        # Assign button (initially hidden) with 30% width
+        filter_row2_frame.update_idletasks()
+        total_width = filter_row2_frame.winfo_width()
+        assign_button_width = int(total_width * 0.3) if total_width > 0 else 150
+        self.assign_button = CTkButton(filter_row2_frame, text="Phân công giảng viên", fg_color="#0085FF", command=self.assignment_assign_teacher, state="disabled", width=assign_button_width)
+        self.assign_button.pack(side="left", padx=(10, 0))
+
+        # Table frame with scrollbar
+        table_frame = CTkFrame(self.assignment_tab, fg_color="#FFFFFF", corner_radius=10)
+        table_frame.pack(padx=10, pady=10, fill="both", expand=True)
+
+        # Scrollbar
+        canvas = tk.Canvas(table_frame)
+        scrollbar = ctk.CTkScrollbar(table_frame, orientation="vertical", command=canvas.yview)
+        scrollable_frame = CTkFrame(canvas)
+
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        # Heading row with fixed total width
+        heading_frame = CTkFrame(scrollable_frame, fg_color="#D3D3D3", corner_radius=0)
+        heading_frame.pack(fill="x", padx=5, pady=(5, 0))
+        
+        # Column headers with adjusted widths to match data
+        CTkLabel(heading_frame, text="Chọn", font=("Helvetica", 14, "bold"), text_color="black", width=50, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Mã lớp", font=("Helvetica", 14, "bold"), text_color="black", width=100, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Tên lớp", font=("Helvetica", 14, "bold"), text_color="black", width=250, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Học phần", font=("Helvetica", 14, "bold"), text_color="black", width=200, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Kỳ học", font=("Helvetica", 14, "bold"), text_color="black", width=100, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Số SV", font=("Helvetica", 14, "bold"), text_color="black", width=80, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Giảng viên hiện tại", font=("Helvetica", 14, "bold"), text_color="black", width=250, anchor="center").pack(side="left", padx=5)
+        CTkLabel(heading_frame, text="Thao tác", font=("Helvetica", 14, "bold"), text_color="black", width=150, anchor="center").pack(side="left", padx=5)
+
+        # List frame
+        self.assignment_list_frame = CTkFrame(scrollable_frame, fg_color="transparent")
+        self.assignment_list_frame.pack(fill="both", expand=True, padx=5, pady=5)
+
+        # Load initial data
+        self.assignment_update_semester_options()
+        self.assignment_update_teacher_options()
+        self.update_filters()  # Khởi tạo danh sách học phần
+        self.assignment_filter_classes()
+
+    def get_teachers_by_dept(self, dept_name):
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+            if dept_name == "Tất cả khoa":
+                cursor.execute("""
+                    SELECT t.teacher_id, t.full_name, d.degree_abbr
+                    FROM teachers t
+                    JOIN degrees d ON t.degree_id = d.degree_id
+                    ORDER BY t.full_name
+                """)
+            else:
+                cursor.execute("""
+                    SELECT t.teacher_id, t.full_name, d.degree_abbr
+                    FROM teachers t
+                    JOIN degrees d ON t.degree_id = d.degree_id
+                    JOIN departments dept ON t.dept_id = dept.dept_id
+                    WHERE dept.dept_name = %s
+                    ORDER BY t.full_name
+                """, (dept_name,))
+            teachers = cursor.fetchall()
+            return [f"{row[2]}. {row[1]} ({row[0]})" for row in teachers] if teachers else ["Chọn giảng viên"]
+        except mysql.connector.Error:
+            return ["Chọn giảng viên"]
+        finally:
+            cursor.close()
+            conn.close()
+
+    def get_semesters_by_year(self, year):
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+            cursor.execute("SELECT semester_name FROM semesters WHERE year = %s ORDER BY semester_name", (year,))
+            semesters = [row[0] for row in cursor.fetchall()]
+            return semesters if semesters else ["Chọn kỳ học"]
+        except mysql.connector.Error as e:
+            print(f"Error fetching semesters: {e}")  # Thêm debug log
+            return ["Chọn kỳ học"]
+        finally:
+            cursor.close()
+            conn.close()
     
+    def get_modules_by_semester(self, year, semester):
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT DISTINCT cm.module_name
+                FROM semesters s
+                JOIN classes c ON s.semester_id = c.semester_id
+                JOIN course_modules cm ON c.module_id = cm.module_id
+                WHERE s.year = %s AND s.semester_name = %s
+                ORDER BY cm.module_name
+            """, (year, semester))
+            modules = [row[0] for row in cursor.fetchall()]
+            return modules if modules else []
+        except mysql.connector.Error as e:
+            print(f"Error fetching modules: {e}")
+            return []
+        finally:
+            cursor.close()
+            conn.close()
+
+    def assignment_update_semester_options(self, event=None):
+        year = self.year_combobox.get()
+        semesters = self.get_semesters_by_year(year)
+        self.semester_combobox.configure(values=["Chọn kỳ học"] + semesters if semesters else ["Chọn kỳ học"])
+        self.semester_combobox.set("Chọn kỳ học")
+        self.assignment_update_module_options()
+        self.assignment_filter_classes()  # Cập nhật bảng khi thay đổi kỳ học
+
+    def assignment_update_teacher_options(self, event=None):
+        dept = self.dept_combobox.get()
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+            if dept == "Chọn khoa":
+                self.teacher_combobox.configure(values=["Chọn giảng viên"])
+                self.teacher_combobox.set("Chọn giảng viên")
+            else:
+                cursor.execute("""
+                    SELECT t.teacher_id, t.full_name, d.degree_abbr
+                    FROM teachers t
+                    JOIN degrees d ON t.degree_id = d.degree_id
+                    JOIN departments dept ON t.dept_id = dept.dept_id
+                    WHERE dept.dept_name = %s
+                    ORDER BY t.full_name
+                """, (dept,))
+                teachers = cursor.fetchall()
+                if teachers:
+                    teacher_list = [f"{row[2]}. {row[1]} ({row[0]})" for row in teachers]
+                    self.teacher_combobox.configure(values=["Chọn giảng viên"] + teacher_list)
+                    self.teacher_combobox.set("Chọn giảng viên")
+                else:
+                    self.teacher_combobox.configure(values=["Chọn giảng viên", "Không có giáo viên"])
+                    self.teacher_combobox.set("Chọn giảng viên")
+        except mysql.connector.Error as e:
+            print(f"Error fetching teachers: {e}")
+            self.teacher_combobox.configure(values=["Chọn giảng viên", f"Lỗi: {str(e)}"])
+            self.teacher_combobox.set("Chọn giảng viên")
+        finally:
+            if 'cursor' in locals():
+                cursor.close()
+            if 'conn' in locals():
+                conn.close()
+
+    def assignment_update_module_options(self, event=None):
+        year = self.year_combobox.get()
+        semester = self.semester_combobox.get()
+        try:
+            if semester != "Chọn kỳ học":
+                modules = self.get_modules_by_semester(year, semester)
+                self.module_combobox.configure(values=["Tất cả"] + modules if modules else ["Tất cả"])
+                self.module_combobox.set("Tất cả")
+            else:
+                self.module_combobox.configure(values=["Tất cả"])
+                self.module_combobox.set("Tất cả")
+        except Exception as e:
+            print(f"Error updating module options: {e}")
+            self.module_combobox.configure(values=["Tất cả"])
+            self.module_combobox.set("Tất cả")
+
+    def toggle_class_selection(self, var, class_id):
+        if var.get():
+            if class_id not in self.selected_classes:
+                self.selected_classes.append(class_id)
+        else:
+            if class_id in self.selected_classes:
+                self.selected_classes.remove(class_id)
+        self.update_assign_button()
+
+    def update_assign_button(self):
+        if self.selected_classes:
+            self.assign_button.configure(state="normal")
+        else:
+            self.assign_button.configure(state="disabled")
+
+    def assignment_filter_classes(self, event=None):
+        year = self.year_combobox.get()
+        semester = self.semester_combobox.get()
+        module = self.module_combobox.get() 
+        dept = self.dept_combobox.get()
+        status = self.status_combobox.get()
+
+        for widget in self.assignment_list_frame.winfo_children():
+            widget.destroy()
+
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+            query = """
+                SELECT c.class_id, c.class_name, cm.module_name, s.semester_name, 
+                    COALESCE(ce.enrolled_students, 0) AS enrolled_students,
+                    COALESCE(t.full_name, 'Chưa phân công')
+                FROM classes c
+                JOIN semesters s ON c.semester_id = s.semester_id
+                JOIN course_modules cm ON c.module_id = cm.module_id
+                LEFT JOIN assignments a ON c.class_id = a.class_id
+                LEFT JOIN teachers t ON a.teacher_id = t.teacher_id
+                LEFT JOIN class_enrollments ce ON c.class_id = ce.class_id
+                JOIN departments d ON cm.dept_id = d.dept_id
+                WHERE s.year = %s
+            """
+            params = [year]
+
+            if semester != "Chọn kỳ học" and semester != "Tất cả":
+                query += " AND s.semester_name = %s"
+                params.append(semester)
+            if module != "Tất cả":
+                query += " AND cm.module_name = %s"
+                params.append(module)
+            if dept != "Chọn khoa" and dept != "Tất cả khoa":
+                query += " AND d.dept_name = %s"
+                params.append(dept)
+            if status == "Đã phân công":
+                query += " AND a.class_id IS NOT NULL"
+            elif status == "Chưa phân công":
+                query += " AND a.class_id IS NULL"
+
+            cursor.execute(query, params)
+            classes = cursor.fetchall()
+
+            self.selected_classes = []
+            if not classes:
+                CTkLabel(self.assignment_list_frame, text="Không có dữ liệu lớp học", font=("Helvetica", 12), text_color="red").pack(pady=10)
+            else:
+                for idx, (class_id, class_name, module_name, semester_name, enrolled_students, teacher_name) in enumerate(classes, 1):
+                    class_row = CTkFrame(self.assignment_list_frame, fg_color="#F5F5F5" if idx % 2 else "#FFFFFF")
+                    class_row.pack(fill="x", pady=2)  # Giảm pady từ 2 xuống 1 để các row gần nhau hơn
+                    class_row.configure(height=35)  # Thêm height=25 để row nhỏ hơn
+                    class_row.pack_propagate(False)
+
+                    # Chỉ hiện checkbox nếu chưa phân công
+                    if teacher_name == 'Chưa phân công':
+                        check_var = BooleanVar()
+                        checkbox = CTkCheckBox(class_row, text="", variable=check_var, width=50, 
+                                        command=lambda v=check_var, c=class_id: self.toggle_class_selection(v, c))
+                        checkbox.pack(side="left", padx=(10, 2))  # Tăng padding bên trái lên 10
+                    else:
+                        # Giữ nguyên padding cho empty_frame để đảm bảo căn chỉnh
+                        empty_frame = CTkFrame(class_row, width=50, fg_color="transparent")
+                        empty_frame.pack(side="left", padx=(10, 2))  # Tăng padding bên trái lên 10
+                        empty_frame.pack_propagate(False)
+
+                    CTkLabel(class_row, text=class_id, font=("Helvetica", 12), width=100, anchor="center").pack(side="left", padx=5)
+                    CTkLabel(class_row, text=class_name, font=("Helvetica", 12), width=250, anchor="center").pack(side="left", padx=5)
+                    CTkLabel(class_row, text=module_name, font=("Helvetica", 12), width=200, anchor="center").pack(side="left", padx=5)
+                    CTkLabel(class_row, text=semester_name, font=("Helvetica", 12), width=100, anchor="center").pack(side="left", padx=5)
+                    CTkLabel(class_row, text=str(enrolled_students), font=("Helvetica", 12), width=80, anchor="center").pack(side="left", padx=5)
+                    CTkLabel(class_row, text=teacher_name, font=("Helvetica", 12), width=250, anchor="center").pack(side="left", padx=5)
+
+                    # Frame chứa nút với thao tác tương ứng
+                    action_frame = CTkFrame(class_row, fg_color="transparent")
+                    action_frame.pack(side="left", padx=5)
+
+                    # Chỉ hiện nút Sửa nếu đã phân công
+                    if teacher_name != 'Chưa phân công':
+                        CTkButton(action_frame, text="Sửa", fg_color="#FF6384", width=70,
+                                command=lambda c=class_id: self.assignment_edit_assignment(c)).pack(side="left", padx=30)
+
+        except mysql.connector.Error as e:
+            messagebox.showerror("Lỗi", f"Không thể tải dữ liệu lớp: {e}")
+        finally:
+            cursor.close()
+            conn.close()
+        self.update_assign_button()
+
+    def assignment_assign_teacher(self):
+        if not self.selected_classes:
+            messagebox.showwarning("Cảnh báo", "Vui lòng chọn ít nhất một lớp để phân công!")
+            return
+        teacher = self.teacher_combobox.get()
+        if teacher == "Chọn giảng viên":
+            messagebox.showwarning("Cảnh báo", "Vui lòng chọn giảng viên!")
+            return
+
+        teacher_id = teacher.split("(")[-1].strip(")")
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+            for class_id in self.selected_classes:
+                # Kiểm tra xem lớp đã được phân công chưa
+                cursor.execute("SELECT assignment_id FROM assignments WHERE class_id = %s", (class_id,))
+                if cursor.fetchone():
+                    messagebox.showwarning("Cảnh báo", f"Lớp {class_id} đã được phân công!")
+                    continue
+                # Tạo assignment_id mới
+                cursor.execute("SELECT MAX(CAST(SUBSTRING(assignment_id, 4) AS UNSIGNED)) FROM assignments")
+                max_id = cursor.fetchone()[0]
+                new_id = f"ASN{str(max_id + 1).zfill(5)}" if max_id else "ASN00001"
+                cursor.execute("INSERT INTO assignments (assignment_id, class_id, teacher_id) VALUES (%s, %s, %s)",
+                            (new_id, class_id, teacher_id))
+            conn.commit()
+            messagebox.showinfo("Thành công", "Phân công giảng viên thành công!")
+            self.assignment_filter_classes()
+            self.selected_classes = []
+            self.assign_button.configure(state="disabled")
+        except mysql.connector.Error as e:
+            messagebox.showerror("Lỗi", f"Không thể phân công: {e}")
+        finally:
+            cursor.close()
+            conn.close()
+
+    def assignment_edit_assignment(self, class_id):
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+            
+            # Lấy thông tin phân công hiện tại
+            cursor.execute("""
+                SELECT t.teacher_id, t.full_name, d.dept_name 
+                FROM assignments a
+                JOIN teachers t ON a.teacher_id = t.teacher_id
+                JOIN departments d ON t.dept_id = d.dept_id
+                WHERE a.class_id = %s
+            """, (class_id,))
+            current_assignment = cursor.fetchone()
+            
+            if not current_assignment:
+                messagebox.showwarning("Cảnh báo", f"Lớp {class_id} chưa được phân công!")
+                return
+            
+            current_teacher_id, current_teacher_name, dept_name = current_assignment
+
+            # Lấy danh sách giảng viên của khoa
+            cursor.execute("""
+                SELECT t.teacher_id, t.full_name, d.degree_abbr 
+                FROM teachers t
+                JOIN degrees d ON t.degree_id = d.degree_id
+                JOIN departments dept ON t.dept_id = dept.dept_id
+                WHERE dept.dept_name = %s
+                ORDER BY t.full_name
+            """, (dept_name,))
+            teachers = cursor.fetchall()
+            teacher_list = [f"{row[2]}. {row[1]} ({row[0]})" for row in teachers]
+
+            # Tạo popup window
+            popup = CTkToplevel(self.window)
+            popup.title("Sửa phân công giảng viên")
+            popup.geometry("400x350")
+
+            # Căn giữa popup
+            screen_width = self.window.winfo_screenwidth()
+            screen_height = self.window.winfo_screenheight()
+            x = (screen_width - 400) // 2
+            y = (screen_height - 250) // 2
+            popup.geometry(f"400x350+{x}+{y}")
+
+            popup.transient(self.window)
+            popup.grab_set()
+
+            # Main frame
+            frame = CTkFrame(popup, fg_color="#F0F0F0", corner_radius=10)
+            frame.pack(padx=20, pady=20, fill="both", expand=True)
+
+            # Title
+            CTkLabel(frame, text="Sửa phân công giảng viên", 
+                    font=("Helvetica", 16, "bold")).pack(pady=(0,20))
+
+            # Class info
+            CTkLabel(frame, text=f"Mã lớp: {class_id}", 
+                    font=("Helvetica", 12)).pack(pady=5)
+            CTkLabel(frame, text=f"Khoa: {dept_name}", 
+                    font=("Helvetica", 12)).pack(pady=5)
+
+            # Teacher selection
+            CTkLabel(frame, text="Chọn giảng viên:", 
+                    font=("Helvetica", 12)).pack(pady=5)
+            
+            # Find current teacher in list
+            current_teacher = next((t for t in teacher_list 
+                                if t.endswith(f"({current_teacher_id})")), teacher_list[0])
+            
+            teacher_var = StringVar(value=current_teacher)
+            teacher_combo = CTkComboBox(frame, values=teacher_list, 
+                                    variable=teacher_var, width=300)
+            teacher_combo.pack(pady=10)
+
+            # Buttons frame
+            button_frame = CTkFrame(frame, fg_color="transparent")
+            button_frame.pack(pady=20)
+
+            def save_assignment():
+                if not messagebox.askyesno("Xác nhận", "Bạn có chắc chắn muốn thay đổi phân công này?", parent=popup):
+                    return
+                    
+                new_teacher = teacher_var.get()
+                if new_teacher == "Chọn giảng viên":
+                    messagebox.showerror("Lỗi", "Vui lòng chọn giảng viên!", parent=popup)
+                    return
+
+                new_teacher_id = new_teacher.split("(")[-1].strip(")")
+                
+                try:
+                    conn = mysql.connector.connect(**DB_CONFIG)
+                    cursor = conn.cursor()
+                    cursor.execute("""
+                        UPDATE assignments 
+                        SET teacher_id = %s 
+                        WHERE class_id = %s
+                    """, (new_teacher_id, class_id))
+                    conn.commit()
+                    messagebox.showinfo("Thành công", 
+                                    "Cập nhật phân công thành công!", parent=popup)
+                    popup.destroy()
+                    self.assignment_filter_classes()
+                except mysql.connector.Error as e:
+                    messagebox.showerror("Lỗi", 
+                                    f"Không thể cập nhật phân công: {e}", parent=popup)
+                finally:
+                    cursor.close()
+                    conn.close()
+
+            # Save button
+            CTkButton(button_frame, text="Lưu", fg_color="#0085FF", 
+                    width=100, command=save_assignment).pack(side="left", padx=5)
+            
+            # Cancel button
+            CTkButton(button_frame, text="Hủy", fg_color="#FF6384", 
+                    width=100, command=popup.destroy).pack(side="left", padx=5)
+
+        except mysql.connector.Error as e:
+            messagebox.showerror("Lỗi", f"Không thể tải thông tin phân công: {e}")
+        finally:
+            if 'cursor' in locals():
+                cursor.close()
+            if 'conn' in locals():
+                conn.close()
+
+    def reset_and_filter_classes(self, event=None):
+        year = self.year_combobox.get()
+        self.dept_combobox.set("Chọn khoa")
+        self.teacher_combobox.set("Chọn giảng viên")
+        self.semester_combobox.set("Chọn kỳ học")
+        self.module_combobox.set("Tất cả")
+        self.status_combobox.set("Tất cả")
+        self.assignment_update_semester_options()  # Cập nhật kỳ học dựa trên năm mới
+        self.assignment_filter_classes()  # Lọc lại bảng với năm mới
+    
+    def update_filters(self, event=None):
+        dept = self.dept_combobox.get()
+        year = self.year_combobox.get()
+        semester = self.semester_combobox.get()
+        
+        # Update teacher options based on department
+        self.assignment_update_teacher_options()
+        
+        # Update module options based on department and semester
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+            
+            if dept != "Chọn khoa" and semester != "Chọn kỳ học":
+                # Lấy danh sách học phần theo khoa và kỳ học
+                cursor.execute("""
+                    SELECT DISTINCT cm.module_name
+                    FROM course_modules cm
+                    JOIN classes c ON cm.module_id = c.module_id
+                    JOIN semesters s ON c.semester_id = s.semester_id
+                    JOIN departments d ON cm.dept_id = d.dept_id
+                    WHERE d.dept_name = %s 
+                    AND s.year = %s
+                    AND s.semester_name = %s
+                    ORDER BY cm.module_name
+                """, (dept, year, semester))
+                
+                modules = [row[0] for row in cursor.fetchall()]
+                if modules:
+                    self.module_combobox.configure(values=["Tất cả"] + modules)
+                else:
+                    self.module_combobox.configure(values=["Tất cả"])
+            else:
+                # Nếu chưa chọn khoa hoặc kỳ học, lấy tất cả học phần
+                if dept != "Chọn khoa":
+                    cursor.execute("""
+                        SELECT DISTINCT cm.module_name
+                        FROM course_modules cm
+                        JOIN departments d ON cm.dept_id = d.dept_id
+                        WHERE d.dept_name = %s
+                        ORDER BY cm.module_name
+                    """, (dept,))
+                else:
+                    cursor.execute("""
+                        SELECT DISTINCT cm.module_name
+                        FROM course_modules cm
+                        ORDER BY cm.module_name
+                    """)
+                    
+                modules = [row[0] for row in cursor.fetchall()]
+                self.module_combobox.configure(values=["Tất cả"] + modules)
+
+            self.module_combobox.set("Tất cả")
+            
+        except mysql.connector.Error as e:
+            print(f"Error updating modules: {e}")
+            self.module_combobox.configure(values=["Tất cả"])
+            self.module_combobox.set("Tất cả")
+        finally:
+            if 'cursor' in locals():
+                cursor.close()
+            if 'conn' in locals():
+                conn.close()
+        
+        # Cập nhật lại bảng dữ liệu
+        self.assignment_filter_classes()
