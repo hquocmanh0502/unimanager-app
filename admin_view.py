@@ -59,68 +59,76 @@ class AdminView:
 
         # Định nghĩa menu_items cho navbar
         self.navbar_menu_items = [
-            {
-                "label": "Quản lý giáo viên",
-                "icon": "👨",
-                "fg_color": "#3E54AC",
-                "hover_color": "#4B67D6",
-                "text_color": "white",
-                "command": None,
-                "submenu": [
-                    {"label": "Bằng cấp", "command": lambda: self.switch_tab("Bằng cấp")},
-                    {"label": "Khoa", "command": lambda: self.switch_tab("Khoa")},
-                    {"label": "Giáo viên", "command": lambda: self.switch_tab("Giáo viên")}
-                ]
-            },
-            {
-                "label": "Quản lý lớp học phần",
-                "icon": "📚",
-                "fg_color": "#3E54AC",
-                "hover_color": "#4B67D6",
-                "text_color": "white",
-                "command": None,
-                "submenu": [
-                    {"label": "Học phần", "command": lambda: self.switch_tab("Học phần")},
-                    {"label": "Kỳ học", "command": lambda: self.switch_tab("Kỳ học")},
-                    {"label": "Lớp học", "command": lambda: self.switch_tab("Lớp học")},
-                    {"label": "Phân công", "command": lambda: self.switch_tab("Phân công")}
-                ]
-            },
-            {
-                "label": "Thống kê",
-                "icon": "📊",
-                "fg_color": "#3E54AC",
-                "hover_color": "#4B67D6",
-                "text_color": "white",
-                "command": None,
-                "submenu": [
-                    {"label": "Thống kê giáo viên", "command": lambda: self.switch_tab("Thống kê giáo viên")},
-                    {"label": "Thống kê lớp", "command": lambda: self.switch_tab("Thống kê lớp")}
-                ]
-            },
-            {
-                "label": "Tiền dạy",
-                "icon": "💰",
-                "fg_color": "#3E54AC",
-                "hover_color": "#4B67D6",
-                "text_color": "white",
-                "command": None,
-                "submenu": [
-                    {"label": "Định mức tiền theo tiết", "command": lambda: self.switch_tab("Định mức tiền theo tiết")},
-                    {"label": "Hệ số giáo viên", "command": lambda: self.switch_tab("Hệ số giáo viên")},
-                    {"label": "Hệ số lớp", "command": lambda: self.switch_tab("Hệ số lớp")},
-                    {"label": "Tính tiền dạy", "command": lambda: self.switch_tab("Tính tiền dạy")}
-                ]
-            },
-            {
-                "label": "Báo cáo",
-                "icon": "📈",
-                "fg_color": "#3E54AC",
-                "hover_color": "#4B67D6",
-                "text_color": "white",
-                "command": lambda: self.switch_tab("Báo cáo")  # Chỉ giữ command mà không có submenu
-            }
-        ]
+        {
+            "label": "Quản lý giáo viên",
+            "icon": "👨",
+            "fg_color": "#3E54AC",
+            "hover_color": "#4B67D6",
+            "text_color": "white",
+            "command": None,
+            "submenu": [
+                {"label": "Bằng cấp", "command": lambda: self.switch_tab("Bằng cấp")},
+                {"label": "Khoa", "command": lambda: self.switch_tab("Khoa")},
+                {"label": "Giáo viên", "command": lambda: self.switch_tab("Giáo viên")}
+            ]
+        },
+        {
+            "label": "Quản lý lớp học phần",
+            "icon": "📚",
+            "fg_color": "#3E54AC",
+            "hover_color": "#4B67D6",
+            "text_color": "white",
+            "command": None,
+            "submenu": [
+                {"label": "Học phần", "command": lambda: self.switch_tab("Học phần")},
+                {"label": "Kỳ học", "command": lambda: self.switch_tab("Kỳ học")},
+                {"label": "Lớp học", "command": lambda: self.switch_tab("Lớp học")},
+                {"label": "Phân công", "command": lambda: self.switch_tab("Phân công")}
+            ]
+        },
+        {
+            "label": "Thống kê",
+            "icon": "📊",
+            "fg_color": "#3E54AC",
+            "hover_color": "#4B67D6",
+            "text_color": "white",
+            "command": None,
+            "submenu": [
+                {"label": "Thống kê giáo viên", "command": lambda: self.switch_tab("Thống kê giáo viên")},
+                {"label": "Thống kê lớp", "command": lambda: self.switch_tab("Thống kê lớp")}
+            ]
+        },
+        {
+            "label": "Tiền dạy",
+            "icon": "💰",
+            "fg_color": "#3E54AC",
+            "hover_color": "#4B67D6",
+            "text_color": "white",
+            "command": None,
+            "submenu": [
+                {"label": "Định mức tiền theo tiết", "command": lambda: self.switch_tab("Định mức tiền theo tiết")},
+                {"label": "Hệ số giáo viên", "command": lambda: self.switch_tab("Hệ số giáo viên")},
+                {"label": "Hệ số lớp", "command": lambda: self.switch_tab("Hệ số lớp")},
+                {"label": "Tính tiền dạy", "command": lambda: self.switch_tab("Tính tiền dạy")}
+            ]
+        },
+        {
+            "label": "Báo cáo",
+            "icon": "📈",
+            "fg_color": "#3E54AC",
+            "hover_color": "#4B67D6",
+            "text_color": "white",
+            "command": lambda: self.switch_tab("Báo cáo")
+        },
+        {
+            "label": "Quản lý tài khoản",
+            "icon": "🔐",
+            "fg_color": "#3E54AC",
+            "hover_color": "#4B67D6",
+            "text_color": "white",
+            "command": lambda: self.switch_tab("Quản lý tài khoản")
+        }
+    ]
 
         # Tạo navbar với menu_items và logout_callback
         self.navbar = ModernNavbar(self.main_frame, fg_color="#2B3467", menu_items=self.navbar_menu_items, logout_callback=self.logout)
@@ -153,6 +161,8 @@ class AdminView:
         self.salary_calc_tab = CTkFrame(self.tab_frame, fg_color="#FFFFFF", corner_radius=10)
         self.report_tab = CTkFrame(self.tab_frame, fg_color="#FFFFFF", corner_radius=10)
         self.assignment_tab = CTkFrame(self.tab_frame, fg_color="#FFFFFF", corner_radius=10)  # Thêm tab Phân công
+        self.account_management_tab = CTkFrame(self.tab_frame, fg_color="#FFFFFF", corner_radius=10)
+    
 
         # Gọi các hàm setup cho các tab
         self.setup_degree_tab()
@@ -169,6 +179,7 @@ class AdminView:
         self.setup_salary_calc_tab()
         self.setup_report_tab()
         self.setup_assignment_tab()
+        self.setup_account_management_tab()
 
         # Hiển thị tab mặc định
         self.current_tab = self.teacher_tab
@@ -1150,7 +1161,8 @@ class AdminView:
             "Hệ số lớp": self.class_coefficient_tab,
             "Tính tiền dạy": self.salary_calc_tab,
             "Báo cáo": self.report_tab,
-            "Phân công": self.assignment_tab
+            "Phân công": self.assignment_tab,
+            "Quản lý tài khoản": self.account_management_tab
         }
         
         self.current_tab = tab_mapping.get(tab_name)
@@ -2049,7 +2061,6 @@ class AdminView:
                         return
 
                 # Tạo mã giáo viên ngẫu nhiên
-                import random
                 max_attempts = 100
                 for _ in range(max_attempts):
                     random_num = random.randint(0, 99999)
@@ -2061,18 +2072,32 @@ class AdminView:
                     messagebox.showerror("Lỗi", "Không thể tạo mã giáo viên duy nhất sau nhiều lần thử!", parent=window)
                     return
 
-                # Thêm giáo viên
+                # Kiểm tra username trùng lặp (dùng teacher_id làm username)
+                cursor.execute("SELECT user_id FROM users WHERE username = %s", (teacher_id,))
+                if cursor.fetchone():
+                    messagebox.showerror("Lỗi", f"Tài khoản '{teacher_id}' đã tồn tại!", parent=window)
+                    return
+
+                # Thêm giáo viên vào bảng teachers
                 cursor.execute(
                     "INSERT INTO teachers (teacher_id, full_name, date_of_birth, phone, email, dept_id, degree_id, teacher_coefficient) "
                     "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
                     (teacher_id, name, dob_date, phone_num or None, email_addr or None, dept_id, degree_id, teacher_coefficient)
                 )
+
+                # Thêm tài khoản vào bảng users với teacher_id làm username
+                cursor.execute(
+                    "INSERT INTO users (user_id, username, password, role) "
+                    "VALUES (%s, %s, %s, %s)",
+                    (teacher_id, teacher_id, "default123", "Teacher")
+                )
+
                 conn.commit()
-                messagebox.showinfo("Thành công", f"Thêm giáo viên thành công với mã {teacher_id}", parent=window)
+                messagebox.showinfo("Thành công", f"Thêm giáo viên thành công với mã và tài khoản đăng nhập: {teacher_id}", parent=window)
                 self.load_teachers()
                 window.destroy()
             except mysql.connector.Error as e:
-                messagebox.showerror("Lỗi", f"Không thể thêm giáo viên: {e}", parent=window)
+                messagebox.showerror("Lỗi", f"Không thể thêm giáo viên hoặc tài khoản: {e}", parent=window)
             finally:
                 if cursor:
                     cursor.close()
@@ -6003,8 +6028,17 @@ class AdminView:
                 for widget in self.salary_table_frame.winfo_children():
                     widget.destroy()
                 CTkLabel(self.salary_table_frame, text="Không có dữ liệu", font=("Helvetica", 12), text_color="gray").pack(pady=20)
+                # Xóa nút lưu nếu có
+                if self.save_button and self.save_button.winfo_exists():
+                    self.save_button.destroy()
+                    self.save_button = None
             else:
                 self.load_salary_table(teacher_id, semester_id)
+                # Thêm nút Lưu kết quả nếu chưa có
+                if not hasattr(self, 'save_button') or self.save_button is None or not self.save_button.winfo_exists():
+                    self.save_button = CTkButton(self.salary_table_frame, text="Lưu kết quả", fg_color="#0085FF",
+                        command=lambda: messagebox.showinfo("Thành công", "Lưu kết quả tính lương thành công"))
+                    self.save_button.pack(pady=10)
 
         except mysql.connector.Error as e:
             messagebox.showerror("Lỗi", f"Không thể tải thông tin: {e}")
@@ -7289,3 +7323,230 @@ class AdminView:
         
         # Cập nhật lại bảng dữ liệu
         self.assignment_filter_classes()
+
+    def setup_account_management_tab(self):
+        # Header
+        header_frame = CTkFrame(self.account_management_tab, fg_color="transparent")
+        header_frame.pack(fill="x", padx=20, pady=(20, 10))
+        CTkLabel(header_frame, text="Quản lý tài khoản", font=("Helvetica", 24, "bold"), 
+                text_color="#2B3467").pack(side="left")
+
+        # Filter frame
+        filter_frame = CTkFrame(self.account_management_tab, fg_color="#F5F7FA", corner_radius=12, 
+                            border_width=1, border_color="#E0E0E0")
+        filter_frame.pack(fill="x", padx=20, pady=10)
+        CTkLabel(filter_frame, text="🔍 Lọc vai trò:", font=("Helvetica", 14, "bold"), 
+                text_color="#2B3467").pack(side="left", padx=(15, 5), pady=10)
+        self.role_filter = CTkComboBox(filter_frame, values=["Tất cả", "Department", "Teacher"], 
+                                    command=self.load_accounts, width=200, font=("Helvetica", 14),
+                                    fg_color="#FFFFFF", button_color="#4B89DC", border_color="#4B89DC",
+                                    text_color="#2B3467")
+        self.role_filter.pack(side="left", padx=5, pady=10)
+        self.role_filter.set("Tất cả")
+
+        # Table frame
+        self.account_table_frame = CTkScrollableFrame(self.account_management_tab, fg_color="#FFFFFF", 
+                                                    corner_radius=12, border_width=1, border_color="#E0E0E0")
+        self.account_table_frame.pack(padx=20, pady=10, fill="both", expand=True)
+
+        # Heading
+        heading_frame = CTkFrame(self.account_table_frame, fg_color="#2B3467")
+        heading_frame.pack(fill="x", pady=(0, 5))
+        headers = ["Mã người dùng", "Tên đăng nhập", "Tên người dùng", "Vai trò", "Thao tác"]
+        widths = [150, 200, 250, 150, 200]
+        for header, width in zip(headers, widths):
+            CTkLabel(heading_frame, text=header, font=("Helvetica", 14, "bold"), 
+                    text_color="white", width=width, anchor="center").pack(side="left", padx=5)
+
+        # Load initial data
+        self.load_accounts()
+
+    def load_accounts(self, event=None):
+        role = self.role_filter.get()
+        for widget in self.account_table_frame.winfo_children()[1:]:  # Skip heading
+            widget.destroy()
+
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+            query = """
+                SELECT u.user_id, u.username, 
+                    CASE 
+                        WHEN u.role = 'Teacher' THEN t.full_name
+                        WHEN u.role = 'Department' THEN d.dept_name
+                        ELSE NULL 
+                    END AS full_name,
+                    u.role
+                FROM users u
+                LEFT JOIN teachers t ON u.user_id = t.teacher_id
+                LEFT JOIN departments d ON u.user_id = d.dept_id
+                WHERE u.role IN ('Department', 'Teacher')
+            """
+            params = []
+            if role != "Tất cả":
+                query += " AND u.role = %s"
+                params.append(role)
+            query += " ORDER BY u.username"
+            cursor.execute(query, params)
+            accounts = cursor.fetchall()
+
+            if not accounts:
+                CTkLabel(self.account_table_frame, text="Không có tài khoản nào", 
+                        font=("Helvetica", 14), text_color="red").pack(pady=10)
+            else:
+                for idx, (user_id, username, full_name, role) in enumerate(accounts, 1):
+                    row_frame = CTkFrame(self.account_table_frame, fg_color="#F5F5F5" if idx % 2 else "#FFFFFF")
+                    row_frame.pack(fill="x", pady=2)
+                    CTkLabel(row_frame, text=user_id, font=("Helvetica", 12), 
+                            text_color="#333333", width=150, anchor="center").pack(side="left", padx=5)
+                    CTkLabel(row_frame, text=username, font=("Helvetica", 12), 
+                            text_color="#333333", width=200, anchor="center").pack(side="left", padx=5)
+                    CTkLabel(row_frame, text=full_name or "-", font=("Helvetica", 12), 
+                            text_color="#333333", width=250, anchor="center").pack(side="left", padx=5)
+                    CTkLabel(row_frame, text=role, font=("Helvetica", 12), 
+                            text_color="#333333", width=150, anchor="center").pack(side="left", padx=5)
+                    action_frame = CTkFrame(row_frame, fg_color="transparent")
+                    action_frame.pack(side="left", padx=5)
+                    CTkButton(action_frame, text="Sửa", fg_color="#3B82F6", hover_color="#60A5FA", width=80,
+                            command=lambda u=user_id: self.edit_account(u)).pack(side="left", padx=5)
+                    CTkButton(action_frame, text="Xóa", fg_color="#EF4444", hover_color="#DC2626", width=80,
+                            command=lambda u=user_id: self.delete_account(u)).pack(side="left", padx=5)
+        except mysql.connector.Error as e:
+            messagebox.showerror("Lỗi", f"Không thể tải danh sách tài khoản: {e}")
+        finally:
+            cursor.close()
+            conn.close()
+
+    def edit_account(self, user_id):
+        popup = CTkToplevel(self.window)
+        popup.title("Sửa tài khoản")
+        popup.geometry("400x500")
+        popup.transient(self.window)
+        popup.grab_set()
+
+        screen_width = self.window.winfo_screenwidth()
+        screen_height = self.window.winfo_screenheight()
+        x = (screen_width - 400) // 2
+        y = (screen_height - 400) // 2
+        popup.geometry(f"+{x}+{y}")
+
+        main_frame = CTkFrame(popup, fg_color="#F3F4F6", corner_radius=12)
+        main_frame.pack(padx=20, pady=20, fill="both", expand=True)
+
+        CTkLabel(main_frame, text="Sửa tài khoản", font=("Helvetica", 18, "bold"), 
+                text_color="#2B3467").pack(pady=(0, 15))
+
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT u.user_id, u.username, u.password, u.role,
+                    CASE 
+                        WHEN u.role = 'Teacher' THEN t.full_name
+                        WHEN u.role = 'Department' THEN d.dept_name
+                        ELSE NULL 
+                    END AS full_name
+                FROM users u
+                LEFT JOIN teachers t ON u.user_id = t.teacher_id
+                LEFT JOIN departments d ON u.user_id = d.dept_id
+                WHERE u.user_id = %s
+            """, (user_id,))
+            account = cursor.fetchone()
+            if not account:
+                messagebox.showerror("Lỗi", "Không tìm thấy tài khoản!", parent=popup)
+                popup.destroy()
+                return
+            current_user_id, current_username, current_password, current_role, full_name = account
+        except mysql.connector.Error as e:
+            messagebox.showerror("Lỗi", f"Không thể tải thông tin tài khoản: {e}", parent=popup)
+            popup.destroy()
+            return
+        finally:
+            cursor.close()
+            conn.close()
+
+        CTkLabel(main_frame, text="Mã người dùng:", font=("Helvetica", 14, "bold"), 
+                text_color="#2B3467").pack(anchor="w", pady=(0, 5))
+        user_id_entry = CTkEntry(main_frame, width=300)
+        user_id_entry.insert(0, current_user_id)
+        user_id_entry.configure(state="disabled")
+        user_id_entry.pack(fill="x", pady=(0, 10))
+
+        CTkLabel(main_frame, text="Tên người dùng:", font=("Helvetica", 14, "bold"), 
+                text_color="#2B3467").pack(anchor="w", pady=(0, 5))
+        full_name_entry = CTkEntry(main_frame, width=300)
+        full_name_entry.insert(0, full_name or "-")
+        full_name_entry.configure(state="disabled")
+        full_name_entry.pack(fill="x", pady=(0, 10))
+
+        CTkLabel(main_frame, text="Tên đăng nhập:", font=("Helvetica", 14, "bold"), 
+                text_color="#2B3467").pack(anchor="w", pady=(0, 5))
+        username_entry = CTkEntry(main_frame, width=300)
+        username_entry.insert(0, current_username)
+        username_entry.pack(fill="x", pady=(0, 10))
+
+        CTkLabel(main_frame, text="Mật khẩu mới:", font=("Helvetica", 14, "bold"), 
+                text_color="#2B3467").pack(anchor="w", pady=(0, 5))
+        password_entry = CTkEntry(main_frame, placeholder_text="Nhập mật khẩu mới (để trống nếu không đổi)", show="*", width=300)
+        password_entry.pack(fill="x", pady=(0, 10))
+
+        # CTkLabel(main_frame, text="Vai trò:", font=("Helvetica", 14, "bold"), 
+        #         text_color="#2B3467").pack(anchor="w", pady=(0, 5))
+        # role_combobox = CTkComboBox(main_frame, values=["Department", "Teacher"], width=300)
+        # role_combobox.set(current_role)
+        # role_combobox.pack(fill="x", pady=(0, 10))
+
+        def save_account():
+            username = username_entry.get().strip()
+            password = password_entry.get().strip()
+            role = role_combobox.get()
+
+            if not username or not role:
+                messagebox.showerror("Lỗi", "Vui lòng nhập đầy đủ thông tin!", parent=popup)
+                return
+
+            try:
+                conn = mysql.connector.connect(**DB_CONFIG)
+                cursor = conn.cursor()
+                if password:
+                    cursor.execute("UPDATE users SET username = %s, password = %s, role = %s WHERE user_id = %s",
+                                (username, password, role, user_id))
+                else:
+                    cursor.execute("UPDATE users SET username = %s, role = %s WHERE user_id = %s",
+                                (username, role, user_id))
+                conn.commit()
+                messagebox.showinfo("Thành công", "Cập nhật tài khoản thành công!", parent=popup)
+                popup.destroy()
+                self.load_accounts()
+            except mysql.connector.Error as e:
+                messagebox.showerror("Lỗi", f"Không thể cập nhật tài khoản: {e}", parent=popup)
+            finally:
+                cursor.close()
+                conn.close()
+
+        button_frame = CTkFrame(main_frame, fg_color="transparent")
+        button_frame.pack(pady=20)
+        CTkButton(button_frame, text="Lưu", fg_color="#1E3A8A", hover_color="#60A5FA", 
+                command=save_account).pack(side="left", padx=10)
+        CTkButton(button_frame, text="Hủy", fg_color="#EF4444", hover_color="#DC2626", 
+                command=popup.destroy).pack(side="left", padx=10)
+
+    def delete_account(self, user_id):
+        if not messagebox.askyesno("Xác nhận", f"Bạn có chắc chắn muốn xóa tài khoản {user_id}?", parent=self.account_management_tab):
+            return
+
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM users WHERE user_id = %s AND role IN ('Department', 'Teacher')", (user_id,))
+            if cursor.rowcount == 0:
+                messagebox.showerror("Lỗi", "Không thể xóa tài khoản Admin hoặc tài khoản không tồn tại!", parent=self.account_management_tab)
+            else:
+                conn.commit()
+                messagebox.showinfo("Thành công", f"Tài khoản {user_id} đã được xóa!", parent=self.account_management_tab)
+                self.load_accounts()
+        except mysql.connector.Error as e:
+            messagebox.showerror("Lỗi", f"Không thể xóa tài khoản: {e}", parent=self.account_management_tab)
+        finally:
+            cursor.close()
+            conn.close()

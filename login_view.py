@@ -1,3 +1,4 @@
+
 from tkinter import messagebox, Toplevel
 import customtkinter as ctk
 from PIL import Image, ImageFilter, ImageEnhance
@@ -577,7 +578,6 @@ class LoginPage(object):
         # Bind sự kiện
         self.bind_events()
 
-    # [Giữ nguyên tất cả các method create_* như trong code trước]
     def create_main_layout(self):
         """Tạo layout chính với hiệu ứng gradient"""
         self.main_container = ctk.CTkFrame(
@@ -951,57 +951,42 @@ class LoginPage(object):
             pass
 
     def authenticate_user(self):
-        """Xác thực người dùng trong background"""
         try:
-            time.sleep(1)  # Giả lập thời gian xử lý
-            
-            role_map = {
-                "Quản trị viên": "Admin",
-                "Giảng viên": "Teacher", 
-                "Kế toán": "Department"
-            }
+            time.sleep(1)
+            role_map = {"Quản trị viên": "Admin", "Giảng viên": "Teacher", "Kế toán": "Accountant"}
             selected_role = role_map[self.var_role.get()]
-            
-            user = verify_user(self.var_email.get().strip(), self.var_password.get())
+            user = verify_user(self.var_email.get().strip(), self.var_password.get().strip())
             self.window.after(0, lambda: self.handle_auth_result(user, selected_role))
-            
         except Exception as e:
             error_msg = str(e)
             self.window.after(0, lambda: self.handle_auth_error(error_msg))
 
     def handle_auth_result(self, user, selected_role):
-        """Xử lý kết quả xác thực"""
         self.stop_loading()
-        
         if user is None:
+            print(f"Debug: User not found for username={self.var_email.get()}, password={self.var_password.get()}, role={selected_role}")
             self.show_modern_error(
                 "Thông tin đăng nhập không chính xác!\n\n"
                 "Vui lòng kiểm tra lại tên đăng nhập và mật khẩu."
             )
             return
-
+        print(f"Debug: User found: {user}, selected_role={selected_role}")
         if user['role'] != selected_role:
+            print(f"Debug: Role mismatch. User role={user['role']}, selected role={selected_role}")
             self.show_modern_warning(
                 f"Quyền truy cập bị từ chối!\n\n"
                 f"Tài khoản này không có quyền truy cập vào vai trò {self.var_role.get()}.\n"
                 f"Vai trò hiện tại của bạn: {self.get_role_name(user['role'])}"
             )
             return
-
-        # Đăng nhập thành công
-        user_name = user.get('name', user.get('email', 'User'))
+        user_name = user.get('username', 'User')
         role_name = self.var_role.get()
-        
-        self.show_success_notification(
-            f"Chào mừng {user_name}!\nĐăng nhập thành công với vai trò {role_name}"
-        )
-        
-        # Delay một chút để user thấy thông báo thành công
+        self.show_success_notification(f"Chào mừng {user_name}!\nĐăng nhập thành công với vai trò {role_name}")
         self.window.after(2000, lambda: self.open_main_app(user))
 
     def handle_auth_error(self, error_msg):
-        """Xử lý lỗi xác thực"""
         self.stop_loading()
+        print(f"Debug: Authentication error: {error_msg}")
         self.show_modern_error(
             f"Lỗi hệ thống!\n\n"
             f"Chi tiết: {error_msg}\n\n"
@@ -1013,7 +998,7 @@ class LoginPage(object):
         role_names = {
             "Admin": "Quản trị viên",
             "Teacher": "Giảng viên",
-            "Department": "Kế toán"
+            "Accountant": "Kế toán"
         }
         return role_names.get(role_code, role_code)
 
@@ -1030,7 +1015,7 @@ class LoginPage(object):
                 self.app = TeacherView(new_window, user)
             elif user['role'] == 'Admin':
                 self.app = AdminView(new_window, user)
-            elif user['role'] == 'Department':
+            elif user['role'] == 'Accountant':
                 self.app = AccountantView(new_window, user)
             else:
                 raise Exception(f"Vai trò không được hỗ trợ: {user['role']}")
